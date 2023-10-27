@@ -1,0 +1,1 @@
+grep -rn TODO * --exclude-dir=dist --exclude-dir=pkg --exclude-dir=target --exclude=todo --exclude=tailwindcss-linux-x64

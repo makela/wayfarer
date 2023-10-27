@@ -1,0 +1,2 @@
+- maahantulo
+- the fool hurts his right foot and left lower back
