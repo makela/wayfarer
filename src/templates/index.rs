@@ -38,7 +38,7 @@ fn index_page<'a, G: Html>(cx: BoundedScope<'_, 'a>, state: &'a PostsPageRx) -> 
     let links = View::new_fragment(links);
     view! { cx,
         h2 { "Posts" }
-        p { "So far I've written the following posts. Be my guest and take your pick." }
+        p { "In this blog I'd like to share my love for Tai Chi. I'm going to share some new and old stories or just my own thoughts on Tai Chi. I hope you enjoy!" }
         ul { (links) }
     }
 }
@@ -68,19 +68,21 @@ pub fn get_posts() -> Vec<Post> {
     // Note: Last post is first, so prepend new stories!
     vec![
         Post {
+            title: "Bosco Falconeria, Harvest of Catarratto".into(),
+            url: "bosco-harvest-2023".into(),
+            published_at: NaiveDate::from_ymd_opt(2023, 10, 27).unwrap(),
+        },
+        /*
+        Post {
             title: "European Tour 2023".into(),
             url: "november-2023".into(),
             published_at: NaiveDate::from_ymd_opt(2023, 11, 11).unwrap(),
-        },
-        Post {
-            title: "Bosco Falconeria, Harvest of Catarratto".into(),
-            url: "bosco-harvest-2023".into(),
-            published_at: NaiveDate::from_ymd_opt(2023, 10, 16).unwrap(),
         },
         Post {
             title: "Sandy Island 2023".into(),
             url: "sandy-2023".into(),
             published_at: NaiveDate::from_ymd_opt(2023, 9, 29).unwrap(),
         },
+        */
     ]
 }
