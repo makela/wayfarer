@@ -40,12 +40,12 @@ fn post_page<G: Html>(cx: Scope, state: &PostStateRx) -> View<G> {
     let previous: View<G> = reference_link(
         cx,
         state.previous.get().as_ref().clone(),
-        "Have about the previous story? ".into(),
+        "Read the previous story? ".into(),
     );
     let next: View<G> = reference_link(
         cx,
         state.next.get().as_ref().clone(),
-        "How about the next story? ".into(),
+        "Read the next story? ".into(),
     );
     view! { cx,
         h2 { (state.title.get()) }
@@ -79,7 +79,7 @@ async fn get_build_state(info: StateGeneratorInfo<()>) -> Result<PostState, Blam
             let file = format!("./posts/{}.md", post.url);
             let content = markdown::file_to_html(Path::new(&file)).unwrap();
             // Negative index seems to fail on wasm, therefore have to text it manually.
-            let previous = if index > 0 {
+            let next = if index > 0 {
                 match posts.get(index - 1) {
                     Some(post) => Some(PostLink {
                         title: post.title.clone(),
@@ -90,7 +90,7 @@ async fn get_build_state(info: StateGeneratorInfo<()>) -> Result<PostState, Blam
             } else {
                 None
             };
-            let next = match posts.get(index + 1) {
+            let previous = match posts.get(index + 1) {
                 Some(post) => Some(PostLink {
                     title: post.title.clone(),
                     url: format!("/post/{}", post.url),

@@ -41,11 +41,6 @@ pub fn main<G: Html>() -> PerseusApp<G> {
                         }
                     }
                     PerseusRoot()
-                    nav {
-                        ul {
-                            li { a(href = "/fundme") { "FundMyTravel" } }
-                        }
-                    }
                 }
             }
         })

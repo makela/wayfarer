@@ -6,7 +6,7 @@ fn feedback_page<G: Html>(cx: Scope) -> View<G> {
         h2 { "Feedback" }
         p { "Would you like to suggest some story for me to tell? Maybe from some past camp or some new camp to visit? Maybe I could try to answer some question on Tai Chi? Give me a line and I'll see what I can do about it." }
         form {
-            textarea(autofocus = true)
+            textarea()
             button { "Send" }
         }
     }
