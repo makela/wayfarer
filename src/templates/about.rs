@@ -13,7 +13,6 @@ fn about_page<G: Html>(cx: Scope) -> View<G> {
             ". First time I met Grand Master Tung Kai Ying and his son Master Tung Chen Wei in Lapland camp 2005. Since I've followed them across Europe and North America."
         }
         p { "Tai Chi has changed my life in more ways than I could ever have dreamt. It has given me a new family of friends, and it has made me go far further on my travels than I ever could have thought." }
-        img(src = "/.perseus/static/img/profile.jpg", alt = "Profile picture")
     }
 }
 
