@@ -4,4 +4,6 @@ The grape harvest itself was surprisingly physical. In particular, body rotation
 
 We also continued to build the training platform. From the last time, we had already formed our own routine, which was easy to remember. At the same time, we built a new dining table on the house's terrace.
 
+![Olive trees on fire](/.perseus/static/img/olive-trees-on-fire.jpg)
+
 Unfortunately, I also got to experience the barren side of Sicily in the form of wildfires, which we saw every evening somewhere in the landscape. At its worst, the fire broke out very close to the land of the farm. Foam extinguishers, rakes, fresh branches and a tractor with water tank were required to control the fire. After all, the direction of the wind was favorable, and the fire did not spread to the training platform or the house. Five olive trees from the neighbor also burned. Supposedly, the shepherds grazing their sheep on the adjacent hillside had set the dry land on fire according to tradition. Today, of course, this is not acceptable, but in Sicily such customs seem to be very deeply internalized. Some arsons undoubtedly have the mafia or other crime behind them.
