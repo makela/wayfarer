@@ -48,6 +48,10 @@ img {
   @apply mx-auto w-10/12 rounded;
 }
 
+article {
+  @apply pb-4;
+}
+
 article ul {
   @apply list-disc;
   @apply m-10;
