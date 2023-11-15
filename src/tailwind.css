@@ -62,7 +62,7 @@ blockquote {
   font-family: 'Gloria Hallelujah', cursive;
 }
 
-textarea, button {
+textarea, input, button {
   @apply mx-6 my-1 px-2 py-1 border-2 rounded bg-slate-800;
 }
 

@@ -3,11 +3,14 @@ use sycamore::prelude::*;
 
 fn feedback_page<G: Html>(cx: Scope) -> View<G> {
     view! { cx,
-        h2 { "Feedback" }
-        p { "Would you like to suggest some story for me to tell? Maybe from some past camp or some new camp to visit? Maybe I could try to answer some question on Tai Chi? Give me a line and I'll see what I can do about it." }
-        form {
-            textarea()
-            button { "Send" }
+        article {
+            h2 { "Feedback" }
+            p { "Would you like to suggest some story for me to tell? Maybe from some past camp or some new camp to visit? Maybe I could try to answer some question on Tai Chi? Give me a line and I'll see what I can do about it." }
+            form(action = "/feedback", method = "POST")  {
+                input(type = "email", name = "email", placeholder = "Email (optional)")
+                textarea(name = "feedback")
+                button { "Send" }
+            }
         }
     }
 }

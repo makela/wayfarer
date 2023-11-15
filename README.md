@@ -59,3 +59,14 @@ Jännä miten vähän tuo alaselän vaiva nousee edes tietoisuuteen harjoitelles
 // Memory is a way to tie moments together.
 // I could say I live for Tai Chi.
 // Body is precious. Mind is a wonder. Time and place are here and now.
+
+
+## Database Setup
+
+
+```
+CREATE DATABASE wayfarer;
+CREATE USER username WITH ENCRYPTED PASSWORD 'password';
+GRANT ALL PRIVILEGES ON DATABASE wayfarer TO username;
+ALTER DATABASE wayfarer OWNER to username;
+```
