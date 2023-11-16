@@ -29,7 +29,6 @@ fn reference_link<G: Html>(cx: Scope, link: Option<PostLink>, text: String) -> V
             p(class = "reference") {
                 (text)
                 a(href = x.url) { (x.title) }
-                "."
             }
         },
     }
