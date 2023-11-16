@@ -12,7 +12,7 @@ Next two evenings we had classes in Citta di Castello. We focused on different s
 
 ![Citta di Castello 2023](/.perseus/static/img/2023-october-citta-di-castello.jpg)
 
-The second weekend we had two day workshop in Voiron, France. Many french people are new to me, but there seems to be lots of practitioners from many different places from France. Maybe because of so many different groups the first slow set was a little imbalance, but already on second class the synchronicity was achieved. One interesting moment occured to me before the second class: the whole room was silent and every one were practicing intensively. That rarely happens spontaneously. We focused mainly on practicing slow set fast and fast set slow, but in the end we also did some push hands.
+The second weekend we had two day workshop in Voiron. Many french people are new to me, but there seems to be lots of practitioners from many different places from France. Maybe because of so many different groups the first slow set was a little imbalance, but already on second class the synchronicity was achieved. One interesting moment occured to me before the second class: the whole room was silent and every one were practicing intensively. That rarely happens spontaneously. We focused mainly on practicing slow set fast and fast set slow, but in the end we also did some push hands.
 
 ![Voiron 2023](/.perseus/static/img/2023-november-voiron.jpg)
 
