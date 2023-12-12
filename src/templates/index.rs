@@ -68,6 +68,11 @@ pub fn get_posts() -> Vec<Post> {
     // Note: Last post is first, so prepend new stories!
     vec![
         Post {
+            title: "Sandy Island 2023".into(),
+            url: "sandy-2023".into(),
+            published_at: NaiveDate::from_ymd_opt(2023, 12, 12).unwrap(),
+        },
+        Post {
             title: "European Tour 2023".into(),
             url: "november-2023".into(),
             published_at: NaiveDate::from_ymd_opt(2023, 11, 10).unwrap(),
@@ -77,12 +82,5 @@ pub fn get_posts() -> Vec<Post> {
             url: "bosco-harvest-2023".into(),
             published_at: NaiveDate::from_ymd_opt(2023, 10, 27).unwrap(),
         },
-        /*
-        Post {
-            title: "Sandy Island 2023".into(),
-            url: "sandy-2023".into(),
-            published_at: NaiveDate::from_ymd_opt(2023, 9, 29).unwrap(),
-        },
-        */
     ]
 }
