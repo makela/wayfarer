@@ -15,7 +15,6 @@ perseus-tailwind = "0.4.0"
 markdown = "0.3.0"
 chrono = { version = "0.4.31", features = [ "serde" ] }
 log = "0.4.20"
-dotenvy = "0.15.7"
 
 # Engine-only dependencies go here
 [target.'cfg(engine)'.dependencies]
@@ -23,6 +22,7 @@ tokio = { version = "1", features = [ "macros", "rt", "rt-multi-thread" ] }
 perseus-warp = { version = "=0.4.2", features = [ "dflt-server" ] }
 warp = { package = "warp-fix-171", version = "0.3" }
 diesel = { version = "2.1.4", features = [ "chrono", "postgres", "r2d2" ] }
+dotenvy = "0.15.7"
 
 # Browser-only dependencies go here
 [target.'cfg(client)'.dependencies]
