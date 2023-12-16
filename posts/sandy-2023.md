@@ -6,6 +6,8 @@ This year's new toy for me was the balance board. I used to do some skate boardi
 
 On practice we focused on multi person applications, from embracing peacock's tail up to brush a knee and push. Also we practiced four corners a lot, and I heard from many people they learned something new on turnings. I've seen many versions of steppings and turnings there, and it's nice to see other ones finding something new as well. I do that myself often too. But one thing to take from there is to turn on the left toe while going back. I remember learning the same in November 2017 in New Hampshire. Memory is selective and associative. That's why the more you remember the easier it is to remember. Like those peculiar dates.
 
+![Sandy Island Fire](/.perseus/static/img/2023-sandy-fire.jpg)
+
 One thing that also makes Sandy special is master's family. Having kids playing around is lively and inspiring. All four boys are so unique but full of spirit. Now a days I'm part of the "fire department" with the kids and the trusted ones. This year we tried Scandinavian top down campfire and I'd say it was a success. The night out on the fire with the whole class off class is every year a pleasure. I remember playing around the fire with multiple surprising push hands partners. Every time you can learn something new from anyone else.
 
 ![Sandy Island Outdoor Picture](/.perseus/static/img/2023-sandy-outdoors.jpg)
