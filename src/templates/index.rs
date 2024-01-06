@@ -68,6 +68,11 @@ pub fn get_posts() -> Vec<Post> {
     // Note: Last post is first, so prepend new stories!
     vec![
         Post {
+            title: "Modesto and Vermont 2023".into(),
+            url: "modesto-and-vermont-2023".into(),
+            published_at: NaiveDate::from_ymd_opt(2024, 1, 6).unwrap(),
+        },
+        Post {
             title: "Sandy Island 2023".into(),
             url: "sandy-2023".into(),
             published_at: NaiveDate::from_ymd_opt(2023, 12, 12).unwrap(),

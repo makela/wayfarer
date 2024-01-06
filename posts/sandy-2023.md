@@ -8,7 +8,7 @@ On practice we focused on multi person applications, from embracing peacock's ta
 
 ![Sandy Island Fire](/.perseus/static/img/2023-sandy-fire.jpg)
 
-One thing that also makes Sandy special is master's family. Having kids playing around is lively and inspiring. All four boys are so unique but full of spirit. Now a days I'm part of the "fire department" with the kids and the trusted ones. This year we tried Scandinavian top down campfire and I'd say it was a success. The night out on the fire with the whole class off class is every year a pleasure. I remember playing around the fire with multiple surprising push hands partners. Every time you can learn something new from anyone else.
+One thing that also makes Sandy special is master's family. Having kids playing around is lively and inspiring. All four boys are so unique but full of spirit. Now a days I'm part of the *fire department* with the kids and the trusted ones. This year we tried Scandinavian top down campfire and I'd say it was a success. The night out on the fire with the whole class off class is every year a pleasure. I remember playing around the fire with multiple surprising push hands partners. Every time you can learn something new from anyone else.
 
 ![Sandy Island Outdoor Picture](/.perseus/static/img/2023-sandy-outdoors.jpg)
 

@@ -1,4 +1,4 @@
-I've been following master Tung Chen Wei in Europe for a long time. This year we started our October tour from Palermo. First we focused in distance push hands, as that's what we've been lately practicing there. Gradually we progressed to contact push hands and also we started as a new practice for some people four corners, first just the steps in solo and with partner and later with contact as well.
+I've been following the master in Europe for a long time. This year we started our October tour from Palermo. First we focused in distance push hands, as that's what we've been lately practicing there. Gradually we progressed to contact push hands and also we started as a new practice for some people four corners, first just the steps in solo and with partner and later with contact as well.
 
 One teaching that I clearly remember from Palermo was, that the easiest way to learn is to listen to the teacher. This of course means to pay attention to what's being taught and also that just by listening you should be able to change your doing. Also teacher can of course come and correct your posture or movement by touching or moving you, that can also be a precious correction, but by learning to correct your self by listening teacher or your own body is a good skill to learn. Related tip I've heard is to always keep an eye on master. And watching means concentration.
 
@@ -12,7 +12,7 @@ Next two evenings we had classes in Citta di Castello. We focused on different s
 
 ![Citta di Castello 2023](/.perseus/static/img/2023-october-citta-di-castello.jpg)
 
-The second weekend we had two day workshop in Voiron. Many french people are new to me, but there seems to be lots of practitioners from many different places from France. Maybe because of so many different groups the first slow set was a little imbalance, but already on second class the synchronicity was achieved. One interesting moment occured to me before the second class: the whole room was silent and every one were practicing intensively. That rarely happens spontaneously. We focused mainly on practicing slow set fast and fast set slow, but in the end we also did some push hands.
+The second weekend we had two day workshop in Voiron. Many french people are new to me, but there seems to be lots of practitioners from many different places from France. Maybe because of so many different groups the first slow set was a little imbalanced, but already on second class the synchronicity was achieved. One interesting moment occured to me before the second class: the whole room was silent and every one were practicing intensively. That rarely happens spontaneously. We focused mainly on practicing slow set fast and fast set slow, but in the end we also did some push hands.
 
 ![Voiron 2023](/.perseus/static/img/2023-november-voiron.jpg)
 
