@@ -2,7 +2,7 @@ Last year in January I travelled to California for master's first Modesto worksh
 
 ![View above clouds](/.perseus/static/img/2023-to-the-states.jpg)
 
-In practice we focused on the first class to the first section, the beginning, for the first class ever there. I always enjoy the first things, the basics, the fundamentals. In my personal practice I still focus the most on slow set, and that's where I think I still progress the most. Nice counter balance for that is the left side and we did that once in Modesto as well. Some people even demonstrated the first section to the left. I think this was the first time I saw kids demonstrating fast set. Also one demonstration, I think, was inspired by the good luck of red color over chinese new year of the rat.
+In practice we focused on the first class to the first section, the beginning, for the first class ever there. I always enjoy the first things, the basics, the fundamentals. In my personal practice I still focus the most on slow set, and that's where I still progress the most. Nice counter balance for that is the left side and we did that once in Modesto as well. Some people even demonstrated the first section to the left. I think this was the first time I saw kids demonstrating fast set. Also one demonstration was inspired by the good luck of red color over chinese new year of the rat.
 
 After the workshop we drove to LA for master's *home class*, that many times makes a difference. I was a little surprised how many students I already knew from the class, but I had a chance to do push hands with a new person to me. That's one of the most interesting things to travel around, to practice with different people.
 
@@ -18,7 +18,7 @@ In Vermont workshop we practiced mainly the first applications. I was lucky to d
 
 After Vermont we drove to Concord class and the plan was to have some extra time with master's family in New Hampshire. We had nice time playing some pool, ice skating and downhill skiing. We had a pool table, when I was a kid, so sometimes with a little luck, I can be competitive. Skating was simple to catch again, but last time I skied was early nineties, around the same age older boys were now here.
 
-Like last time I mentioned my accident of falling and hurting myself, this time I also fell quite hard on couple first runs down the hill, but I didn't hurt myself. Speaking of which, I think I've improved my body awareness more because of the damage done. So I've come to the conclusion, that sometimes breaking things is a chance to learn. Though I'm not recommending anyone to do that on purpose. Healing is a process, not a problem to solve. Finally hand standing feels like it used to, and now I can push up with either foot.
+Like last time I mentioned my accident of falling and hurting myself, this time I also fell quite hard on couple first runs down the hill, but I didn't hurt myself. Speaking of which, I've improved my body awareness more because of the damage done. So I've come to the conclusion, that sometimes breaking things is a chance to learn. Though I'm not recommending anyone to do that on purpose. Healing is a process, not a problem to solve. Finally hand standing feels like it used to, and now I can push up with either foot.
 
 ![Skiing](/.perseus/static/img/2023-new-hampshire-skiing.jpg)
 
