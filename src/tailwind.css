@@ -44,8 +44,13 @@ p.reference, p.date {
   @apply mx-12 italic;
 }
 
-img {
+article img {
   @apply mx-auto w-10/12 rounded;
+}
+
+img.rss {
+  width: 24px;
+  @apply float-right;
 }
 
 article {

@@ -71,6 +71,7 @@ pub fn main<G: Html>() -> PerseusApp<G> {
         ))
         .static_alias("/favicon.ico", "static/favicon.ico")
         .static_alias("/.perseus/static/styles.css", "dist/styles.css")
+        .static_alias("/feed.xml", "dist/feed.xml")
         .template(crate::templates::index::get_template())
         .template(crate::templates::about::get_template())
         .template(crate::templates::feedback::get_template())
@@ -86,6 +87,7 @@ pub fn main<G: Html>() -> PerseusApp<G> {
                     link(rel = "preconnect", href = "https://fonts.googleapis.com")
                     link(rel = "preconnect", href = "https://fonts.gstatic.com", crossorigin = true)
                     link(href = "https://fonts.googleapis.com/css2?family=Shadows+Into+Light&family=Gloria+Hallelujah&family=Inter&display=swap", rel = "stylesheet")
+                    link(rel = "alternative", type = "application/rss+xml", title = "Subscribe to Posts", href = "/feed.xml")
                 }
                 body {
                     h1 { a(href = "/") { "Tai Chi Wayfarer" } }

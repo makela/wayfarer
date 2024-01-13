@@ -1,4 +1,4 @@
-use super::index::get_posts;
+use super::posts::get_posts;
 use chrono::NaiveDate;
 use perseus::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -98,7 +98,7 @@ async fn get_build_state(info: StateGeneratorInfo<()>) -> Result<PostState, Blam
             };
             Ok(PostState {
                 title: post.title.clone(),
-                published_at: post.published_at,
+                published_at: post.published_at.into(),
                 content,
                 previous,
                 next,

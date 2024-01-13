@@ -1,14 +1,8 @@
-use chrono::NaiveDate;
 use perseus::prelude::*;
 use serde::{Deserialize, Serialize};
 use sycamore::prelude::*;
 
-#[derive(Serialize, Deserialize, Clone, ReactiveState)]
-pub struct Post {
-    pub title: String,
-    pub url: String,
-    pub published_at: NaiveDate,
-}
+use super::posts::{get_posts, Post};
 
 #[derive(Serialize, Deserialize, Clone, ReactiveState)]
 #[rx(alias = "PostsPageRx")]
@@ -40,6 +34,11 @@ fn index_page<'a, G: Html>(cx: BoundedScope<'_, 'a>, state: &'a PostsPageRx) -> 
         h2 { "Posts" }
         p { "In this blog I'd like to share my love for Tai Chi. I'm going to share some new and old stories or just some thoughts on Tai Chi. I hope you enjoy!" }
         ul { (links) }
+        p(class = "reference") {
+            a(href = "/feed.xml", rel = "external") {
+                img(class = "rss", src = "/.perseus/static/img/rss.png", alt = "Subscribe to Posts")
+            }
+        }
     }
 }
 
@@ -62,30 +61,4 @@ pub fn get_template<G: Html>() -> Template<G> {
         .view_with_state(index_page)
         .head(head)
         .build()
-}
-
-pub fn get_posts() -> Vec<Post> {
-    // Note: Last post is first, so prepend new stories!
-    vec![
-        Post {
-            title: "Modesto and Vermont 2023".into(),
-            url: "modesto-and-vermont-2023".into(),
-            published_at: NaiveDate::from_ymd_opt(2024, 1, 6).unwrap(),
-        },
-        Post {
-            title: "Sandy Island 2023".into(),
-            url: "sandy-2023".into(),
-            published_at: NaiveDate::from_ymd_opt(2023, 12, 12).unwrap(),
-        },
-        Post {
-            title: "European Tour 2023".into(),
-            url: "november-2023".into(),
-            published_at: NaiveDate::from_ymd_opt(2023, 11, 10).unwrap(),
-        },
-        Post {
-            title: "Bosco Falconeria, Harvest of Catarratto".into(),
-            url: "bosco-harvest-2023".into(),
-            published_at: NaiveDate::from_ymd_opt(2023, 10, 27).unwrap(),
-        },
-    ]
 }
