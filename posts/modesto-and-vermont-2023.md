@@ -2,7 +2,7 @@ Last year in January I travelled to California for master's first Modesto worksh
 
 ![View above clouds](/.perseus/static/img/2023-to-the-states.jpg)
 
-In practice we focused on the first class to the first section, the beginning, for the first class ever there. I always enjoy the first things, the basics, the fundamentals. In my personal practice I still focus the most on slow set, and that's where I still progress the most. Nice counter balance for that is the left side and we did that once in Modesto as well. Some people even demonstrated the first section to the left. I think this was the first time I saw kids demonstrating fast set. Also one demonstration was inspired by the good luck of red color over chinese new year of the rat.
+In practice we focused on the first class to the first section, the beginning, for the first class ever there. I always enjoy the first things, the basics, the fundamentals. In my personal practice I still focus the most on slow set, and that's where I still progress the most. Nice counter balance for that is the left side and we did that once in Modesto as well. Some people even demonstrated the first section to the left. I think this was the first time I saw kids demonstrating fast set. Also one demonstration was inspired by the good luck of red color over chinese new year of the rabbit.
 
 After the workshop we drove to LA for master's *home class*, that many times makes a difference. I was a little surprised how many students I already knew from the class, but I had a chance to do push hands with a new person to me. That's one of the most interesting things to travel around, to practice with different people.
 
