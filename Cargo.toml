@@ -26,3 +26,6 @@ dotenvy = "0.15.7"
 
 # Browser-only dependencies go here
 [target.'cfg(client)'.dependencies]
+
+[profile.release]
+lto = true
