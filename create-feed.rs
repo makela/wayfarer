@@ -19,7 +19,7 @@ impl From<&Post> for Item {
             title: Some(post.title.clone()),
             link: Some(format!("https://www.taichiwayfarer.com/post/{}", post.url)),
             description: None,
-            author: Some("Timo".to_string()),
+            author: None,
             categories: Vec::new(),
             comments: None,
             enclosure: None,
@@ -36,7 +36,11 @@ impl From<&Post> for Item {
 
 fn main() {
     let items: Vec<Item> = get_posts().iter().map(Item::from).collect();
-    let pub_date = if items.len() > 0 { items[0].pub_date.clone() } else { None };
+    let pub_date = if items.len() > 0 {
+        items[0].pub_date.clone()
+    } else {
+        None
+    };
     let channel = ChannelBuilder::default()
         .title("Tai Chi Wayfarer")
         .link("https://www.taichiwayfarer.com")

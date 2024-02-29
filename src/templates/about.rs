@@ -7,7 +7,7 @@ fn about_page<G: Html>(cx: Scope) -> View<G> {
             h2 { "About" }
             blockquote { "Be still like a mountain and flow like a river." }
             blockquote { " - Lao Tzu" }
-            p { "Hi, my name is Timo. I've been practicing Tai Chi Chuan for over two decades. To have this art in my life makes me so lucky, happy and grateful." }
+            p { "Hi, I've been practicing Tai Chi Chuan for over two decades. To have this art in my life makes me so lucky, happy and grateful." }
             p {
                 "I practice Yang style Tai Chi in "
                 a(href = "http://tungtaichi.com") { "Tung school" }
