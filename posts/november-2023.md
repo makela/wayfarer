@@ -4,7 +4,7 @@ One teaching that I clearly remember from Palermo was, that the easiest way to l
 
 ![Palermo October 2023](/.perseus/static/img/2023-october-palermo.jpg)
 
-After Palermo we travelled to Arezzo. There we had only one class but because of the weather some people missed it. That also made me to lead the group in front left corner, because the guy supposed to do that, didn't make it in time. We focused on the slow and fast sets. Gong tui, sung tui, juan jao.
+After Palermo we travelled to Arezzo. There we had only one class but because of the weather some people missed it. That also made me to lead the group in front left corner, because the guy supposed to do that, didn't make it in time. We focused on the slow and fast sets. *Gong tui*, *zuo tui*, *zhuan yao*.
 
 ![Arezzo 2023](/.perseus/static/img/2023-october-arezzo.jpg)
 

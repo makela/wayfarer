@@ -12,6 +12,14 @@ pub fn get_posts() -> Vec<Post> {
     // Note: Last post is first, so prepend new stories!
     vec![
         Post {
+            title: "Mèze and Mariehamn, March 2024".into(),
+            url: "march-2024".into(),
+            published_at: NaiveDate::from_ymd_opt(2024, 4, 4)
+                .unwrap()
+                .and_hms_opt(18, 22, 00)
+                .unwrap(),
+        },
+        Post {
             title: "Helsinki and Palermo, February 2024".into(),
             url: "february-2024".into(),
             published_at: NaiveDate::from_ymd_opt(2024, 2, 29)
