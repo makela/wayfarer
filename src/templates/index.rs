@@ -32,6 +32,7 @@ fn index_page<'a, G: Html>(cx: BoundedScope<'_, 'a>, state: &'a PostsPageRx) -> 
     let links = View::new_fragment(links);
     view! { cx,
         h2 { "Posts" }
+        img(class = "index", src = "/.perseus/static/img/2023-to-the-states.jpg", alt = "Tai Chi Wayfarer")
         p { "In this blog I'd like to share my love for Tai Chi. I'm going to share some new and old stories or just some thoughts on Tai Chi. I hope you enjoy!" }
         ul { (links) }
         p(class = "reference") {

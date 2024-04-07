@@ -48,6 +48,10 @@ article img {
   @apply mx-auto w-10/12 rounded;
 }
 
+img.index {
+  @apply float-right m-4 w-1/4 rounded;
+}
+
 img.rss {
   width: 24px;
   @apply float-right;
