@@ -21,8 +21,6 @@ fn index_page<'a, G: Html>(cx: BoundedScope<'_, 'a>, state: &'a PostsPageRx) -> 
             acc.push(view! { cx,
                 li {
                     p {
-                        (format!("{}", post.published_at.format("%B %e, %Y")))
-                        " "
                         a(href = format!("/post/{}", post.url)) { (format!("{}", post.title)) }
                     }
                 }
