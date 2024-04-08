@@ -22,7 +22,7 @@
             openssl
             pkg-config
             eza
-            fd
+            #fd
             (rust-bin.stable.latest.default.override {
               targets = [ "wasm32-unknown-unknown" ];
             })
@@ -33,11 +33,12 @@
             clippy
             universal-ctags
             geckodriver
+            rust-script
           ];
 
           shellHook = ''
             alias ls=eza
-            alias find=fd
+            #alias find=fd
           '';
         };
       }
