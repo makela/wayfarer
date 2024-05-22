@@ -22,7 +22,6 @@
             openssl
             pkg-config
             eza
-            #fd
             (rust-bin.stable.latest.default.override {
               targets = [ "wasm32-unknown-unknown" ];
             })
@@ -38,7 +37,6 @@
 
           shellHook = ''
             alias ls=eza
-            #alias find=fd
           '';
         };
       }
