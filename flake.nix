@@ -2,7 +2,7 @@
   description = "A devShell example";
 
   inputs = {
-    nixpkgs.url      = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url      = "github:NixOS/nixpkgs/nixos-23.11";
     rust-overlay.url = "github:oxalica/rust-overlay";
     flake-utils.url  = "github:numtide/flake-utils";
   };
@@ -22,9 +22,9 @@
             openssl
             pkg-config
             eza
-            (rust-bin.stable.latest.default.override {
+            (rust-bin.selectLatestNightlyWith (toolchain: toolchain.default.override {
               targets = [ "wasm32-unknown-unknown" ];
-            })
+            }))
             wasm-bindgen-cli
             wasm-pack
             cargo-wasi
