@@ -4,6 +4,8 @@ This year I flew to states twelve hours earlier than my friends, so I decided to
 
 In teaching we focused first learning the names of the movements in Chinese. My Chinese is not very good, so it would require some serious studying for me to remember all those names. But that's not really the point, but to absorb them gradually, and I caught some words that are used in many movements, such as *ma*, *hu*, *pu*, *chio*, and *hou* as personally interesting one. Also what I heard about teaching was, that only 20% should be learning and 80% practicing.
 
+![Group Picture](/.perseus/static/img/2024-sandy-group.jpg)
+
 To learn all the names at once would have been too much so master decided we'd focus on the movements from slow set *duilian*. First we practiced just by saying the names by turns with partner without doing the actual movements, and then also with the movements. Chinese names were hard for many people so optionally we used the English ones. Personally I learned many new details starting from the wrist lock, pushing in *ju feng szu pi* and dodging the lifting of kick.
 
 The movements of slow set *duilian*:
