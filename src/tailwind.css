@@ -23,15 +23,18 @@ h2 {
   @apply text-2xl;
 }
 
-nav {
-  @apply text-end;
+nav ul {
+  @apply flex flex-row-reverse;
+}
+nav ul li {
+  @apply mx-2;
 }
 
 a {
   @apply text-blue-200;
 }
 
-p, ul {
+p, ul, ol {
   @apply m-6;
   font-family: 'Inter', cursive;
 }
@@ -62,8 +65,11 @@ article {
 }
 
 article ul {
-  @apply list-disc;
-  @apply m-10;
+  @apply list-disc m-10;
+}
+
+article ol {
+  @apply list-decimal mx-20;
 }
 
 blockquote {

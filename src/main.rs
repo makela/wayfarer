@@ -38,6 +38,7 @@ pub fn main<G: Html>() -> PerseusApp<G> {
                     nav {
                         ul {
                             li { a(href = "/about") { "About" } }
+                            li { a(href = "/") { "Posts" } }
                         }
                     }
                     PerseusRoot()
