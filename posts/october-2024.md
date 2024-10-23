@@ -28,4 +28,4 @@ On the last class we heard some beatiful and entertaining singing, that has been
 
 ![Alcamo](/.perseus/static/img/2024-alcamo.jpg)
 
-After Copenhagen I continued to Sicily with my teacher, so I'm expecting a lot of practicing and olive picking from the near future.
+After Copenhagen I continued to Sicily with my teacher, so I'm expecting a lot of practicing and olive picking in the near future.
