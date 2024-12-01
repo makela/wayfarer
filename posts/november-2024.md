@@ -1,6 +1,6 @@
 This November I had again a chance to follow master in Europe for nineteen classes, and that's not being enough, I continued to Åland for my teacher's six classes workshop. Feels almost like practicing has become a full time job for me.
 
-Like said last time, I was already there, when we began in Palermo. This time Copenhagen  had a nice presentation; usually there is only one person from north beside me. I actually like Copenhage a lot, it's close to Finland, and maybe we should have more classes there.
+Like said last time, I was already there, when we began in Palermo. This time Copenhagen  had a nice presentation; usually there is only one person from north beside me. I actually like Copenhagen a lot, it's close to Finland, and maybe we should have more classes there.
 
 ![Palermo](/.perseus/static/img/2024-november-palermo.jpg)
 
