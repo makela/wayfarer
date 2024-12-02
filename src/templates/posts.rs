@@ -11,14 +11,14 @@ pub struct Post {
 pub fn get_posts() -> Vec<Post> {
     // Note: Last post is first, so prepend new stories!
     vec![
-        /*Post {
-            title: "It's all about a body".into(),
+        Post {
+            title: "It's all about the Body".into(),
             url: "december-2024".into(),
             published_at: NaiveDate::from_ymd_opt(2024, 12, 2)
                 .unwrap()
-                .and_hms_opt(10, 00, 00)
+                .and_hms_opt(18, 01, 00)
                 .unwrap(),
-        },*/
+        },
         Post {
             title: "Play Tai Chi".into(),
             url: "november-2024".into(),
