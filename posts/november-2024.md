@@ -16,6 +16,6 @@ In Voiron many of the students were practicing the preparatory position before t
 
 ![Voiron](/.perseus/static/img/2024-november-voiron.jpg)
 
-Another fundamental teaching was about demonstration. I know it can be disorienting to be in front of everyone and try to concentrate on one thing, but when demonstrating it helps to just hold on posture and think first. Tai chi starts in the mind. Don't help. Give her a chance. It may be funny to see people doing something completely different than asked, but it's always a lesson to all the observers to be aware of the actions.
+Another fundamental teaching was about demonstration. I know it can be disorienting to be in front of everyone and try to concentrate on one thing, but when demonstrating it helps to just hold on posture and think first. Tai chi starts in the mind, like master said. Don't help. Give her a chance. It may be funny to see people doing something completely different than asked, but it's always a lesson to all the observers to be aware of the actions.
 
 It's a lot to take three weekends and most of the weekdays between at once, so I'll tell the rest next week.
