@@ -24,7 +24,7 @@ pub fn get_posts() -> Vec<Post> {
             url: "december-2024".into(),
             published_at: NaiveDate::from_ymd_opt(2024, 12, 2)
                 .unwrap()
-                .and_hms_opt(18, 01, 00)
+                .and_hms_opt(17, 46, 00)
                 .unwrap(),
         },
         Post {
