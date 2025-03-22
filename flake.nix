@@ -1,8 +1,8 @@
 {
-  description = "A devShell example";
+  description = "A very basic flake";
 
   inputs = {
-    nixpkgs.url      = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
     rust-overlay.url = "github:oxalica/rust-overlay";
     flake-utils.url  = "github:numtide/flake-utils";
   };
@@ -19,25 +19,11 @@
       {
         devShells.default = mkShell {
           buildInputs = [
-            openssl
-            pkg-config
-            eza
-            (rust-bin.selectLatestNightlyWith (toolchain: toolchain.default.override {
-              targets = [ "wasm32-unknown-unknown" ];
-            }))
-            wasm-bindgen-cli
-            wasm-pack
-            cargo-wasi
-            cargo-outdated
-            clippy
-            universal-ctags
-            geckodriver
-            rust-script
+            rust-bin.nightly.latest.default
+            mold
+            just
+            tailwindcss
           ];
-
-          shellHook = ''
-            alias ls=eza
-          '';
         };
       }
     );

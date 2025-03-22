@@ -1,48 +1,355 @@
-mod error_views;
-mod templates;
+use axum::{
+    extract::Path,
+    http::{header, HeaderMap},
+    response::{IntoResponse, Redirect},
+    routing::get,
+    Router,
+};
+use chrono::{NaiveDate, NaiveDateTime};
+use maud::{html, Markup, PreEscaped, DOCTYPE};
+use rss::{ChannelBuilder, Item};
+use std::collections::BTreeMap;
+use tower_http::{services::ServeDir, trace, trace::TraceLayer};
+use tower_livereload::LiveReloadLayer;
+use tracing::Level;
+use tracing_subscriber::EnvFilter;
 
-use perseus::plugins::Plugins;
-use perseus::prelude::*;
-use sycamore::prelude::*;
+struct Post {
+    title: String,
+    url: String,
+    published_at: NaiveDateTime,
+}
 
-#[perseus::main(perseus_warp::dflt_server)]
-pub fn main<G: Html>() -> PerseusApp<G> {
-    PerseusApp::new()
-        .plugins(Plugins::new().plugin(
-            perseus_tailwind::get_tailwind_plugin,
-            perseus_tailwind::TailwindOptions {
-                in_file: "src/tailwind.css".into(),
-                out_file: "dist/styles.css".into(),
-            },
-        ))
-        .static_alias("/favicon.ico", "static/favicon.ico")
-        .static_alias("/.perseus/static/styles.css", "dist/styles.css")
-        .static_alias("/feed.xml", "dist/feed.xml")
-        .template(crate::templates::index::get_template())
-        .template(crate::templates::about::get_template())
-        .template(crate::templates::post::get_template())
-        .error_views(crate::error_views::get_error_views())
-        .index_view(|cx| {
-            view! { cx,
-                head {
-                    meta(charset = "utf-8")
-                    meta(name = "viewport", content = "width=device-width, initial-scale=1, shrink-to-fit=no")
-                    link(rel = "stylesheet", href = "/.perseus/static/styles.css")
-                    link(rel = "preconnect", href = "https://fonts.googleapis.com")
-                    link(rel = "preconnect", href = "https://fonts.gstatic.com", crossorigin = true)
-                    link(href = "https://fonts.googleapis.com/css2?family=Shadows+Into+Light&family=Gloria+Hallelujah&family=Inter&display=swap", rel = "stylesheet")
-                    link(rel = "alternative", type = "application/rss+xml", title = "Subscribe to Posts", href = "/feed.xml")
-                }
-                body {
-                    h1 { a(href = "/") { "Tai Chi Wayfarer" } }
-                    nav {
-                        ul {
-                            li { a(href = "/about") { "About" } }
-                            li { a(href = "/") { "Posts" } }
-                        }
-                    }
-                    PerseusRoot()
+impl From<&Post> for Item {
+    fn from(post: &Post) -> Self {
+        Item {
+            title: Some(post.title.clone()),
+            link: Some(format!("https://www.taichiwayfarer.com/post/{}", post.url)),
+            description: None,
+            author: None,
+            categories: Vec::new(),
+            comments: None,
+            enclosure: None,
+            guid: None,
+            pub_date: Some(post.published_at.format("%a, %d %b %Y %T EET").to_string()),
+            source: None,
+            content: None,
+            extensions: BTreeMap::new(),
+            itunes_ext: None,
+            dublin_core_ext: None,
+        }
+    }
+}
+
+struct PostLink {
+    title: String,
+    url: String,
+}
+
+fn get_posts() -> Vec<Post> {
+    // Note: Last post is first, so prepend new stories!
+    vec![
+        Post {
+            title: "Match Your Energy".into(),
+            url: "february-2025".into(),
+            published_at: NaiveDate::from_ymd_opt(2025, 2, 13)
+                .unwrap()
+                .and_hms_opt(9, 45, 0)
+                .unwrap(),
+        },
+        Post {
+            title: "Know Your Space".into(),
+            url: "january-2025".into(),
+            published_at: NaiveDate::from_ymd_opt(2025, 1, 31)
+                .unwrap()
+                .and_hms_opt(17, 32, 0)
+                .unwrap(),
+        },
+        Post {
+            title: "It's all about the Body".into(),
+            url: "december-2024".into(),
+            published_at: NaiveDate::from_ymd_opt(2024, 12, 2)
+                .unwrap()
+                .and_hms_opt(17, 46, 0)
+                .unwrap(),
+        },
+        Post {
+            title: "Play Tai Chi".into(),
+            url: "november-2024".into(),
+            published_at: NaiveDate::from_ymd_opt(2024, 11, 30)
+                .unwrap()
+                .and_hms_opt(22, 2, 0)
+                .unwrap(),
+        },
+        Post {
+            title: "Copenhagen, October 2024".into(),
+            url: "october-2024".into(),
+            published_at: NaiveDate::from_ymd_opt(2024, 10, 23)
+                .unwrap()
+                .and_hms_opt(17, 5, 0)
+                .unwrap(),
+        },
+        Post {
+            title: "Sandy Island 2024".into(),
+            url: "sandy-2024".into(),
+            published_at: NaiveDate::from_ymd_opt(2024, 9, 18)
+                .unwrap()
+                .and_hms_opt(15, 15, 0)
+                .unwrap(),
+        },
+        Post {
+            title: "Lapland and Mera 2024".into(),
+            url: "june-2024".into(),
+            published_at: NaiveDate::from_ymd_opt(2024, 6, 20)
+                .unwrap()
+                .and_hms_opt(12, 21, 0)
+                .unwrap(),
+        },
+        Post {
+            title: "Etna Camp 2024".into(),
+            url: "etna-2024".into(),
+            published_at: NaiveDate::from_ymd_opt(2024, 5, 22)
+                .unwrap()
+                .and_hms_opt(12, 2, 0)
+                .unwrap(),
+        },
+        Post {
+            title: "Mèze and Mariehamn, March 2024".into(),
+            url: "march-2024".into(),
+            published_at: NaiveDate::from_ymd_opt(2024, 4, 4)
+                .unwrap()
+                .and_hms_opt(18, 22, 0)
+                .unwrap(),
+        },
+        Post {
+            title: "Helsinki and Palermo, February 2024".into(),
+            url: "february-2024".into(),
+            published_at: NaiveDate::from_ymd_opt(2024, 2, 29)
+                .unwrap()
+                .and_hms_opt(21, 5, 0)
+                .unwrap(),
+        },
+        Post {
+            title: "Modesto and Vermont 2023".into(),
+            url: "modesto-and-vermont-2023".into(),
+            published_at: NaiveDate::from_ymd_opt(2024, 1, 6)
+                .unwrap()
+                .and_hms_opt(14, 45, 0)
+                .unwrap(),
+        },
+        Post {
+            title: "Sandy Island 2023".into(),
+            url: "sandy-2023".into(),
+            published_at: NaiveDate::from_ymd_opt(2023, 12, 12)
+                .unwrap()
+                .and_hms_opt(15, 0, 0)
+                .unwrap(),
+        },
+        Post {
+            title: "European Tour 2023".into(),
+            url: "november-2023".into(),
+            published_at: NaiveDate::from_ymd_opt(2023, 11, 10)
+                .unwrap()
+                .and_hms_opt(16, 5, 0)
+                .unwrap(),
+        },
+        Post {
+            title: "Bosco Falconeria, Harvest of Catarratto".into(),
+            url: "bosco-harvest-2023".into(),
+            published_at: NaiveDate::from_ymd_opt(2023, 10, 27)
+                .unwrap()
+                .and_hms_opt(17, 15, 0)
+                .unwrap(),
+        },
+    ]
+}
+
+fn layout(title: &str, content: Markup) -> Markup {
+    html! {
+        (DOCTYPE)
+        head {
+            title { (format!("{} ☯ Tai Chi Wayfarer", title)) }
+            link rel="shortcut icon" type="image/ico" href="/static/favicon.ico"
+            meta charset="utf-8";
+            meta http-equiv="X-UA-Compatible" content="IE=edge";
+            meta name="viewport" content="width=device-width, initial-scale=1";
+            link rel="preconnect" href="https://fonts.googleapis.com";
+            link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="true";
+            link href="https://fonts.googleapis.com/css2?family=Shadows+Into+Light&family=Gloria+Hallelujah&family=Inter&display=swap" rel="stylesheet";
+            link href="/static/tailwind.css" rel="stylesheet";
+            link rel="alternative" type="application/rss+xml" title="Subscribe to Posts" href="/feed.xml";
+        }
+        body {
+            h1 { a href="/" { "Tai Chi Wayfarer" } }
+            nav {
+                ul {
+                    li { a href="/about" { "About" } }
+                    li { a href="/" { "Posts" } }
                 }
             }
-        })
+            (content)
+        }
+    }
+}
+
+async fn index() -> Markup {
+    layout(
+        "Posts",
+        html! {
+            h2 { "Posts" }
+            img .index src="/static/img/2023-to-the-states.jpg" alt="Tai Chi Wayfarer";
+            p { "In this blog I'd like to share my love for Tai Chi. I'm going to share some new and old stories or just some thoughts on Tai Chi. I hope you enjoy!" }
+            ul {
+                @for post in get_posts() {
+                    li {
+                        p {
+                            a href=(format!("/post/{}", post.url)) { (format!("{}", post.title)) }
+                        }
+                    }
+                }
+            }
+            p .reference {
+                a href="/feed.xml" rel="external" {
+                    img .rss src="/static/img/rss.png" alt="Subscribe to Posts";
+                }
+            }
+        },
+    )
+}
+
+async fn feed() -> impl IntoResponse {
+    let items: Vec<Item> = get_posts().iter().map(Item::from).collect();
+    let pub_date = if !items.is_empty() {
+        items[0].pub_date.clone()
+    } else {
+        None
+    };
+    let channel = ChannelBuilder::default()
+        .title("Tai Chi Wayfarer")
+        .link("https://www.taichiwayfarer.com")
+        .description("RSS feed of Tai Chi Wayfarer posts.")
+        .pub_date(pub_date)
+        .items(items)
+        .build();
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        header::CONTENT_TYPE,
+        "text/xml; charset=utf.8".parse().unwrap(),
+    );
+    (headers, channel.to_string()).into_response()
+}
+
+async fn about() -> Markup {
+    layout(
+        "About",
+        html! {
+            article {
+                h2 { "About" }
+                blockquote { "Be still like a mountain and flow like a river." }
+                blockquote { " - Lao Tzu" }
+                p { "Hi, I've been practicing Tai Chi Chuan for over two decades. To have this art in my life makes me so lucky, happy and grateful." }
+                p {
+                    "I practice Yang style Tai Chi in "
+                    a href="http://tungtaichi.com" { "Tung school" }
+                    ". First time I met Grand Master Tung Kai Ying and his son Master Tung Chen Wei in Lapland camp 2005. Since I've followed them across Europe and North America."
+                }
+                p { "Tai Chi has changed my life in more ways than I could ever have dreamt. It has given me a new family of friends, and it has made me go far further on my travels than I ever could have thought." }
+            }
+        },
+    )
+}
+
+fn reference_link(link: Option<PostLink>, text: &str) -> Markup {
+    match link {
+        None => html! {},
+        Some(x) => html! {
+            p .reference {
+                (text)
+                a href=(x.url) { (x.title) }
+            }
+        },
+    }
+}
+
+async fn post(Path(url): Path<String>) -> Markup {
+    let posts = get_posts();
+    let index = posts.iter().position(|post| post.url == url).unwrap();
+    match posts.get(index) {
+        Some(post) => {
+            let file = format!("./posts/{}.md", post.url);
+            let content = markdown::file_to_html(std::path::Path::new(&file)).unwrap();
+            let next = if index > 0 {
+                posts.get(index - 1).map(|post| PostLink {
+                    title: post.title.clone(),
+                    url: format!("/post/{}", post.url),
+                })
+            } else {
+                None
+            };
+            let previous = posts.get(index + 1).map(|post| PostLink {
+                title: post.title.clone(),
+                url: format!("/post/{}", post.url),
+            });
+            layout(
+                &post.title,
+                html! {
+                    h2 { (post.title) }
+                    p .date {
+                        "Published "
+                        (format!("{}", post.published_at.format("%B %e, %Y")))
+                    }
+                    article { (PreEscaped(content)) }
+                    (reference_link(next, "Read the next story? "))
+                    (reference_link(previous, "Read the previous story? "))
+                },
+            )
+        }
+        None => html! {},
+    }
+}
+
+#[tokio::main]
+async fn main() {
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            EnvFilter::try_from_default_env()
+                .or_else(|_| EnvFilter::try_new("www=debug,tower_http=info"))
+                .unwrap(),
+        )
+        .init();
+
+    let app = Router::new()
+        .nest_service("/static", ServeDir::new("dist"))
+        // This is for legacy perseus build
+        .route(
+            "/.perseus/{*path}",
+            get(async |Path(path): Path<String>| Redirect::permanent(&format!("/{}", &path))),
+        )
+        .route("/", get(index))
+        .route("/feed.xml", get(feed))
+        .route("/about", get(about))
+        .route("/post/{url}", get(post))
+        // Support also directory style urls
+        .route("/about/", get(async || Redirect::permanent("/about")))
+        .route(
+            "/post/{url}/",
+            get(async |Path(url): Path<String>| Redirect::permanent(&format!("/post/{}", &url))),
+        )
+        .layer(
+            TraceLayer::new_for_http()
+                .make_span_with(trace::DefaultMakeSpan::new().level(Level::INFO))
+                .on_response(trace::DefaultOnResponse::new().level(Level::INFO)),
+        );
+    let app = if std::env::var("DEV").is_ok() {
+        app.layer(LiveReloadLayer::new())
+    } else {
+        app
+    };
+    let port = std::env::var("PORT").unwrap_or("3000".to_string());
+    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port))
+        .await
+        .unwrap();
+    axum::serve(listener, app.into_make_service())
+        .await
+        .unwrap();
 }

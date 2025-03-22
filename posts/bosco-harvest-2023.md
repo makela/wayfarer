@@ -1,11 +1,11 @@
 Our training theme was to the left, as a mirror image. We started with a slow set, then practiced Tung Jia and Kaihe. For me, the latter sets are very new as a mirror image, in mind and body. It takes practice to internalize the sets the other way around. I've been practicing the left side slow set for myself as well, but I've never really went through these other sets to the left. In weapons it actually goes to the right. Maybe the most interesting thing in left side is to feel oneself a beginner again. It feels like the opposite of deja vu, samais vu. It's somehow so familiar but at the same time so new.
 
-![Bosco Tai Chi Domenica](/.perseus/static/img/2023-september-bosco.jpg)
+![Bosco Tai Chi Domenica](/static/img/2023-september-bosco.jpg)
 
 The grape harvest itself was surprisingly physical. In particular, body rotation and bending played a big role, which initially caused pain in my lower back. After exploring new positions to work, I felt squat particularly pleasant and efficient, but also heavy and challenging. I believe this physical picking exercise helped me to stretch my posture, especially on the left side of my torso. Nice to use the body in new ways.
 
 We also continued to build the training platform. From the last time, we had already formed our own routine, which was easy to remember. At the same time, we built a new dining table on the house's terrace.
 
-![Olive trees on fire](/.perseus/static/img/olive-trees-on-fire.jpg)
+![Olive trees on fire](/static/img/olive-trees-on-fire.jpg)
 
 Unfortunately, I also got to experience the barren side of Sicily in the form of wildfires, which we saw every evening somewhere in the landscape. At its worst, the fire broke out very close to the land of the farm. Foam extinguishers, rakes, fresh branches and a tractor with water tank were required to control the fire. After all, the direction of the wind was favorable, and the fire did not spread to the training platform or the house. Five olive trees from the neighbor also burned. Supposedly, the shepherds grazing their sheep on the adjacent hillside had set the dry land on fire according to tradition. Nowadays, of course, this is not acceptable, but in Sicily such customs seem to be very deeply internalized. Some arsons undoubtedly have the mafia or other crime behind them.

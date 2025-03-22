@@ -1,13 +1,13 @@
 This January we had a new opportunity to participate on a winter camp in Felton, California. I don't know if I'd do it every year, but for the first time I wanted to see the place and the people. The camping site was nicely compact with short distances from cabins to practicing and dining halls, and the food was good. Also there were options to do some hiking near by. We were prepared for worse weather, but the sky was clear, the sun was warm and the stars were bright during the whole week.
 
-![View from the hill](/.perseus/static/img/2025-felton-view.jpg)
+![View from the hill](/static/img/2025-felton-view.jpg)
 
 On practice we kept warm with swinging hands, three steps and the first duilian. Apparently many people had just learned the first duilian, and I learned new details in there as well. For example before lifting the partner’s kick, you first step straight and turn your foot after the lift for the kick, though I still step directly with an angle in solo version of the practice. Also it was great to see master demonstrating the steps between changing the roles by taking super long steps and on the contrary by taking the following step only next to the other foot to keep the moved distance short, but always three steps and keeping the third step long.
 
-![Group Picture](/.perseus/static/img/2025-felton.jpg)
+![Group Picture](/static/img/2025-felton.jpg)
 
 The practice hall was not too big for 32 students and master's second son, but we thought it could fit one more row and column so there should be room for about thirteen people more. The limiting space actually forced us to pay more attention to the place and other people. Know your space, as master said. Do the changes where needed to have the space for the next movements. Especially three steps and *duilian* requires space, and you need to be aware of where you need it. In three steps I had an opportunity to demonstrate with master how to minimize the moving in side ways, i.e. stepping right next to your partner's feet and taking straight steps so you can go back and forward many, many times before the space runs out.
 
-![Dining hall](/.perseus/static/img/2025-felton-dining-hall.jpg)
+![Dining hall](/static/img/2025-felton-dining-hall.jpg)
 
 After the camp we had a workshop in Modesto or more specifically in Riverbank. I was there in the first workshop two years ago, when we focused on the first section, and the same theme continued this time by practicing third section more than other sections of the form. In the workshop I also had a chance to push with a new person, that hadn’t really done any push hands before, and it was a pleasure to see her starting to grok the idea of pushing and turning, keeping it smooth and fluid. Teaching is a lot of fun, though learning is even more of so.

@@ -1,4 +1,3 @@
-.direnv/
-dist/
-pkg/
-target/
+/target
+dist/tailwind.css
+.direnv

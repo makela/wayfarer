@@ -2,20 +2,20 @@ I've been following the master in Europe for a long time. This year we started o
 
 One teaching that I clearly remember from Palermo was, that the easiest way to learn is to listen to the teacher. This of course means to pay attention to what's being taught and also that just by listening you should be able to change your doing. Also teacher can of course come and correct your posture or movement by touching or moving you, that can also be a precious correction, but by learning to correct your self by listening teacher or your own body is a good skill to learn. Related tip I've heard is to always keep an eye on master. And watching means concentration.
 
-![Palermo October 2023](/.perseus/static/img/2023-october-palermo.jpg)
+![Palermo October 2023](/static/img/2023-october-palermo.jpg)
 
 After Palermo we travelled to Arezzo. There we had only one class but because of the weather some people missed it. That also made me to lead the group in front left corner, because the guy supposed to do that, didn't make it in time. We focused on the slow and fast sets. *Gong tui*, *zuo tui*, *zhuan yao*.
 
-![Arezzo 2023](/.perseus/static/img/2023-october-arezzo.jpg)
+![Arezzo 2023](/static/img/2023-october-arezzo.jpg)
 
 Next two evenings we had classes in Citta di Castello. We focused on different speeds on slow set, some fast set and principals of ting, hua, na and fa in push hands. On second class I had an honor to demonstrate some push hands with master. It's always a pleasure to directly feel his pushing and turning.
 
-![Citta di Castello 2023](/.perseus/static/img/2023-october-citta-di-castello.jpg)
+![Citta di Castello 2023](/static/img/2023-october-citta-di-castello.jpg)
 
 The second weekend we had two day workshop in Voiron. Many french people are new to me, but there seems to be lots of practitioners from many different places from France. Maybe because of so many different groups the first slow set was a little imbalanced, but already on second class the synchronicity was achieved. One interesting moment occured to me before the second class: the whole room was silent and every one were practicing intensively. That rarely happens spontaneously. We focused mainly on practicing slow set fast and fast set slow, but in the end we also did some push hands.
 
-![Voiron 2023](/.perseus/static/img/2023-november-voiron.jpg)
+![Voiron 2023](/static/img/2023-november-voiron.jpg)
 
 In Helsinki the class size was about half of any where else. We focused mainly on first knife, and every one demonstrated that by themselves. It's interesting to see so many versions of the human body and the form. Personally I found slap kick and jumpings still new to me in the first knife, so I need to practice them more. Master has been teaching in Helsinki over fifteen years, and most of the students are already students of his father, so many people already know most of the forms, and we had a pleasure to finish the whole tour this time in Kaihe and Ying Chieh Kuai Quan.
 
-![Helsinki November 2023](/.perseus/static/img/2023-november-helsinki.jpg)
+![Helsinki November 2023](/static/img/2023-november-helsinki.jpg)

@@ -57,7 +57,7 @@ img.index {
 
 img.rss {
   width: 24px;
-  @apply float-right;
+  @apply float-right pb-4;
 }
 
 article {
