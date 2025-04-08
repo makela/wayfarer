@@ -48,7 +48,7 @@ p.reference, p.date {
 }
 
 article img {
-  @apply mx-auto w-10/12 rounded;
+  @apply mx-auto w-10/12 rounded italic;
 }
 
 img.index {
