@@ -1,6 +1,6 @@
 use axum::{
     extract::Path,
-    http::{header, HeaderMap},
+    http::{header, HeaderMap, StatusCode},
     response::{IntoResponse, Redirect},
     routing::get,
     Router,
@@ -279,40 +279,43 @@ fn reference_link(link: Option<PostLink>, text: &str) -> Markup {
     }
 }
 
-async fn post(Path(url): Path<String>) -> Markup {
+async fn post(Path(url): Path<String>) -> impl IntoResponse {
     let posts = get_posts();
-    let index = posts.iter().position(|post| post.url == url).unwrap();
-    match posts.get(index) {
-        Some(post) => {
-            let file = format!("./posts/{}.md", post.url);
-            let content = markdown::file_to_html(std::path::Path::new(&file)).unwrap();
-            let next = if index > 0 {
-                posts.get(index - 1).map(|post| PostLink {
+    match posts.iter().position(|post| post.url == url) {
+        Some(index) => match posts.get(index) {
+            Some(post) => {
+                let file = format!("./posts/{}.md", post.url);
+                let content = markdown::file_to_html(std::path::Path::new(&file)).unwrap();
+                let next = if index > 0 {
+                    posts.get(index - 1).map(|post| PostLink {
+                        title: post.title.clone(),
+                        url: format!("/post/{}", post.url),
+                    })
+                } else {
+                    None
+                };
+                let previous = posts.get(index + 1).map(|post| PostLink {
                     title: post.title.clone(),
                     url: format!("/post/{}", post.url),
-                })
-            } else {
-                None
-            };
-            let previous = posts.get(index + 1).map(|post| PostLink {
-                title: post.title.clone(),
-                url: format!("/post/{}", post.url),
-            });
-            layout(
-                &post.title,
-                html! {
-                    h2 { (post.title) }
-                    p .date {
-                        "Published "
-                        (format!("{}", post.published_at.format("%B %e, %Y")))
-                    }
-                    article { (PreEscaped(content)) }
-                    (reference_link(next, "Read the next story? "))
-                    (reference_link(previous, "Read the previous story? "))
-                },
-            )
-        }
-        None => html! {},
+                });
+                layout(
+                    &post.title,
+                    html! {
+                        h2 { (post.title) }
+                        p .date {
+                            "Published "
+                            (format!("{}", post.published_at.format("%B %e, %Y")))
+                        }
+                        article { (PreEscaped(content)) }
+                        (reference_link(next, "Read the next story? "))
+                        (reference_link(previous, "Read the previous story? "))
+                    },
+                )
+                .into_response()
+            }
+            None => (StatusCode::NOT_FOUND, "".to_string()).into_response(),
+        },
+        None => (StatusCode::NOT_FOUND, "".to_string()).into_response(),
     }
 }
 
