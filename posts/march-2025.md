@@ -14,6 +14,6 @@ Even though my serene nature fits well to be a duteous student in class, I've go
 
 ![Palermo Skyline](/static/img/2025-march-palermo-skyline.jpg)
 
-Change of behavior is a proof of a genuine change. When you really start to apply new habits, you see the circumstances differently and you are not anymore just repeating your old thoughts. Other way around you can change your behavior by changing your thinking. In any given situation you can interupt your normal flow of thinking by becoming aware of your automatic patterns, and this gives room for new ideas and ways. And of course not everything should be changed. A delicate balance of introvert and extrovert, passive and active, softness and hardness, compassion and moderation are all characteristics to master.
+Change of behavior is a proof of a genuine change. When you really start to apply new habits, you see the circumstances differently and you are not anymore just repeating your old thoughts. Other way around you can change your behavior by changing your thinking. In any given situation you can interupt your normal flow of thinking by becoming aware of your automatic patterns, and this gives room for new ideas and ways. And of course not everything should be changed. A delicate balance of open and close, passive and active, soft and hard, compassion and moderation are all characteristics to master.
 
 And don't forget to silence your phone.
