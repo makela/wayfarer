@@ -20,4 +20,4 @@ In Marienhamn my teacher also talked about a good connection, and the purpose is
 
 I know some people can be a little affraid of the whole idea of touching or being touched, but in my opinion, you can not find the essence of *Tai Chi*, unless you practice with a partner. All people are different, and the more you get experience with them, the easier it is to match with new people.
 
-One thing my teacher also said and resonated strongly with my was: always follow. Even though he used that to match your energy with a group, I realised that it's kind of a mantra for me now a days, because I always follow my teachers.
+One thing my teacher also said and resonated strongly with me was: always follow. Even though he used that to match your energy with a group, I realised that it's kind of a mantra for me now a days, because I always follow my teachers.
