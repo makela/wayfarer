@@ -9,7 +9,11 @@ use chrono::{NaiveDate, NaiveDateTime};
 use maud::{html, Markup, PreEscaped, DOCTYPE};
 use rss::{ChannelBuilder, Item};
 use std::collections::BTreeMap;
-use tower_http::{services::ServeDir, trace, trace::TraceLayer};
+use tower_http::{
+    services::{ServeDir, ServeFile},
+    trace,
+    trace::TraceLayer,
+};
 use tower_livereload::LiveReloadLayer;
 use tracing::Level;
 use tracing_subscriber::EnvFilter;
@@ -177,7 +181,6 @@ fn layout(title: &str, content: Markup) -> Markup {
         (DOCTYPE)
         head {
             title { (format!("{} ☯ Tai Chi Wayfarer", title)) }
-            link rel="shortcut icon" type="image/ico" href="/static/favicon.ico"
             meta charset="utf-8";
             meta http-equiv="X-UA-Compatible" content="IE=edge";
             meta name="viewport" content="width=device-width, initial-scale=1";
@@ -346,6 +349,7 @@ async fn main() {
             "/post/{url}/",
             get(async |Path(url): Path<String>| Redirect::permanent(&format!("/post/{}", &url))),
         )
+        .route_service("/favicon.ico", ServeFile::new("dist/favicon.ico"))
         .layer(
             TraceLayer::new_for_http()
                 .make_span_with(trace::DefaultMakeSpan::new().level(Level::INFO))
