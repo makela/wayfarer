@@ -18,4 +18,4 @@ But what still applies to any practice, a student should first know the previous
 
 ![Helsinki Group Picture](/static/img/2025-april-helsinki-to.jpg)
 
-After Mèze my teacher had a seminar in Helsinki. In his classes were two new students, who were in the beginning of third section, and they were taught the corners as well, so that was nice continuity to what we had just practiced in Mèze. Sometimes these weird coincidences, unexpected synchronities, make me smile.
+After Mèze my teacher had a seminar in Helsinki. In his classes were two new students, who were in the beginning of third section, and they were taught the corners as well, so that was nice continuity to what we had just practiced in Mèze. Sometimes these weird coincidences, unexpected synchronicities, make me smile.
