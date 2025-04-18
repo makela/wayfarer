@@ -1,6 +1,6 @@
 The first weekend of April master had a seminar in Mèze the second time. This time there were close to hundred students. In such a big group there's always a chance to practice with a new partner.
 
-First we practiced swing hands a lot, *gong tui*, *zuo tui*. Sink first. You need to find good root. Ground yourself. It’s in your stance, posture. How you carry yourself. Later we took steps, long and soft. Keep in form. Heels on the same line.
+First we practiced swing hands a lot, *gong tui*, *zuo tui*. Sink first. You need to find good root. Ground yourself. It’s in your stance, posture. How you carry yourself. Later we took steps, long and soft. Stay in form. Heels on the same line.
 
 ![Mèze Group Picture](/static/img/2025-april-meze.jpg)
 
