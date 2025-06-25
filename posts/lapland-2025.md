@@ -1,0 +1,13 @@
+This year in Lapland camp we had a little different setup as usual, what comes to the positions in the form. Some people, who are usually in the front, came a little late, and this time they were in the back. I think that was one reason the master wanted to switch in which direction we practiced. And we practiced to all directions, except diagonally, which was one of my new ways to practice last winter. One thing to keep in mind on these cases is to fill the empty spaces. If there’s one in front of you, just step up into the previous row. Our lines were almost complete with only one empty spot.
+
+![Lapland group picture](/static/img/2025-lapland.jpg)
+
+What also comes to lateness, you should be ready, when the class starts. Don’t do anything extra during the class, such as go to adjusting your outfit, but respect others by focusing on the teaching. Of course this is forgiven at first, but repetition may make you to demonstrate. And when you get a correction, you shouldn’t question your teacher, that would have been an insult in China. If some correction feels weird, maybe you should think about it more, maybe after weeks or even months you finally understand, what you were taught.
+
+One new practice to me was *tai chi walk*. Odd rows turned to the left and even rows to the right, but at the end of a row you followed the one in front of you. Also the goal was to unite the whole group into one, single circle. Stay low. Take long steps. Hands circle flatten, open like in *kaihe*, same height, chest high, and they do not cross. I thought you should  follow the one in front of you, keep the same pace, same steps, same turns, but maybe that's just me. We always finished this walk by relaxing the hands, getting higher by shortening the steps, and finally giving up the circling.
+
+![Fishing](/static/img/2025-lapland-fishing.jpg)
+
+Also we practiced sword a lot, very slow and precisely, not even finishing the set, but adding one or two movements at a time. We practiced for a long time just the preparatory posture, while master made sure everyone was keeping the sword correctly. I had a heavier sword than I usually practice with, so just preparing for a long time with it felt like a new practice. In addition I picked up many details, I may have previously overlooked, like watch the tip of your sword, usually in strikes the sword is balanced between your feet and the blade is aligned in the same direction as your pointing arm, like an extension of it. And as a little spoiler, I’ve seen some versions of *fishing posture*, that I've not been taught yet.
+
+After Lapland we had another camp in Mera, so stay tuned.
