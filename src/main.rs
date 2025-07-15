@@ -9,6 +9,7 @@ use chrono::{NaiveDate, NaiveDateTime};
 use maud::{html, Markup, PreEscaped, DOCTYPE};
 use rss::{ChannelBuilder, Item};
 use std::collections::BTreeMap;
+use std::fs;
 use tower_http::{
     services::{ServeDir, ServeFile},
     trace,
@@ -320,7 +321,8 @@ async fn post(Path(url): Path<String>) -> impl IntoResponse {
         Some(index) => match posts.get(index) {
             Some(post) => {
                 let file = format!("./posts/{}.md", post.url);
-                let content = markdown::file_to_html(std::path::Path::new(&file)).unwrap();
+                let input = fs::read_to_string(std::path::Path::new(&file)).unwrap();
+                let content = markdown::to_html(&input);
                 let next = if index > 0 {
                     posts.get(index - 1).map(|post| PostLink {
                         title: post.title.clone(),

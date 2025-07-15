@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 axum = { version = "0.8.1", features = ["tokio"] }
 chrono = { version = "0.4.39", features = ["serde"] }
-markdown = "0.3.0"
+markdown = "1.0.0"
 maud = { version = "0.27.0", features = ["axum"] }
 rss = { version = "2.0.12", features = ["chrono", "serde"] }
 tokio = { version = "1.43.0", features = ["rt-multi-thread"] }
