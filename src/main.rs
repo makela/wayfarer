@@ -250,7 +250,7 @@ async fn index() -> Markup {
         html! {
             h2 { "Posts" }
             img .index src="/static/img/2023-to-the-states.jpg" alt="Tai Chi Wayfarer";
-            p { "In this blog I'd like to share my love for Tai Chi. I'm going to share some new and old stories or just some thoughts on Tai Chi. I hope you enjoy!" }
+            p { "In this blog, I'd like to share my love of Tai Chi. I’ll be sharing both new and old stories, as well as some reflections. I hope you enjoy!" }
             ul {
                 @for post in get_posts() {
                     li {
@@ -299,13 +299,13 @@ async fn about() -> Markup {
                 h2 { "About" }
                 blockquote { "Be still like a mountain and flow like a river." }
                 blockquote { " - Lao Tzu" }
-                p { "Hi, I've been practicing Tai Chi Chuan for over two decades. To have this art in my life makes me so lucky, happy and grateful." }
+                p { "Hi, I've been practicing Tai Chi Chuan for over two decades. Having this art in my life makes me feel lucky, happy, and grateful." }
                 p {
-                    "I practice Yang style Tai Chi in "
+                    "I practice Yang-style Tai Chi in the "
                     a href="http://tungtaichi.com" { "Tung school" }
-                    ". First time I met Grand Master Tung Kai Ying and his son Master Tung Chen Wei in Lapland camp 2005. Since I've followed them across Europe and North America."
+                    ". The first time I met Grand Master Tung Kai Ying and his son, Master Tung Chen Wei, was at the Lapland camp in 2005. Since then, I've followed them across Europe and North America."
                 }
-                p { "Tai Chi has changed my life in more ways than I could ever have dreamt. It has given me a new family of friends, and it has made me go far further on my travels than I ever could have thought." }
+                p { "Tai Chi has changed my life in more ways than I could ever have dreamed. It has given me a new family of friends and has taken me further in my travels than I ever could have imagined." }
             }
         },
     )
