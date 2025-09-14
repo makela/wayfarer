@@ -12,7 +12,7 @@ But in general the idea is all about *shadow boxing*, how Western people used to
 
 ![La Honda group picture](/static/img/2025-la-honda.jpg)
 
-As I had a little hunch last June, I was finally taught the *fishing posture.* Usually we just skip the whole movement, but instead of keeping the right toes in front in *phoenix spreading her right wing*, you can step the toes of the right foot after *the little dipper* behind the heel of the left foot and twist the heel of the right foot a little to the right while keeping the right knee down. And then comes the new movement by flipping the sword into front of your body. Keep eyes on your sword while turning it up, back, down and front. From there step directly to *dragon walking*.
+As I had a little hunch last June, I was finally taught the *fishing posture.* Usually we just skip the whole movement, but instead of keeping the right toes in front in *phoenix spreading her right wing*, you can step the toes of the right foot after *the little dipper* behind the heel of the left foot and twist the heel of the right foot a little to the right while keeping the right knee down. And then comes the new movement by flipping the sword in front of your body. Keep eyes on your sword while turning it up, back, down and forward. From there step directly into *dragon walking*.
 
 We had a little tightness in the practice hall, so grandmaster also showed us how to practice without needing all the space the form usually takes. You can take two big steps back between *three rings around the moon* and *the big dipper*. And in *cat chasing the mouse* instead of jumping forward, you can jump backward right before the left foot would touch the ground in front of you.
 
