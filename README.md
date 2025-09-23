@@ -6,3 +6,9 @@
 
 [ ] posts in database
 [ ] script to insert new posts, maybe pictures can be manually uploaded
+
+
+
+Sink your chest.
+Clear your mind.
+Focus on the practice.
