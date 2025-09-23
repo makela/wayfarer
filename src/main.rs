@@ -55,6 +55,14 @@ fn get_posts() -> Vec<Post> {
     // Note: Last post is first, so prepend new stories!
     vec![
         Post {
+            title: "Do Bigger".into(),
+            url: "sandy-2025".into(),
+            published_at: NaiveDate::from_ymd_opt(2025, 9, 23)
+                .unwrap()
+                .and_hms_opt(14, 5, 0)
+                .unwrap(),
+        },
+        Post {
             title: "Always Practice".into(),
             url: "la-honda-2025".into(),
             published_at: NaiveDate::from_ymd_opt(2025, 9, 13)
