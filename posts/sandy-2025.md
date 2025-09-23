@@ -20,6 +20,6 @@ This year it was too dry to have a real fire, so we made a fireless bonfire. We 
 
 If you had practiced *tuishou* with me, you might remember how my left shoulder used to make a popping sound back in the day. This time, in the following workshop, I practiced with a big partner, using really big moves, and my right shoulder started making the same sound. That was unexpected, but the sound is nothing to worry about, it doesn't hurt or feel uncomfortable. It did, howerer, make me pay more attention to my shoulders. In contrast to this post's theme, it made me try practicing the slow set with smaller movements, which helped me to discover new space to stretch everything back into bigger movements.
 
-One thing to keep in mind, in order to honor the master, is to always address him as such. It's similar to how you whouldn't call your Chinese friend's mother by her first name, but rather as a mrs. followed by the family name. He also explained that *laoshi* is more academic, while *shifu* is more practical.
+One thing to keep in mind, in order to honor the master, is to always address him as such. It's similar to how you wouldn't call your Chinese friend's mother by her first name, but rather mrs. followed by the family name. He also explained that *lǎoshī* is more academic, while *shīfu* is more practical.
 
 And doing bigger made me wonder whether I should consider attending more workshops and camps. I don't know, but maybe the question is simply about finding balance in abundance.
