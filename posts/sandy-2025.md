@@ -12,7 +12,7 @@ Do bigger, like master said, and this applies to many excercises. Take bigger st
 
 ![View of the Lake](/static/img/2025-sandy-lake.jpg)
 
-Grandmaster taught previous week how to go to the third kick without touching the ground the toes of your left foot, but instead pivoting on your right foot. Master instructed everyone to do this in the fast set, and it makes a lot of sense, since the turning would be difficult to do slowly. So from the second kick, keep your left knee up, turn and already start circle your hands, and finally kick.
+Grandmaster taught previous week how to go to the third kick without touching the ground with the toes of your left foot, but instead pivoting on your right foot. Master instructed everyone to do this in the fast set, and it makes a lot of sense, since the turning would be difficult to do slowly. So from the second kick, keep your left knee up, turn and already start circle your hands, and finally kick.
 
 This year it was too dry to have a real fire, so we made a fireless bonfire. We built it even taller than master's second son, decorating it with scarves, strings, lights and anything else we could find on the island to light up the party. It was easy to maintain, it wasn't cold without the fire, and some people even suggested we should do it more often.
 
