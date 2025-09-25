@@ -8,7 +8,7 @@ Grandmaster wanted us to focus especially on the Chinese saying: *Yǒu rén ruò
 
 Grandmaster asked many students how they would translate or interpret this, and personally I would maybe say something like: I don't know who you are. You don't know who I am. Therefore you can think I'm nobody, but I should also think you are nobody. And because you don't know me, I can be whoever I want to be.
 
-But in general the idea is all about *shadow boxing*, how Western people used to know Tai Chi before they knew the Chinese name for the art. In an extra class in San Francisco after the camp we tried to apply the same in push hands. The first has the initiative. *Nǐ bù dòng, wǒ bù dòng. Nǐ yī dòng, wǒ xiān dòng.* If you don't move, I won't move. If you move, I'll move first, like a revolver duel in Western movies.
+But in general the idea is all about *shadow boxing*, how Western people used to know Tai Chi before they knew the Chinese name for the art. In an extra class in San Francisco after the camp we tried to apply the same in push hands. The first has the initiative. *Nǐ bù dòng, wǒ bù dòng. Nǐ yù dòng, wǒ xiān dòng.* If you don't move, I won't move. If you move, I'll move first, like a revolver duel in Western movies.
 
 ![La Honda group picture](/static/img/2025-la-honda.jpg)
 
