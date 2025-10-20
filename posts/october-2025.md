@@ -14,7 +14,7 @@ If you continue moving at a steady pace and find more and more space as you go f
 
 ![Autumn in Finland](/static/img/2025-autumn-in-finland.jpg)
 
-When talking about not stopping, I must also mention *ting*, to listen. By thi the teacher means to hold your posture, yet in the mind always continue the movement. The intention, *yi*, should always be present. It guides your focus, your gaze, your head, and the rest of your body - in that order. Keep your gaze on the horizon so you can sense everything around you, though still watching your hands at the same. You should know what your hands are doing and where you step, but keep your eyes open and look ahead.
+When talking about not stopping, I must also mention *tíng*, to stop. By this the teacher means to hold your posture, yet in the mind always continue the movement. The intention, *yi*, should always be present. It guides your focus, your gaze, your head, and the rest of your body - in that order. Keep your gaze on the horizon so you can sense everything around you, though still watching your hands at the same. You should know what your hands are doing and where you step, but keep your eyes open and look ahead.
 
 Even when we count movements and stop in seemingly static postures between them, we are still practicing movements. And when you begin to practice a specific movement, you actually start from the previous one, continuing that and gradually transforming into the one you were about to practice.
 
