@@ -275,11 +275,16 @@ async fn index() -> Markup {
             h2 { "Posts" }
             img .index src="/static/img/2023-to-the-states.jpg" alt="Tai Chi Wayfarer";
             p { "In this blog, I'd like to share my love of Tai Chi. I’ll be sharing both new and old stories, as well as some reflections. I hope you enjoy!" }
-            ul {
+            ul .post-list {
                 @for post in get_posts() {
                     li {
-                        p {
-                            a href=(format!("/post/{}", post.url)) { (format!("{}", post.title)) }
+                        div  {
+                            div {
+                                a href=(format!("/post/{}", post.url)) { (format!("{}", post.title)) }
+                            }
+                            div .date {
+                                (format!("{}", post.published_at.format("%B %e, %Y")))
+                            }
                         }
                     }
                 }

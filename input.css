@@ -30,6 +30,19 @@ nav ul li {
   @apply mx-2;
 }
 
+ul.post-list {
+  @apply clear-both;
+}
+ul.post-list li div {
+  @apply flex flex-row;
+}
+ul.post-list li div div {
+  @apply flex-1 m-2;
+}
+ul.post-list li div div.date {
+  @apply flex-none text-sm;
+}
+
 a {
   @apply text-blue-200;
 }
