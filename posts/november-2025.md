@@ -1,6 +1,6 @@
 November seems to be one of the busiest month for me. This time I had twenty-six classes in six different locations. Concidering that there were only about five people in all three places in Italy, and six people in Copenhagen and Helsinki, while most of the classes had more than thirty students, there were a very many people in total.
 
-We practiced every day shifting weight forward, 弓腿 *gōng tuǐ*, sitting on your leg 坐腿 *zuò tuǐ*, and turning the waist, 转腰 *zhuǎn yāo*. That's where all practice begins - in any form and in push hands, 推手 *tuīshǒu*.
+We practiced every day shifting weight forward, 弓腿 *gōng tuǐ*, sitting on your leg, 坐腿 *zuò tuǐ*, and turning the waist, 转腰 *zhuǎn yāo*. That's where all practice begins - in any form and in push hands, 推手 *tuīshǒu*.
 
 ![Palermo group picture](/static/img/2025-november-palermo.jpg)
 
