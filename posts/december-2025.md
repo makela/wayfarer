@@ -10,7 +10,7 @@ In the last post, I already mentioned that we practiced a lot of push hands, 推
 
 ![Helsinki group picture](/static/img/2025-november-helsinki.jpg)
 
-Follow your partner, as master also said. This is all about: *If you don't move, I won't move. If you move, I'll move first.* 你不动，我不动， 你欲动，我先动 *Nǐ bù dòng, wǒ bù dòng, nǐ yù dòng, wǒ xiān dòng*. It also always helps to practice everything clearly and smoothly. Make it a game, a play of controling and following.
+Follow your partner, as master also said. This is all about: *If you don't move, I won't move. If you move, I'll move first.* 你不动。我不动。 你欲动。我先动。 *Nǐ bù dòng, wǒ bù dòng. Nǐ yù dòng, wǒ xiān dòng*. It also helps to practice everything clearly and smoothly. Make it a game, a play of following and controlling.
 
 In one class in Helsinki, we also had beginners. That brings me to the concept of *beginner's mind*. It simply means having no expectations, being receptive - even enthusiastic. Open your mind. Think yourself.
 
@@ -18,7 +18,7 @@ In Helsinki, I taught fast set to one new person. While teaching, I also try to 
 
 ![Mariehamn group picture](/static/img/2025-november-mariehamn.jpg)
 
-Meditation has changed my life in recent years, and I've realized it has nothing to do with controlling the mind, but with listening without judgment. Do not try to control your thoughts. Simply do not let them control you. Become fully aware. Experience your mind totally. It's the silence between the thoughts. Quiet your mind so it doesn't become too lazy or too talkative - not mind full, but mindful. Go forward. Go beyond. Let your thinking fly - that's what the mind is made for.
+Meditation has changed my life in recent years, and I've realized it has nothing to do with controlling the mind, but with listening without judgment. Do not try to control your thoughts. Simply do not let them control you. Become fully aware. Experience your mind totally. It's the silence between the thoughts. Quiet your mind so it doesn't become too lazy or too talkative - not mind full, but mindful. Go forward. Go beyond. Let your imagination fly - that's what the mind is made for.
 
 And as one of my teachers famously said: *The mind is everything. What you think you become.* I've had my missteps, but what really matters is how you approach things - the attitude. One mind. Don't doubt. Don't try. Do.
 
