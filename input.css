@@ -78,7 +78,7 @@ article {
 }
 
 article ul {
-  @apply list-disc m-10;
+  @apply list-disc mx-14;
 }
 
 article ol {
