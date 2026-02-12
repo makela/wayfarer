@@ -8,13 +8,13 @@ One good way to practice all the movements is to begin any movement from the *pr
 
 To practice new ways, I've been focusing on learning the Chinese names of the movements. One thing I've been wondering about is the difference between 进步 *jìnbù* and 上步 *shàng bù*, both translated as *step forward*. Similarly, I've studied the distinctions between the different ways of turning the body and how they are named. Maybe I don't need to explain all the differences - simply paying attention and thinking about them may already change how you practice.
 
-- *fist near the waist*, 抷身锤 *pī shēn chuí*
-- *turn back and heel kick*, 转身蹬脚 *zhuǎn shēn dēng jiǎo*
+- *fist near the waist*, 撇身捶 *piē shēn chuí*
+- *turn back and heel kick*, 轉身蹬腳 *zhuǎn shēn dēng jiǎo*
 - *twist body and right heel kick*, 斜身右蹬脚 *xié shēn yòu dēng jiǎo*
-- *sit back and right heel kick*, 转身蹬脚 *huí shēn yòu dēng jiǎo*
-- *turn around and right heel kick*, 转身右蹬脚 *zhuǎn shēn yòu dēng jiǎo*
-- *turn around and cross-kick*, 转身十字腿 *zhuǎn shēn shízì tuǐ*
-- *turn around and slap-kick*, 转身双擺莲 *zhuǎn shēn shuāng bǎi lián*
+- *sit back and right heel kick*, 回身右蹬腳 *huí shēn yòu dēng jiǎo*
+- *turn around and right heel kick*, 轉身右蹬腳 *zhuǎn shēn yòu dēng jiǎo*
+- *turn around and cross-kick*, 轉身十字腿 *zhuǎn shēn shí zì tuǐ*
+- *turn around and slap-kick*, 轉身雙擺蓮 *zhuǎn shēn shuāng bǎi lián*
 
 ![Trees](/static/img/2026-winter-camp-trees.jpg)
 
