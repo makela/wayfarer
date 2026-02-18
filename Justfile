@@ -1,5 +1,5 @@
 watch:
-    DEV= mold -run cargo watch --no-gitignore -x "run"
+    DEV= cargo watch --no-gitignore -x "run"
 
 tailwind:
     tailwindcss -i ./input.css -o ./dist/tailwind.css --watch

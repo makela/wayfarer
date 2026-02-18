@@ -18,11 +18,12 @@
       with pkgs;
       {
         devShells.default = mkShell {
+          LD_LIBRARY_PATH = lib.makeLibraryPath [ openssl ];
           buildInputs = [
             rust-bin.nightly.latest.default
-            mold
             just
             tailwindcss
+            openssl
           ];
         };
       }
