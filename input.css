@@ -89,15 +89,3 @@ blockquote {
   @apply mx-6 px-2 text-lg italic border-l-2;
   font-family: 'Gloria Hallelujah', cursive;
 }
-
-textarea, input, button {
-  @apply mx-6 my-1 px-2 py-1 border-2 rounded bg-slate-800;
-}
-
-textarea {
-  @apply w-11/12 h-48;
-}
-
-button {
-  @apply bg-blue-500 border-blue-500;
-}
