@@ -1,14 +1,14 @@
 This February we had a seminar in the Pyrenees for the second time, one in Helsinki right after, and this time the first one in Florence. In every place we had five classes. The first and the last locations had over sixty students. It really does feel special to practice with a big group, but in contrast, in Helsinki the atmosphere was unique in its own way, with the focus on finding very fine timing.
 
-One theme the master emphasized was how to start, 起 *qǐ*, *to raise* - like in *tai chi starting movement*, 太極起式 *tàijí qǐ shì*. This is also what the master says when we begin the form. Raise your hands at the same time with the whole group, as if all the students were shadows of the master. And just like a shadow follows, everyone should follow and keep the same speed.
+One theme the master emphasized was how to start, 起 *qǐ*, *to raise* - like in *Tai Chi starting movement*, 太極起式 *tàijí qǐ shì*. This is also what the master says when we begin the form. Raise your hands at the same time with the whole group, as if all the students were shadows of the master. And just like a shadow follows, everyone should follow and keep the same speed.
 
 ![Pyrenees Group Picture](/static/img/2026-pyrenees.jpg)
 
-One thing that makes keeping the pace together easier is when the master says when to shift your weight - 弓腿 *gōng tuǐ*, 坐腿 *zuò tuǐ* - or turn your waist, 转腰 *zhuǎn yāo*. So when you hear this, make sure you are doing what he says. Listen, 聽 *tīng*.
+One thing that makes keeping the pace together easier is when the master says when to shift your weight - 弓腿 *gōng tuǐ*, 坐腿 *zuò tuǐ* - or turn your waist, 转腰 *zhuǎn yāo*. So when you hear this, make sure you are doing what he says. Listen, 听 *tīng*.
 
 The beginning is also very important when you practice with a partner. Follow your partner, *raise* your hands, bend your knees, take the steps, shift your weight, and do all the movements at the same time. Your partner is your shadow, like master said - not literally, but doing the counter movement, only reacting when your partner is acting, like a mirror, together. 你不动。我不动。 你欲动。我先动。
 
-When learning new drills, like *three steps*, 三步 *sān bù*, or *four corners*, 大捋 *dà lǚ*, it is good to practice especially how to start. Here you are closer to your partner than in regular push hands, 推手 *tuīshǒu*, and you count to three. One is raising your hands, bending your knees, and making contact. Two is a small step or turn. And three is a big step and the movement, 擠 *ji*, 靠 *kào*, or 捋 *lǚ*.
+When learning new drills, like *three steps*, 三步 *sān bù*, or *four corners*, 大捋 *dà lǚ*, it is good to practice especially how to start. Here you are closer to your partner than in regular push hands, 推手 *tuīshǒu*, and you count to three. One is raising your hands, bending your knees, and making contact. Two is a small step or turn. And three is a big step and the movement, 擠 *jǐ*, 靠 *kào*, or 捋 *lǚ*.
 
 ![Helsinki Group Picture](/static/img/2026-february-helsinki.jpg)
 
