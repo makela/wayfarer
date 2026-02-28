@@ -20,7 +20,7 @@ Don't make a sound with your steps - a shadow is silent - step softly. Also, no 
 
 ![Florence Group Picture](/static/img/2026-florence.jpg)
 
-A shadow is just the absence of light. We see only light, so it's about what we do not see - what we are unaware of, unconscious of. You can also use your own shadow as a mirror. I think people could have used shadows to study your their posture while practicing even before mirrors were that common.
+A shadow is just the absence of light. We see only light, so it's about what we do not see - what we are unaware of, unconscious of. You can also use your own shadow as a mirror. I think people could have used shadows to study their posture while practicing even before mirrors were that common.
 
 I have a light in the center of my room, so I can see my own shadow in all directions. I don't look at it constantly, but it is one way to pay attention to what I am doing. I have also filmed my own practice to observe how I was moving. In this sense, you can use a camera as a third eye.
 
