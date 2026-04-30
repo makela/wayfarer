@@ -24,4 +24,4 @@ There is a lot more I remember, but remember by yourself was one of the teaching
 
 Also you shouldn't help other students too soon. Give them time to remember. And you shouldn't help anyone who is demonstrating - let the master do the teaching. Just watch. Maybe next time they will do it right. You can learn and correct yourself just by paying attention. Being conscious and focused makes it easier to remember. Practicing helps memory. If you don't remember, practice what you do remember.
 
-Usually, the requirements for seminars and camps is to remember the slow and fast sets, not just to be able to follow. So start by remembering them very well on your own. And remember to practice partner excercises outside of class with your roommate, as the master reminded us. Camps and workshops are a great chance to practice together.
+Usually, the requirements for seminars and camps is to remember the slow and fast sets, not just to be able to follow. So start by remembering them very well on your own. And remember to practice partner excercises outside of class with your roommate, as the master reminded us.
