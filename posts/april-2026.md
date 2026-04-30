@@ -12,7 +12,7 @@ In our school, we usually start push hands with taking contact with one hand, bu
 
 In Mèze, we practiced *three steps* and *four corners* a lot. Last year, we already had a demonstration of how to change from *three steps* to *four corners*, how to change direction in *four corners*, and how to get back to *three steps*. That seemed to be a taste of what was coming, because this time we practiced those together.
 
-We started solo *four corners* with a count. The first is to raise your hands and bend your knees. With a partner, we start close and take a contact on the first count. On the second count, the same side hand circles and the foot takes a long step. The other elbow goes toward parther's face, 肘 *zhǒu*. The third count is also a long step, with a big pull, 大捋 *dà lǚ*, or a shoulder strike, 靠 *kào*.
+We started solo *four corners* with a count. The first is to raise your hands and bend your knees, or later step close to the other foot, either next to it or behind it. With a partner, we start close and take a contact on the first count. On the second count, the same side hand circles and the foot either turns or takes a long step. The other elbow goes toward parther's face, 肘 *zhǒu*. The third count is also a long step, with a big pull, 大捋 *dà lǚ*, or a shoulder strike, 靠 *kào*.
 
 With a partner, the turns and steps are not at the same time, like in *three steps*. In the beginning, one person turns first so the other knows to step. The same applies to the other counts: the one moving backward steps first while performing their movement, and the other follows with a counter movement. Always do smooth and soft. Don't go up and down. Stay on the same level.
 
