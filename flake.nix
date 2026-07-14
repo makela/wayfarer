@@ -20,7 +20,7 @@
         devShells.default = mkShell {
           LD_LIBRARY_PATH = lib.makeLibraryPath [ openssl ];
           buildInputs = [
-            rust-bin.nightly.latest.default
+            rust-bin.stable.latest.default
             just
             tailwindcss
             openssl
