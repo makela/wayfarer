@@ -1,6 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 body {
   @apply mx-auto max-w-2xl text-slate-50 bg-slate-900;
@@ -21,6 +19,10 @@ h1 a {
 
 h2 {
   @apply text-2xl;
+}
+
+h3 {
+  @apply mt-4 text-base;
 }
 
 nav ul {
@@ -60,12 +62,18 @@ p.reference, p.date {
   @apply mx-12 italic;
 }
 
-article img {
-  @apply mx-auto w-10/12 rounded italic;
+article img, article .video, .use-cookies {
+  @apply mx-auto w-10/12 rounded-sm;
+}
+.use-cookies button {
+  @apply mx-2 my-1 px-2 py-1 rounded-sm bg-white text-black;
+}
+.use-cookies {
+  @apply p-4 bg-black;
 }
 
 img.index {
-  @apply float-right m-4 w-1/4 rounded;
+  @apply float-right m-4 w-1/4 rounded-sm;
 }
 
 img.rss {
@@ -77,8 +85,12 @@ article {
   @apply pb-4;
 }
 
+article ul, table {
+  @apply mx-4;
+}
+
 article ul {
-  @apply list-disc mx-14;
+  @apply list-disc;
 }
 
 article ol {
@@ -88,4 +100,48 @@ article ol {
 blockquote {
   @apply mx-6 px-2 text-lg italic border-l-2;
   font-family: 'Gloria Hallelujah', cursive;
+}
+
+table thead {
+  @apply text-left text-sm font-light;
+}
+
+table th, table td {
+  @apply px-4;
+}
+
+.names-of-set div {
+  @apply p-1;
+}
+.names-of-set .index {
+  @apply col-span-1 text-right pr-4;
+}
+.names-of-set .characters {
+  @apply col-span-2;
+}
+.names-of-set .pinyin {
+  @apply col-span-4;
+}
+.names-of-set .english {
+  @apply col-span-5;
+}
+.names-of-set .full {
+  @apply col-span-12;
+}
+.names-of-set {
+  @apply pl-8 grid grid-cols-12 text-sm;
+}
+
+.proverbs div {
+  @apply p-1;
+}
+.proverbs .english {
+  @apply pb-6;
+}
+.proverbs {
+  @apply pl-8 text-sm;
+}
+
+.pinyin {
+  @apply italic;
 }

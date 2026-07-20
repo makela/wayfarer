@@ -22,7 +22,8 @@
           buildInputs = [
             rust-bin.stable.latest.default
             just
-            tailwindcss
+            watchman
+            tailwindcss_4
             openssl
           ];
         };
