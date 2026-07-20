@@ -509,9 +509,8 @@ pub fn get_extra_markup(url: String) -> Markup {
             ("合太极", "Hé Tàijí", "Tai Chi Ending Movement"),
         ];
         html! {
-            link rel="stylesheet" href="/static/embed-youtube.css" media="print" onload="this.media='all'";
-            div #slow-set-video {}
-            script async src="/static/cookies.js" {}
+            div #slow-set-video.video {}
+            script async src="/static/embed-video.js" {}
             div .names-of-set {
                 // 太極拳架子名目
                 div .full { h3 { "Movements of the Slow Set" } }
