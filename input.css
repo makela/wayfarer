@@ -72,7 +72,7 @@ article img, .require-cookies, .video, .video iframe {
   @apply aspect-video;
 }
 .require-cookies button {
-  @apply mx-4 my-2 px-2 py-1 bg-slate-50 text-slate-900;
+  @apply m-2 px-4 py-1 bg-slate-50 text-slate-900;
 }
 .require-cookies {
   @apply p-4 border-white border-2 bg-slate-900 text-center;

@@ -1,20 +1,22 @@
-const storeKey = "allowCookies"
+const storeKey = "acceptCookies"
 
-function allowCookies() {
+function acceptCookies() {
   localStorage.setItem(storeKey, true)
   renderCookieContent()
 }
 
-function renderContent(id, content) {
+function renderVideo(id, videoId) {
   let element = document.getElementById(id)
   if (element) {
     if (localStorage.getItem(storeKey)) {
-      element.innerHTML = content()
+      element.innerHTML = video(videoId)
     } else {
       element.innerHTML = `
         <div class="require-cookies">
-          This content requires cookies
-          <button onclick="allowCookies()">Allow cookies</button>
+          Video requires accepting cookies from YouTube?
+          <button onclick="acceptCookies()">Accept</button>
+          or watch the video in
+          <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank">YouTube</a>
         </div>`
     }
   }
@@ -33,7 +35,7 @@ function video(id) {
   }
 
 function renderCookieContent() {
-  renderContent("slow-set-video", function() { return video("zD7FVVj59O8") })
+  renderVideo("slow-set-video", "zD7FVVj59O8")
 }
 
 renderCookieContent()
