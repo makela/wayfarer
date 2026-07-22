@@ -1,4 +1,7 @@
-watch:
+[parallel]
+watch: dev tailwind
+
+dev:
     DEV= cargo watch --no-gitignore -x "run"
 
 tailwind:
