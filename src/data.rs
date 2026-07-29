@@ -40,8 +40,8 @@ pub fn get_posts() -> Vec<Post> {
     vec![
         /*
         Post {
-            title: "The Slow Set".into(),
-            url: "the-slow-set".into(),
+            title: "The Sword Set".into(),
+            url: "the-sword-set".into(),
             published_at: NaiveDate::from_ymd_opt(2026, 8, 8)
                 .unwrap()
                 .and_hms_opt(8, 8, 0)
@@ -50,6 +50,14 @@ pub fn get_posts() -> Vec<Post> {
         Post {
             title: "Chinese Glossary".into(),
             url: "chinese-glossary".into(),
+            published_at: NaiveDate::from_ymd_opt(2026, 8, 8)
+                .unwrap()
+                .and_hms_opt(8, 8, 0)
+                .unwrap(),
+        },
+        Post {
+            title: "The Slow Set".into(),
+            url: "the-slow-set".into(),
             published_at: NaiveDate::from_ymd_opt(2026, 8, 8)
                 .unwrap()
                 .and_hms_opt(8, 8, 0)
@@ -299,6 +307,17 @@ pub fn get_posts() -> Vec<Post> {
     ]
 }
 
+fn name_table(names: Vec<(&str, &str, &str)>) -> Markup {
+    html! {
+        @for (i, (characters, pinyin, name)) in names.iter().enumerate() {
+            div .index { (format!("{}.", i+1)) }
+            div .characters { (characters) }
+            div .pinyin { (pinyin) }
+            div .english { (name) }
+        }
+    }
+}
+
 pub fn get_extra_markup(url: String) -> Markup {
     if url == "./posts/the-slow-set.md" {
         let names = vec![
@@ -514,12 +533,174 @@ pub fn get_extra_markup(url: String) -> Markup {
             div .names-of-set {
                 // 太極拳架子名目
                 div .full { h3 { "Movements of the Slow Set" } }
-                @for (i, (characters, pinyin, name)) in names.iter().enumerate() {
-                    div .index { (format!("{}.", i+1)) }
-                    div .characters { (characters) }
-                    div .pinyin { (pinyin) }
-                    div .english { (name) }
-                }
+                (name_table(names))
+            }
+        }
+    } else if url == "./posts/the-sword-set.md" {
+        let names = vec![
+            ("太极起式", "Tàijí qǐ shì", "Tai Chi Starting Movement"),
+            (
+                "三環套月",
+                "Sān húan tào yùe",
+                "Three Rings Around the Moon",
+            ),
+            ("魁星式", "Kuí xīng shì", "The Big Dipper"),
+            ("燕子抄水", "Yàn zǐ chāo shuǐ", "Swallow Touching the Water"),
+            (
+                "左右攔掃",
+                "Zuǒ yòu lán sǎo",
+                "Side Sweeping, Left and Right",
+            ),
+            ("小魁星", "Xiǎo kuí xīng", "The Little Dipper"),
+            (
+                "燕子歸巢",
+                "Yàn zǐ guī cháo",
+                "Swallow Returning to the Nest",
+            ),
+            ("靈猫捕鼠", "Líng māo bǔ shǔ", "Cat Chasing the Mouse"),
+            ("風凰抬头", "Fèng huáng tái tóu", "Phoenix Raising Her Head"),
+            (
+                "黄蜂入洞",
+                "Huáng fēng rù dòng",
+                "Wasp Flying into the Cave",
+            ),
+            (
+                "鳳凰右展翅",
+                "Fèng huáng yòu zhǎn chì",
+                "Phoenix Spreading Her Right Wing",
+            ),
+            ("小魁星", "Xiǎo kuí xīng", "The Little Dipper"),
+            (
+                "鳳凰左展翅",
+                "Fèng huáng zuǒ zhǎn chì",
+                "Phoenix Spreading Her Left Wing",
+            ),
+            ("等魚式", "Děng yú shì", "Fishing Posture"),
+            (
+                "左右龍行",
+                "Zuǒ yòu lóng xíng",
+                "Dragon Walking, Left and Right",
+            ),
+            (
+                "宿鳥投林",
+                "Sù niǎo tóu lín",
+                "Birds Returning to the Trees",
+            ),
+            ("烏龍擺尾", "Wū lóng bǎi wěi", "Dark Dragon Waving His Tail"),
+            (
+                "青龍出海",
+                "Qīng lóng chū hǎi",
+                "Dragon Coming Out of the Sea",
+            ),
+            ("風捲荷葉", "Fēng juǎn hé yè", "Wind Sweeping Lotus Leaves"),
+            (
+                "左右獅子搖頭",
+                "Zuǒ yòu shīzǐ yáo tóu",
+                "Lion Shaking His Head, Left and Right",
+            ),
+            ("虎抱頭", "Hǔ bào tóu", "Holding the Tiger's Head"),
+            (
+                "野馬跳潤",
+                "Yě mǎ tiào jiàn",
+                "Wild Horse Leaping Over the Creek",
+            ),
+            ("勒馬式", "Lè mă shì", "Reining the Horse"),
+            ("指南針", "Zhǐ nán zhēn", "The Compass"),
+            (
+                "左右迎風揮塵",
+                "Zuǒ yòu yíng fēng dǎn chén",
+                "Dusting Against the Wind, Left and Right",
+            ),
+            ("顺水推舟", "Shùn shuǐ tuī zhōu", "Current Pushing the Boat"),
+            ("流星趕月", "Liú xīng gǎn yuè", "Meteor Chasing the Moon"),
+            (
+                "天馬行空",
+                "Tiān mǎ xíng kōng",
+                "Fairy Horse Galloping in the Sky",
+            ),
+            ("挑簾式", "Tiāo lián shì", "Lifting the Curtain"),
+            (
+                "左右車輪",
+                "Zuǒ yòu chē lún",
+                "Wagon Wheeling, Left and Right",
+            ),
+            ("燕子御泥", "Yàn zǐ xián ní", "Swallow Carrying Dirt"),
+            ("大鹏展翅", "Dà péng zhǎn chì", "Eagel Spreading His Wings"),
+            (
+                "海底撈月",
+                "Hǎi dǐ lāo yuè",
+                "Scooping the Moon from the Sea",
+            ),
+            ("懷中抱月", "Huái zhōng bào yuè", "Embracing the Moon"),
+            (
+                "哪吒探海",
+                "Nǎ Zhā tàn hǎi",
+                "Na Zha Venturing into the Sea",
+            ),
+            (
+                "犀牛望月",
+                "Xī niú wàng yuè",
+                "Rhinoceros Gazing at the Moon",
+            ),
+            ("射雁式", "Shè yàn shì", "Shooting the Wild Goose"),
+            (
+                "青龍探爪",
+                "Qīng lóng tàn zhǎo",
+                "Dragon Stretching Her Wings",
+            ),
+            (
+                "風凰雙展翅",
+                "Fèng huáng shuāng zhǎn chì",
+                "Phoenix Spreading Her Wings",
+            ),
+            (
+                "左右挎攔",
+                "Zuǒ yòu kuǎ lán",
+                "Crossing the Fence, Left and Right",
+            ),
+            ("射雁式", "Shè yàn shì", "Shooting the Wild Goose"),
+            ("白猿獻菜", "Bái yuán xiàn guǒ", "White Ape Offering Fruits"),
+            (
+                "左右落花",
+                "Zuǒ yòu luò huā",
+                "Falling Flowers, Left and Right",
+            ),
+            ("玉女穿梭", "Yùnǚ chuān suō", "Fair Lady Works the Shuttle"),
+            (
+                "白虎攪尾",
+                "Bái hǔ jiǎo wěi",
+                "White Tiger Raising His Tail",
+            ),
+            (
+                "魚躍龍門",
+                "Yú yǎo lóng mén",
+                "Carp Jumping Over the Dragon Gate",
+            ),
+            (
+                "左右烏龍絞柱",
+                "Zuǒ yòu wū lóng jiǎo zhù",
+                "Dark Dragon Wreathing Around the Pole",
+            ),
+            ("仙人指路", "Xiān rén zhǐ lù", "Fairy Pointing the Way"),
+            (
+                "朝天一指香",
+                "Cháo tiān yī zhǐ xiāng",
+                "Single Incense Pointing to the Sky",
+            ),
+            (
+                "風掃梅花",
+                "Fēng sǎo méi huā",
+                "Wind Sweeping Plum Blossoms",
+            ),
+            ("牙筋式", "Yá hù shì", "Holding the Tablet"),
+            ("合太极", "Hé Tàijí", "Tai Chi Ending Movement"),
+        ];
+        html! {
+            div #sword-set-video.video {}
+            script async src="/static/embed-video.js" {}
+            div .names-of-set {
+                div .full { h3 { "Movements of the Sword Set" } }
+                (name_table(names))
             }
         }
     } else if url == "./posts/chinese-glossary.md" {
@@ -603,6 +784,7 @@ pub fn get_extra_markup(url: String) -> Markup {
                     ("上步", "Shàng bù", "step again"),
                     ("??", "gang bù", "follow step"),
                     ("半步", "Bàn bù", "half step"),
+                    ("退步", "Tuì bù", "step back"),
                     ("下课", "Xià kè", "close class"),
                 ],
             ),

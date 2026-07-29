@@ -36,6 +36,7 @@ function video(id) {
 
 function renderCookieContent() {
   renderVideo("slow-set-video", "zD7FVVj59O8")
+  renderVideo("sword-set-video", "ptfS70jQAhc")
 }
 
 renderCookieContent()
