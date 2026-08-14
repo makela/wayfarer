@@ -20,7 +20,7 @@ use tracing_subscriber::EnvFilter;
 mod data;
 use data::{get_extra_markup, get_posts, PostLink};
 
-fn layout(title: &str, content: Markup) -> Markup {
+fn layout(title: &str, content: &Markup) -> Markup {
     html! {
         (DOCTYPE)
         head {
@@ -50,7 +50,7 @@ fn layout(title: &str, content: Markup) -> Markup {
 async fn index() -> Markup {
     layout(
         "Posts",
-        html! {
+        &html! {
             h2 { "Posts" }
             img .index src="/static/img/2023-to-the-states.jpg" alt="Tai Chi Wayfarer";
             p { "In this blog, I'd like to share my love of Tai Chi. I’ll be sharing both new and old stories, as well as some reflections. I hope you enjoy!" }
@@ -77,12 +77,13 @@ async fn index() -> Markup {
     )
 }
 
+#[expect(clippy::unwrap_used)]
 async fn feed() -> impl IntoResponse {
     let items: Vec<Item> = get_posts().iter().map(Item::from).collect();
-    let pub_date = if !items.is_empty() {
-        items[0].pub_date.clone()
-    } else {
+    let pub_date = if items.is_empty() {
         None
+    } else {
+        items[0].pub_date.clone()
     };
     let channel = ChannelBuilder::default()
         .title("Tai Chi Wayfarer")
@@ -94,7 +95,7 @@ async fn feed() -> impl IntoResponse {
     let mut headers = HeaderMap::new();
     headers.insert(
         header::CONTENT_TYPE,
-        "text/xml; charset=utf.8".parse().unwrap(),
+        "text/xml; charset=utf-8".parse().unwrap(),
     );
     (headers, channel.to_string()).into_response()
 }
@@ -102,7 +103,7 @@ async fn feed() -> impl IntoResponse {
 async fn about() -> Markup {
     layout(
         "About",
-        html! {
+        &html! {
             article {
                 h2 { "About" }
                 blockquote { "Be still like a mountain and flow like a river." }
@@ -137,9 +138,9 @@ async fn post(Path(url): Path<String>) -> impl IntoResponse {
         Some(index) => match posts.get(index) {
             Some(post) => {
                 let file = format!("./posts/{}.md", post.url);
-                let input = fs::read_to_string(std::path::Path::new(&file)).unwrap();
+                let input = fs::read_to_string(std::path::Path::new(&file)).unwrap_or_default();
                 let content = markdown::to_html(&input);
-                let extra_markup = get_extra_markup(file);
+                let extra_markup = get_extra_markup(&file);
                 let next = if index > 0 {
                     posts.get(index - 1).map(|post| PostLink {
                         title: post.title.clone(),
@@ -154,7 +155,7 @@ async fn post(Path(url): Path<String>) -> impl IntoResponse {
                 });
                 layout(
                     &post.title,
-                    html! {
+                    &html! {
                         h2 { (post.title) }
                         p .date {
                             "Published "
@@ -170,9 +171,9 @@ async fn post(Path(url): Path<String>) -> impl IntoResponse {
                 )
                 .into_response()
             }
-            None => (StatusCode::NOT_FOUND, "".to_string()).into_response(),
+            None => (StatusCode::NOT_FOUND, String::new()).into_response(),
         },
-        None => (StatusCode::NOT_FOUND, "".to_string()).into_response(),
+        None => (StatusCode::NOT_FOUND, String::new()).into_response(),
     }
 }
 
@@ -182,7 +183,7 @@ async fn main() {
         .with_env_filter(
             EnvFilter::try_from_default_env()
                 .or_else(|_| EnvFilter::try_new("www=debug,tower_http=info"))
-                .unwrap(),
+                .unwrap_or_default(),
         )
         .init();
 
@@ -215,10 +216,13 @@ async fn main() {
         app
     };
     let port = std::env::var("PORT").unwrap_or("3000".to_string());
-    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port))
-        .await
-        .unwrap();
-    axum::serve(listener, app.into_make_service())
-        .await
-        .unwrap();
+    if let Ok(listener) = tokio::net::TcpListener::bind(format!("0.0.0.0:{port}")).await
+        && axum::serve(listener, app.into_make_service())
+            .await
+            .is_ok()
+    {
+        tracing::info!("Server listening on {port}");
+    } else {
+        tracing::error!("Server failed to startup");
+    }
 }

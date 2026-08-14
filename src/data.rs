@@ -35,6 +35,7 @@ pub struct PostLink {
     pub url: String,
 }
 
+#[expect(clippy::too_many_lines)]
 pub fn get_posts() -> Vec<Post> {
     // Note: Last post is first, so prepend new stories!
     vec![
@@ -43,271 +44,271 @@ pub fn get_posts() -> Vec<Post> {
             title: "The Sword Set".into(),
             url: "the-sword-set".into(),
             published_at: NaiveDate::from_ymd_opt(2026, 8, 8)
-                .unwrap()
+                .unwrap_or_default()
                 .and_hms_opt(8, 8, 0)
-                .unwrap(),
+                .unwrap_or_default(),
         },
         Post {
             title: "Chinese Glossary".into(),
             url: "chinese-glossary".into(),
             published_at: NaiveDate::from_ymd_opt(2026, 8, 8)
-                .unwrap()
+                .unwrap_or_default()
                 .and_hms_opt(8, 8, 0)
-                .unwrap(),
+                .unwrap_or_default(),
         },
         Post {
             title: "The Slow Set".into(),
             url: "the-slow-set".into(),
             published_at: NaiveDate::from_ymd_opt(2026, 8, 8)
-                .unwrap()
+                .unwrap_or_default()
                 .and_hms_opt(8, 8, 0)
-                .unwrap(),
+                .unwrap_or_default(),
         },
         */
         Post {
             title: "Come to the Center".into(),
             url: "june-2026".into(),
             published_at: NaiveDate::from_ymd_opt(2026, 7, 5)
-                .unwrap()
+                .unwrap_or_default()
                 .and_hms_opt(22, 26, 0)
-                .unwrap(),
+                .unwrap_or_default(),
         },
         Post {
             title: "Be Aware of Your Body".into(),
             url: "etna-2026".into(),
             published_at: NaiveDate::from_ymd_opt(2026, 5, 29)
-                .unwrap()
+                .unwrap_or_default()
                 .and_hms_opt(13, 17, 0)
-                .unwrap(),
+                .unwrap_or_default(),
         },
         Post {
             title: "Remember by Yourself".into(),
             url: "april-2026".into(),
             published_at: NaiveDate::from_ymd_opt(2026, 4, 30)
-                .unwrap()
+                .unwrap_or_default()
                 .and_hms_opt(16, 34, 0)
-                .unwrap(),
+                .unwrap_or_default(),
         },
         Post {
             title: "Take Your Time".into(),
             url: "march-2026".into(),
             published_at: NaiveDate::from_ymd_opt(2026, 3, 31)
-                .unwrap()
+                .unwrap_or_default()
                 .and_hms_opt(16, 21, 0)
-                .unwrap(),
+                .unwrap_or_default(),
         },
         Post {
             title: "Be a Shadow".into(),
             url: "february-2026".into(),
             published_at: NaiveDate::from_ymd_opt(2026, 2, 28)
-                .unwrap()
+                .unwrap_or_default()
                 .and_hms_opt(12, 32, 0)
-                .unwrap(),
+                .unwrap_or_default(),
         },
         Post {
             title: "Do Your Own Way".into(),
             url: "january-2026".into(),
             published_at: NaiveDate::from_ymd_opt(2026, 2, 11)
-                .unwrap()
+                .unwrap_or_default()
                 .and_hms_opt(14, 27, 0)
-                .unwrap(),
+                .unwrap_or_default(),
         },
         Post {
             title: "Use Your Mind".into(),
             url: "december-2025".into(),
             published_at: NaiveDate::from_ymd_opt(2025, 12, 14)
-                .unwrap()
+                .unwrap_or_default()
                 .and_hms_opt(11, 44, 0)
-                .unwrap(),
+                .unwrap_or_default(),
         },
         Post {
             title: "Practice On Your Own".into(),
             url: "november-2025".into(),
             published_at: NaiveDate::from_ymd_opt(2025, 12, 3)
-                .unwrap()
+                .unwrap_or_default()
                 .and_hms_opt(18, 28, 0)
-                .unwrap(),
+                .unwrap_or_default(),
         },
         Post {
             title: "Don't Stop".into(),
             url: "october-2025".into(),
             published_at: NaiveDate::from_ymd_opt(2025, 10, 20)
-                .unwrap()
+                .unwrap_or_default()
                 .and_hms_opt(17, 55, 0)
-                .unwrap(),
+                .unwrap_or_default(),
         },
         Post {
             title: "Do Bigger".into(),
             url: "sandy-2025".into(),
             published_at: NaiveDate::from_ymd_opt(2025, 9, 23)
-                .unwrap()
+                .unwrap_or_default()
                 .and_hms_opt(14, 5, 0)
-                .unwrap(),
+                .unwrap_or_default(),
         },
         Post {
             title: "Always Practice".into(),
             url: "la-honda-2025".into(),
             published_at: NaiveDate::from_ymd_opt(2025, 9, 13)
-                .unwrap()
+                .unwrap_or_default()
                 .and_hms_opt(18, 8, 0)
-                .unwrap(),
+                .unwrap_or_default(),
         },
         Post {
             title: "Together".into(),
             url: "mera-2025".into(),
             published_at: NaiveDate::from_ymd_opt(2025, 7, 2)
-                .unwrap()
+                .unwrap_or_default()
                 .and_hms_opt(10, 44, 0)
-                .unwrap(),
+                .unwrap_or_default(),
         },
         Post {
             title: "Don't Do Anything Extra".into(),
             url: "lapland-2025".into(),
             published_at: NaiveDate::from_ymd_opt(2025, 6, 25)
-                .unwrap()
+                .unwrap_or_default()
                 .and_hms_opt(20, 25, 0)
-                .unwrap(),
+                .unwrap_or_default(),
         },
         Post {
             title: "Raise Your Spirit".into(),
             url: "may-2025".into(),
             published_at: NaiveDate::from_ymd_opt(2025, 6, 20)
-                .unwrap()
+                .unwrap_or_default()
                 .and_hms_opt(14, 22, 0)
-                .unwrap(),
+                .unwrap_or_default(),
         },
         Post {
             title: "Don't Teach Too Much".into(),
             url: "april-2025".into(),
             published_at: NaiveDate::from_ymd_opt(2025, 4, 17)
-                .unwrap()
+                .unwrap_or_default()
                 .and_hms_opt(14, 31, 0)
-                .unwrap(),
+                .unwrap_or_default(),
         },
         Post {
             title: "Pay Attention".into(),
             url: "march-2025".into(),
             published_at: NaiveDate::from_ymd_opt(2025, 4, 8)
-                .unwrap()
+                .unwrap_or_default()
                 .and_hms_opt(9, 45, 0)
-                .unwrap(),
+                .unwrap_or_default(),
         },
         Post {
             title: "Match Your Energy".into(),
             url: "february-2025".into(),
             published_at: NaiveDate::from_ymd_opt(2025, 2, 13)
-                .unwrap()
+                .unwrap_or_default()
                 .and_hms_opt(9, 45, 0)
-                .unwrap(),
+                .unwrap_or_default(),
         },
         Post {
             title: "Know Your Space".into(),
             url: "january-2025".into(),
             published_at: NaiveDate::from_ymd_opt(2025, 1, 31)
-                .unwrap()
+                .unwrap_or_default()
                 .and_hms_opt(17, 32, 0)
-                .unwrap(),
+                .unwrap_or_default(),
         },
         Post {
             title: "It's all about the Body".into(),
             url: "december-2024".into(),
             published_at: NaiveDate::from_ymd_opt(2024, 12, 2)
-                .unwrap()
+                .unwrap_or_default()
                 .and_hms_opt(17, 46, 0)
-                .unwrap(),
+                .unwrap_or_default(),
         },
         Post {
             title: "Play Tai Chi".into(),
             url: "november-2024".into(),
             published_at: NaiveDate::from_ymd_opt(2024, 11, 30)
-                .unwrap()
+                .unwrap_or_default()
                 .and_hms_opt(22, 2, 0)
-                .unwrap(),
+                .unwrap_or_default(),
         },
         Post {
             title: "Copenhagen, October 2024".into(),
             url: "october-2024".into(),
             published_at: NaiveDate::from_ymd_opt(2024, 10, 23)
-                .unwrap()
+                .unwrap_or_default()
                 .and_hms_opt(17, 5, 0)
-                .unwrap(),
+                .unwrap_or_default(),
         },
         Post {
             title: "Sandy Island 2024".into(),
             url: "sandy-2024".into(),
             published_at: NaiveDate::from_ymd_opt(2024, 9, 18)
-                .unwrap()
+                .unwrap_or_default()
                 .and_hms_opt(15, 15, 0)
-                .unwrap(),
+                .unwrap_or_default(),
         },
         Post {
             title: "Lapland and Mera 2024".into(),
             url: "june-2024".into(),
             published_at: NaiveDate::from_ymd_opt(2024, 6, 20)
-                .unwrap()
+                .unwrap_or_default()
                 .and_hms_opt(12, 21, 0)
-                .unwrap(),
+                .unwrap_or_default(),
         },
         Post {
             title: "Etna Camp 2024".into(),
             url: "etna-2024".into(),
             published_at: NaiveDate::from_ymd_opt(2024, 5, 22)
-                .unwrap()
+                .unwrap_or_default()
                 .and_hms_opt(12, 2, 0)
-                .unwrap(),
+                .unwrap_or_default(),
         },
         Post {
             title: "Mèze and Mariehamn, March 2024".into(),
             url: "march-2024".into(),
             published_at: NaiveDate::from_ymd_opt(2024, 4, 4)
-                .unwrap()
+                .unwrap_or_default()
                 .and_hms_opt(18, 22, 0)
-                .unwrap(),
+                .unwrap_or_default(),
         },
         Post {
             title: "Helsinki and Palermo, February 2024".into(),
             url: "february-2024".into(),
             published_at: NaiveDate::from_ymd_opt(2024, 2, 29)
-                .unwrap()
+                .unwrap_or_default()
                 .and_hms_opt(21, 5, 0)
-                .unwrap(),
+                .unwrap_or_default(),
         },
         Post {
             title: "Modesto and Vermont 2023".into(),
             url: "modesto-and-vermont-2023".into(),
             published_at: NaiveDate::from_ymd_opt(2024, 1, 6)
-                .unwrap()
+                .unwrap_or_default()
                 .and_hms_opt(14, 45, 0)
-                .unwrap(),
+                .unwrap_or_default(),
         },
         Post {
             title: "Sandy Island 2023".into(),
             url: "sandy-2023".into(),
             published_at: NaiveDate::from_ymd_opt(2023, 12, 12)
-                .unwrap()
+                .unwrap_or_default()
                 .and_hms_opt(15, 0, 0)
-                .unwrap(),
+                .unwrap_or_default(),
         },
         Post {
             title: "European Tour 2023".into(),
             url: "november-2023".into(),
             published_at: NaiveDate::from_ymd_opt(2023, 11, 10)
-                .unwrap()
+                .unwrap_or_default()
                 .and_hms_opt(16, 5, 0)
-                .unwrap(),
+                .unwrap_or_default(),
         },
         Post {
             title: "Bosco Falconeria, Harvest of Catarratto".into(),
             url: "bosco-harvest-2023".into(),
             published_at: NaiveDate::from_ymd_opt(2023, 10, 27)
-                .unwrap()
+                .unwrap_or_default()
                 .and_hms_opt(17, 15, 0)
-                .unwrap(),
+                .unwrap_or_default(),
         },
     ]
 }
 
-fn name_table(names: Vec<(&str, &str, &str)>) -> Markup {
+fn name_table(names: &[(&str, &str, &str)]) -> Markup {
     html! {
         @for (i, (characters, pinyin, name)) in names.iter().enumerate() {
             div .index { (format!("{}.", i+1)) }
@@ -318,7 +319,8 @@ fn name_table(names: Vec<(&str, &str, &str)>) -> Markup {
     }
 }
 
-pub fn get_extra_markup(url: String) -> Markup {
+#[expect(clippy::too_many_lines)]
+pub fn get_extra_markup(url: &str) -> Markup {
     if url == "./posts/the-slow-set.md" {
         let names = vec![
             ("预备式", "Yùbèi shì", "Preparation"),
@@ -533,7 +535,7 @@ pub fn get_extra_markup(url: String) -> Markup {
             div .names-of-set {
                 // 太極拳架子名目
                 div .full { h3 { "Movements of the Slow Set" } }
-                (name_table(names))
+                (name_table(&names))
             }
         }
     } else if url == "./posts/the-sword-set.md" {
@@ -700,7 +702,7 @@ pub fn get_extra_markup(url: String) -> Markup {
             script async src="/static/embed-video.js" {}
             div .names-of-set {
                 div .full { h3 { "Movements of the Sword Set" } }
-                (name_table(names))
+                (name_table(&names))
             }
         }
     } else if url == "./posts/chinese-glossary.md" {
@@ -712,9 +714,10 @@ pub fn get_extra_markup(url: String) -> Markup {
                     ("慢拳", "Màn quán", "slow set"),
                     ("快拳", "Kuài quán", "fast set"),
                     ("董家", "Dǒng jiā", "Tung family set"),
-                    ("开合 | 開合", "Kāi hé", "opening and closing"),
-                    ("太极剑", "Tàijí jiàn", "Tai Chi sword"),
                     ("太极刀", "Tàijí dāo", "Tai Chi knife"),
+                    ("", "", "Tai Chi sticks"),
+                    ("太极剑", "Tàijí jiàn", "Tai Chi sword"),
+                    ("开合 | 開合", "Kāi hé", "opening and closing"),
                     ("对练", "Duì liàn", ""),
                     ("太极功", "Tàijí gōng", ""),
                     ("推手", "Tuīshǒu", "push hands"),
@@ -774,18 +777,18 @@ pub fn get_extra_markup(url: String) -> Markup {
                     ("停", "tíng", "to stop"),
                     ("练习", "liànxí", "to practice"),
                     ("面对", "miàn duì", "to face"),
-                    ("弓腿", "Gōng tuǐ", "working leg, bow stand"), // bend your legs?
-                    ("坐腿", "Zuò tuǐ", "sitting on legs"),
-                    ("转腰", "Zhuǎn yāo", "turn your waist"),
-                    ("转身", "Zhuǎn shēn", "turn your body"),
+                    ("弓腿", "gōng tuǐ", "working leg, bow stand"), // bend your legs?
+                    ("坐腿", "zuò tuǐ", "sitting on legs"),
+                    ("转腰", "zhuǎn yāo", "turn your waist"),
+                    ("转身", "zhuǎn shēn", "turn your body"),
                     ("松肩", "sōng jiān", "relax your shoulders"),
                     ("??", "sōng kua", "relax your hips/pelvis?"),
                     ("进步", "Jìnbù", "step forward"),
-                    ("上步", "Shàng bù", "step again"),
-                    ("??", "gang bù", "follow step"),
-                    ("半步", "Bàn bù", "half step"),
-                    ("退步", "Tuì bù", "step back"),
-                    ("下课", "Xià kè", "close class"),
+                    ("上步", "shàng bù", "step again"),
+                    ("跟步", "gēn bù", "follow step"),
+                    ("半步", "bàn bù", "half step"),
+                    ("退步", "tuì bù", "step back"),
+                    ("下课", "xià kè", "close class"),
                 ],
             ),
             (
@@ -799,13 +802,14 @@ pub fn get_extra_markup(url: String) -> Markup {
                     ("鸡", "jī", "rooster"),
                     ("蛇", "shé", "snake "),
                     ("鱼", "yú", "fish"),
-                    ("", "", "dragon"),
+                    ("龍", "lóng", "dragon"),
                     ("", "", "swallow"),
                     ("", "", "lion"),
                     ("", "", "wasp"),
                     ("", "", "ape"),
                     ("", "", "cat"),
-                    ("", "", "mouse§"),
+                    ("", "", "mouse"),
+                    ("", "", "insect"),
                 ],
             ),
             (
@@ -835,6 +839,7 @@ pub fn get_extra_markup(url: String) -> Markup {
                 vec![
                     ("很好", "Hěn hǎo", "very good"),
                     ("慢慢吃", "Màn man chī", "Enjoy your meal"),
+                    ("", "zailaiiizi", "One more time"),
                 ],
             ),
         ];
