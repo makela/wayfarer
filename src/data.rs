@@ -56,15 +56,15 @@ pub fn get_posts() -> Vec<Post> {
                 .and_hms_opt(8, 8, 0)
                 .unwrap_or_default(),
         },
+        */
         Post {
             title: "The Slow Set".into(),
             url: "the-slow-set".into(),
-            published_at: NaiveDate::from_ymd_opt(2026, 8, 8)
+            published_at: NaiveDate::from_ymd_opt(2026, 8, 18)
                 .unwrap_or_default()
-                .and_hms_opt(8, 8, 0)
+                .and_hms_opt(19, 52, 0)
                 .unwrap_or_default(),
         },
-        */
         Post {
             title: "Come to the Center".into(),
             url: "june-2026".into(),
@@ -408,11 +408,7 @@ pub fn get_extra_markup(url: &str) -> Markup {
                 "Yòu lǒu xī níu bù",
                 "Brush Right Knee and Push",
             ),
-            (
-                "进步搬揽捶",
-                "Jìn bù bān lǎn chuí",
-                "Step Forward and Punch Down",
-            ),
+            ("進步栽捶", "Jìn bù zāi chuí", "Step Forward and Punch Down"),
             ("抷身锤", "Pī shēn chuí", "Fist Near the Waist"),
             (
                 "上步搬揽捶",

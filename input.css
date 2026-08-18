@@ -120,16 +120,16 @@ table th, table td {
   @apply p-1;
 }
 .names-of-set .index {
-  @apply col-span-1 text-right pr-4;
+  @apply row-span-3 md:row-span-1 col-span-1 text-right pr-4;
 }
 .names-of-set .characters {
-  @apply col-span-2;
+  @apply col-span-11 md:col-span-2 md:mb-2;
 }
 .names-of-set .pinyin {
-  @apply col-span-4;
+  @apply col-span-11 md:col-span-4 md:mb-2;
 }
 .names-of-set .english {
-  @apply col-span-5;
+  @apply col-span-11 md:col-span-5 mb-2;
 }
 .names-of-set .full {
   @apply col-span-12;
