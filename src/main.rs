@@ -53,13 +53,13 @@ async fn index() -> Markup {
         &html! {
             h2 { "Posts" }
             img .index src="/static/img/2023-to-the-states.jpg" alt="Tai Chi Wayfarer";
-            p { "In this blog, I'd like to share my love of Tai Chi. I’ll be sharing both new and old stories, as well as some reflections. I hope you enjoy!" }
+            p { "In this blog, I share my love of Tai Chi. I hope you enjoy!" }
             ul .post-list {
                 @for post in get_posts() {
                     li {
                         div  {
                             div {
-                                a href=(format!("/post/{}", post.url)) { (format!("{}", post.title)) }
+                                a href=(format!("/post/{}", post.url)) { (post.title) }
                             }
                             div .date {
                                 (format!("{}", post.published_at.format("%B %e, %Y")))
@@ -108,7 +108,7 @@ async fn about() -> Markup {
                 h2 { "About" }
                 blockquote { "Be still like a mountain and flow like a river." }
                 blockquote { " - Lao Tzu" }
-                p { "Hi, I've been practicing Tai Chi Chuan for over two decades. Having this art in my life makes me feel lucky, happy, and grateful." }
+                p { "Hi, I've been practicing Tai Chi Chuan for over two decades. Having this art in my life makes me feel lucky, happy and grateful." }
                 p {
                     "I practice Yang-style Tai Chi in the "
                     a href="http://tungtaichi.com" { "Tung school" }
@@ -192,7 +192,7 @@ async fn main() {
         // This is for legacy perseus build
         .route(
             "/.perseus/{*path}",
-            get(async |Path(path): Path<String>| Redirect::permanent(&format!("/{}", &path))),
+            get(async |Path(path): Path<String>| Redirect::permanent(&format!("/{path}"))),
         )
         .route("/", get(index))
         .route("/feed.xml", get(feed))
@@ -202,7 +202,7 @@ async fn main() {
         .route("/about/", get(async || Redirect::permanent("/about")))
         .route(
             "/post/{url}/",
-            get(async |Path(url): Path<String>| Redirect::permanent(&format!("/post/{}", &url))),
+            get(async |Path(url): Path<String>| Redirect::permanent(&format!("/post/{url}"))),
         )
         .route_service("/favicon.ico", ServeFile::new("dist/favicon.ico"))
         .layer(
