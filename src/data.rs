@@ -36,6 +36,7 @@ pub struct PostLink {
 }
 
 #[expect(clippy::too_many_lines)]
+#[must_use]
 pub fn get_posts() -> Vec<Post> {
     // Note: Last post is first, so prepend new stories!
     vec![
@@ -320,6 +321,7 @@ fn name_table(names: &[(&str, &str, &str, &str)]) -> Markup {
 }
 
 #[expect(clippy::too_many_lines)]
+#[must_use]
 pub fn get_slow_set_names() -> Vec<(&'static str, &'static str, &'static str, &'static str)> {
     vec![
         ("00:00", "预备式", "Yùbèi shì", "Preparation"),
@@ -635,6 +637,7 @@ pub fn get_slow_set_names() -> Vec<(&'static str, &'static str, &'static str, &'
 }
 
 #[expect(clippy::too_many_lines)]
+#[must_use]
 pub fn get_sword_names() -> Vec<(&'static str, &'static str, &'static str, &'static str)> {
     vec![
         ("", "太极起式", "Tàijí qǐ shì", "Tai Chi Starting Movement"),
@@ -868,6 +871,7 @@ pub fn get_sword_names() -> Vec<(&'static str, &'static str, &'static str, &'sta
 }
 
 #[expect(clippy::too_many_lines)]
+#[must_use]
 pub fn get_extra_markup(url: &str) -> Markup {
     if url == "./posts/the-slow-set.md" {
         let names = get_slow_set_names();
