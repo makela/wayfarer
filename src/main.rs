@@ -36,6 +36,13 @@ fn layout(title: &str, content: &Markup) -> Markup {
         }
         body {
             h1 { a href="/" { "Tai Chi Wayfarer" } }
+            div .support-me {
+                span {
+                    (PreEscaped("
+<script type='text/javascript' src='https://storage.ko-fi.com/cdn/widget/Widget_2.js'></script><script type='text/javascript'>kofiwidget2.init('', '#1E293B', 'D1D61VF42Q');kofiwidget2.draw();</script>
+                    "))
+                }
+            }
             nav {
                 ul {
                     li { a href="/about" { "About" } }
@@ -106,9 +113,10 @@ async fn about() -> Markup {
         &html! {
             article {
                 h2 { "About" }
+                img .index src="/static/img/profile.jpg" alt="Tai Chi Wayfarer";
                 blockquote { "Be still like a mountain and flow like a river." }
                 blockquote { " - Lao Tzu" }
-                p { "Hi, I've been practicing Tai Chi Chuan for over two decades. Having this art in my life makes me feel lucky, happy and grateful." }
+                p { "Hi, my name is Timo. I've been practicing Tai Chi Chuan since 2002. Having this art in my life makes me feel so lucky, happy and grateful." }
                 p {
                     "I practice Yang-style Tai Chi in the "
                     a href="http://tungtaichi.com" { "Tung school" }

@@ -151,3 +151,10 @@ table th, table td {
 .pinyin {
   @apply italic;
 }
+
+div.support-me {
+  @apply float-end mr-4;
+}
+.btn-container, a.kofi-button {
+  min-width: 27px !important;
+}
