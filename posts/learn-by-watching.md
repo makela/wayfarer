@@ -8,7 +8,7 @@ The first thing the grandmaster taught was how to sit down and stand up. Slowly 
 
 Hold your posture straight, whether sitting or standing. Don't lean. Usually you can see the grandmaster holding his posture like this in group pictures - sitting or standing. He even mentioned how students have started copying and imitating his way of sitting, his posture - even ladies, although traditionally they used to sit very differently in many cultures.
 
-Speaking of imitating, one things he said was: *learn by watching*. That's actually the very first thing a new student should learn. You cannot practice unless you've seen how to practice. Trying to learn just from a verbal explanation would be impossible. Though, I wouldn't be writing this blog if I believed it wouldn't be beneficial as an addition, a reminder or extra food for thought.
+Speaking of imitating, he said: *learn by watching*. That's actually the very first thing a new student should learn. You cannot practice unless you've seen how to practice. Trying to learn just from a verbal explanation would be impossible. Though, I wouldn't be writing this blog if I believed it wouldn't be beneficial as an addition, a reminder or extra food for thought.
 
 The most famous story of learning by watching must be about the legendary first generation Yang family master Lu Chan, who learned Tai Chi by watching Chen family practicing. All the great teachers have learned by watching. Like I've mention before, masters used to show movements only once or a few times, which emphasizes how important watching is.
 
