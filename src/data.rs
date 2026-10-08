@@ -59,6 +59,14 @@ pub fn get_posts() -> Vec<Post> {
         },
         */
         Post {
+            title: "Learn by Watching".into(),
+            url: "learn-by-watching".into(),
+            published_at: NaiveDate::from_ymd_opt(2026, 10, 8)
+                .unwrap_or_default()
+                .and_hms_opt(11, 41, 0)
+                .unwrap_or_default(),
+        },
+        Post {
             title: "The Slow Set".into(),
             url: "the-slow-set".into(),
             published_at: NaiveDate::from_ymd_opt(2026, 8, 18)
