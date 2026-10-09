@@ -46,6 +46,7 @@ fn layout(title: &str, content: &Markup) -> Markup {
             nav {
                 ul {
                     li { a href="/about" { "About" } }
+                    li { a href="/subscribe" { "Subscribe" } }
                     li { a href="/" { "Posts" } }
                 }
             }
@@ -128,6 +129,22 @@ async fn about() -> Markup {
     )
 }
 
+async fn subscribe() -> Markup {
+    layout(
+        "Subscribe",
+        &html! {
+            article {
+                h2 { "Subscribe" }
+                p {
+                    "If you'd like to hear about upcoming camps and workshops or when I publish new posts, "
+                    a href="mailto:taichiwayfarer@gmail.com?subject=Subscribe&body=Please tell something about yourself, who is your teacher or what content you are interested of?" { "send me an email" }
+                    ", and I will share the flyers and my updates with you."
+                }
+            }
+        },
+    )
+}
+
 fn reference_link(link: Option<PostLink>, text: &str) -> Markup {
     match link {
         None => html! {},
@@ -205,9 +222,11 @@ async fn main() {
         .route("/", get(index))
         .route("/feed.xml", get(feed))
         .route("/about", get(about))
+        .route("/subscribe", get(subscribe))
         .route("/post/{url}", get(post))
         // Support also directory style urls
         .route("/about/", get(async || Redirect::permanent("/about")))
+        .route("/subscribe/", get(async || Redirect::permanent("/subscribe")))
         .route(
             "/post/{url}/",
             get(async |Path(url): Path<String>| Redirect::permanent(&format!("/post/{url}"))),
