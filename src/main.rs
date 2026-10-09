@@ -179,9 +179,9 @@ async fn post(Path(url): Path<String>) -> impl IntoResponse {
                 )
                 .into_response()
             }
-            None => (StatusCode::NOT_FOUND, String::new()).into_response(),
+            None => handler_404().await.into_response(),
         },
-        None => (StatusCode::NOT_FOUND, String::new()).into_response(),
+        None => handler_404().await.into_response(),
     }
 }
 
@@ -213,6 +213,7 @@ async fn main() {
             get(async |Path(url): Path<String>| Redirect::permanent(&format!("/post/{url}"))),
         )
         .route_service("/favicon.ico", ServeFile::new("dist/favicon.ico"))
+        .fallback(handler_404)
         .layer(
             TraceLayer::new_for_http()
                 .make_span_with(trace::DefaultMakeSpan::new().level(Level::INFO))
@@ -233,4 +234,18 @@ async fn main() {
     } else {
         tracing::error!("Server failed to startup");
     }
+}
+
+async fn handler_404() -> impl IntoResponse {
+    (StatusCode::NOT_FOUND, layout(
+        "Not Found",
+        &html! {
+            h2 { "Not Found" }
+            p {
+                "The page you are looking for does not exist. Try "
+                a href="/" { "posts" }
+                " instead."
+            }
+        },
+    ))
 }
