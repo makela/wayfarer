@@ -114,8 +114,7 @@ async fn about() -> Markup {
         &html! {
             article {
                 h2 { "About" }
-                img .index src="/static/img/profile.jpg" alt="Tai Chi Wayfarer";
-                blockquote { "Be still like a mountain and flow like a river." }
+                blockquote { "Be still like a mountain and flow like a great river." }
                 blockquote { " - Lao Tzu" }
                 p { "Hi, my name is Timo. I've been practicing Tai Chi Chuan since 2002. Having this art in my life makes me feel so lucky, happy and grateful." }
                 p {
