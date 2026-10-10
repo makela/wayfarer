@@ -142,7 +142,7 @@ async fn subscribe() -> Markup {
                 blockquote { " - Lao Tzu" }
                 p {
                     "If you'd like to hear about upcoming camps and workshops or when I publish new posts, "
-                    a href="mailto:taichiwayfarer@gmail.com?subject=Subscribe&body=Please tell something about yourself, who is your teacher or what content you are interested of?" { "send me an email" }
+                    a href="mailto:taichiwayfarer@gmail.com?subject=Subscribe&body=Please tell me something about yourself. Who is your teacher, or what kind of content are you interested in?" { "send me an email" }
                     ", and I will share the flyers and my updates with you."
                 }
             }
