@@ -61,6 +61,9 @@ async fn index() -> Markup {
         &html! {
             h2 { "Posts" }
             img .index src="/static/img/2023-to-the-states.jpg" alt="Tai Chi Wayfarer";
+            //blockquote { "The wise do not accumulate. The more they do for others, the more they have. The more they give to others, the greater their abundance." }
+            blockquote { "If you do not change direction, you may end up where you are heading." }
+            blockquote { " - Lao Tzu" }
             p { "In this blog, I share my love of Tai Chi. I hope you enjoy!" }
             ul .post-list {
                 @for post in get_posts() {
@@ -135,6 +138,8 @@ async fn subscribe() -> Markup {
         &html! {
             article {
                 h2 { "Subscribe" }
+                blockquote { "Going on means going far, going far means returning." }
+                blockquote { " - Lao Tzu" }
                 p {
                     "If you'd like to hear about upcoming camps and workshops or when I publish new posts, "
                     a href="mailto:taichiwayfarer@gmail.com?subject=Subscribe&body=Please tell something about yourself, who is your teacher or what content you are interested of?" { "send me an email" }
