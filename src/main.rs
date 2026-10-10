@@ -46,7 +46,8 @@ fn layout(title: &str, content: &Markup) -> Markup {
             nav {
                 ul {
                     li { a href="/about" { "About" } }
-                    li { a href="/subscribe" { "Subscribe" } }
+                    //li { a href="/teaching" { "Teaching" } }
+                    //li { a href="/subscribe" { "Subscribe" } }
                     li { a href="/" { "Posts" } }
                 }
             }
@@ -60,8 +61,15 @@ async fn index() -> Markup {
         "Posts",
         &html! {
             h2 { "Posts" }
+            blockquote { "The journey of a thousand miles begins with one step." }
+            blockquote { " - Lao Tzu" }
             img .index src="/static/img/2023-to-the-states.jpg" alt="Tai Chi Wayfarer";
             p { "In this blog, I share my love of Tai Chi. I hope you enjoy!" }
+            p {
+                "If you'd like to hear about upcoming camps and workshops or when I publish new posts, "
+                a href="mailto:taichiwayfarer@gmail.com?subject=Subscribe&body=Please tell me something about yourself. Who is your teacher, or what kind of content are you interested in?" { "send me an email" }
+                ", and I will share the flyers and my updates with you."
+            }
             ul .post-list {
                 @for post in get_posts() {
                     li {
@@ -116,6 +124,7 @@ async fn about() -> Markup {
                 h2 { "About" }
                 blockquote { "Be still like a mountain and flow like a great river." }
                 blockquote { " - Lao Tzu" }
+                img .index src="/static/img/profile.jpg" alt="Timo";
                 p { "Hi, my name is Timo. I've been practicing Tai Chi Chuan since 2002. Having this art in my life makes me feel so lucky, happy and grateful." }
                 p {
                     "I practice Yang-style Tai Chi in the "
@@ -140,6 +149,22 @@ async fn subscribe() -> Markup {
                     "If you'd like to hear about upcoming camps and workshops or when I publish new posts, "
                     a href="mailto:taichiwayfarer@gmail.com?subject=Subscribe&body=Please tell me something about yourself. Who is your teacher, or what kind of content are you interested in?" { "send me an email" }
                     ", and I will share the flyers and my updates with you."
+                }
+            }
+        },
+    )
+}
+
+async fn teaching() -> Markup {
+    layout(
+        "Teaching",
+        &html! {
+            article {
+                h2 { "Teaching" }
+                blockquote { "When the student is ready the teacher will appear." }
+                blockquote { " - Lao Tzu" }
+                p {
+                    ""
                 }
             }
         },
@@ -224,10 +249,12 @@ async fn main() {
         .route("/feed.xml", get(feed))
         .route("/about", get(about))
         .route("/subscribe", get(subscribe))
+        .route("/teaching", get(teaching))
         .route("/post/{url}", get(post))
         // Support also directory style urls
         .route("/about/", get(async || Redirect::permanent("/about")))
         .route("/subscribe/", get(async || Redirect::permanent("/subscribe")))
+        .route("/teaching/", get(async || Redirect::permanent("/teaching")))
         .route(
             "/post/{url}/",
             get(async |Path(url): Path<String>| Redirect::permanent(&format!("/post/{url}"))),
