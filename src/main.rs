@@ -46,8 +46,6 @@ fn layout(title: &str, content: &Markup) -> Markup {
             nav {
                 ul {
                     li { a href="/about" { "About" } }
-                    //li { a href="/teaching" { "Teaching" } }
-                    //li { a href="/subscribe" { "Subscribe" } }
                     li { a href="/" { "Posts" } }
                 }
             }
@@ -137,40 +135,6 @@ async fn about() -> Markup {
     )
 }
 
-async fn subscribe() -> Markup {
-    layout(
-        "Subscribe",
-        &html! {
-            article {
-                h2 { "Subscribe" }
-                blockquote { "Going on means going far, going far means returning." }
-                blockquote { " - Lao Tzu" }
-                p {
-                    "If you'd like to hear about upcoming camps and workshops or when I publish new posts, "
-                    a href="mailto:taichiwayfarer@gmail.com?subject=Subscribe&body=Please tell me something about yourself. Who is your teacher, or what kind of content are you interested in?" { "send me an email" }
-                    ", and I will share the flyers and my updates with you."
-                }
-            }
-        },
-    )
-}
-
-async fn teaching() -> Markup {
-    layout(
-        "Teaching",
-        &html! {
-            article {
-                h2 { "Teaching" }
-                blockquote { "When the student is ready the teacher will appear." }
-                blockquote { " - Lao Tzu" }
-                p {
-                    ""
-                }
-            }
-        },
-    )
-}
-
 fn reference_link(link: Option<PostLink>, text: &str) -> Markup {
     match link {
         None => html! {},
@@ -248,13 +212,9 @@ async fn main() {
         .route("/", get(index))
         .route("/feed.xml", get(feed))
         .route("/about", get(about))
-        .route("/subscribe", get(subscribe))
-        .route("/teaching", get(teaching))
         .route("/post/{url}", get(post))
         // Support also directory style urls
         .route("/about/", get(async || Redirect::permanent("/about")))
-        .route("/subscribe/", get(async || Redirect::permanent("/subscribe")))
-        .route("/teaching/", get(async || Redirect::permanent("/teaching")))
         .route(
             "/post/{url}/",
             get(async |Path(url): Path<String>| Redirect::permanent(&format!("/post/{url}"))),
