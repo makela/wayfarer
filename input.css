@@ -91,8 +91,8 @@ article {
   @apply pb-4;
 }
 
-article ul, table {
-  @apply mx-4;
+article ul, article ol {
+  @apply mx-16;
 }
 
 article ul {
@@ -100,20 +100,12 @@ article ul {
 }
 
 article ol {
-  @apply list-decimal mx-20;
+  @apply list-decimal;
 }
 
 blockquote {
   @apply mx-6 px-2 text-lg italic border-l-2;
   font-family: 'Gloria Hallelujah', cursive;
-}
-
-table thead {
-  @apply text-left text-sm font-light;
-}
-
-table th, table td {
-  @apply px-4;
 }
 
 .names-of-set div {
