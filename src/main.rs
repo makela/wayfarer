@@ -122,7 +122,7 @@ async fn about() -> Markup {
                 h2 { "About" }
                 blockquote { "Be still like a mountain and flow like a great river." }
                 blockquote { " - Lao Tzu" }
-                img .index src="/static/img/profile.jpg" alt="Timo";
+                img .index src="/static/img/profile.jpg" alt="Profile picture";
                 p { "Hi, my name is Timo. I've been practicing Tai Chi Chuan since 2002. Having this art in my life makes me feel so lucky, happy and grateful." }
                 p {
                     "I practice Yang-style Tai Chi in the "

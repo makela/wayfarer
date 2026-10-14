@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 body {
-  @apply mx-auto max-w-2xl text-slate-50 bg-slate-900;
+  @apply mx-auto max-w-2xl min-w-sm text-slate-50 bg-slate-900;
 }
 
 h1, h2 {
@@ -79,7 +79,7 @@ article img, .require-cookies, .video, .video iframe {
 }
 
 img.index {
-  @apply float-right m-4 w-1/4;
+  @apply float-right mt-8 m-4 w-1/4;
 }
 
 img.rss {
