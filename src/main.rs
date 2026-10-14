@@ -1,5 +1,5 @@
 use axum::{
-    extract::Path,
+    extract::{Path, State},
     http::{header, HeaderMap, StatusCode},
     response::{IntoResponse, Redirect},
     routing::get,
@@ -7,7 +7,6 @@ use axum::{
 };
 use maud::{html, Markup, PreEscaped, DOCTYPE};
 use rss::{ChannelBuilder, Item};
-use std::fs;
 use tower_http::{
     services::{ServeDir, ServeFile},
     trace,
@@ -18,7 +17,14 @@ use tracing::Level;
 use tracing_subscriber::EnvFilter;
 
 mod data;
-use data::{get_extra_markup, get_posts, PostLink};
+use data::get_extra_markup;
+mod posts;
+use posts::{PostRepository, PostLink};
+
+#[derive(Clone)]
+struct AppState {
+    posts: PostRepository
+}
 
 fn layout(title: &str, content: &Markup) -> Markup {
     html! {
@@ -54,7 +60,7 @@ fn layout(title: &str, content: &Markup) -> Markup {
     }
 }
 
-async fn index() -> Markup {
+async fn index(State(state): State<AppState>) -> Markup {
     layout(
         "Posts",
         &html! {
@@ -69,7 +75,7 @@ async fn index() -> Markup {
                 ", and I will share the flyers and my updates with you."
             }
             ul .post-list {
-                @for post in get_posts() {
+                @for post in state.posts.post_list {
                     li {
                         div  {
                             div {
@@ -92,8 +98,8 @@ async fn index() -> Markup {
 }
 
 #[expect(clippy::unwrap_used)]
-async fn feed() -> impl IntoResponse {
-    let items: Vec<Item> = get_posts().iter().map(Item::from).collect();
+async fn feed(State(state): State<AppState>) -> impl IntoResponse {
+    let items: Vec<Item> = state.posts.post_list.iter().map(Item::from).collect();
     let pub_date = if items.is_empty() {
         None
     } else {
@@ -147,47 +153,31 @@ fn reference_link(link: Option<PostLink>, text: &str) -> Markup {
     }
 }
 
-async fn post(Path(url): Path<String>) -> impl IntoResponse {
-    let posts = get_posts();
-    match posts.iter().position(|post| post.url == url) {
-        Some(index) => match posts.get(index) {
-            Some(post) => {
-                let file = format!("./posts/{}.md", post.url);
-                let input = fs::read_to_string(std::path::Path::new(&file)).unwrap_or_default();
-                let content = markdown::to_html(&input);
-                let extra_markup = get_extra_markup(&file);
-                let next = if index > 0 {
-                    posts.get(index - 1).map(|post| PostLink {
-                        title: post.title.clone(),
-                        url: format!("/post/{}", post.url),
-                    })
-                } else {
-                    None
-                };
-                let previous = posts.get(index + 1).map(|post| PostLink {
-                    title: post.title.clone(),
-                    url: format!("/post/{}", post.url),
-                });
-                layout(
-                    &post.title,
-                    &html! {
-                        h2 { (post.title) }
-                        p .date {
-                            "Published "
-                            (format!("{}", post.published_at.format("%B %e, %Y")))
-                        }
-                        article {
-                            (PreEscaped(content))
-                            (extra_markup)
-                        }
-                        (reference_link(next, "Read the next story? "))
-                        (reference_link(previous, "Read the previous story? "))
-                    },
-                )
-                .into_response()
-            }
-            None => handler_404().await.into_response(),
-        },
+async fn post(
+    Path(url): Path<String>,
+    State(state): State<AppState>,
+) -> impl IntoResponse {
+    match state.posts.post_map.get(&url) {
+        Some(page) => {
+            let extra_markup = get_extra_markup(&page.post.url);
+            layout(
+                &page.post.title,
+                &html! {
+                    h2 { (page.post.title) }
+                    p .date {
+                        "Published "
+                        (format!("{}", page.post.published_at.format("%B %e, %Y")))
+                    }
+                    article {
+                        (PreEscaped(page.content.clone()))
+                        (extra_markup)
+                    }
+                    (reference_link(page.next_link.clone(), "Read the next story? "))
+                    (reference_link(page.previous_link.clone(), "Read the previous story? "))
+                },
+            )
+            .into_response()
+        }
         None => handler_404().await.into_response(),
     }
 }
@@ -201,6 +191,9 @@ async fn main() {
                 .unwrap_or_default(),
         )
         .init();
+
+    let posts = PostRepository::new();
+    let state = AppState { posts };
 
     let app = Router::new()
         .nest_service("/static", ServeDir::new("dist"))
@@ -225,7 +218,8 @@ async fn main() {
             TraceLayer::new_for_http()
                 .make_span_with(trace::DefaultMakeSpan::new().level(Level::INFO))
                 .on_response(trace::DefaultOnResponse::new().level(Level::INFO)),
-        );
+        )
+        .with_state(state);
     let app = if std::env::var("DEV").is_ok() {
         app.layer(LiveReloadLayer::new())
     } else {
