@@ -19,11 +19,11 @@ use tracing_subscriber::EnvFilter;
 mod data;
 use data::get_extra_markup;
 mod posts;
-use posts::{PostRepository, PostLink};
+use posts::{PostLink, PostRepository};
 
 #[derive(Clone)]
 struct AppState {
-    posts: PostRepository
+    posts: PostRepository,
 }
 
 fn layout(title: &str, content: &Markup) -> Markup {
@@ -153,10 +153,7 @@ fn reference_link(link: Option<PostLink>, text: &str) -> Markup {
     }
 }
 
-async fn post(
-    Path(url): Path<String>,
-    State(state): State<AppState>,
-) -> impl IntoResponse {
+async fn post(Path(url): Path<String>, State(state): State<AppState>) -> impl IntoResponse {
     match state.posts.post_map.get(&url) {
         Some(page) => {
             let extra_markup = get_extra_markup(&page.post.url);
@@ -183,11 +180,11 @@ async fn post(
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt()
         .with_env_filter(
             EnvFilter::try_from_default_env()
-                .or_else(|_| EnvFilter::try_new("www=debug,tower_http=info"))
+                .or_else(|_| EnvFilter::try_new("taichiwayfarer=debug,tower_http=info"))
                 .unwrap_or_default(),
         )
         .init();
@@ -226,27 +223,39 @@ async fn main() {
         app
     };
     let port = std::env::var("PORT").unwrap_or("3000".to_string());
-    if let Ok(listener) = tokio::net::TcpListener::bind(format!("0.0.0.0:{port}")).await
-        && axum::serve(listener, app.into_make_service())
-            .await
-            .is_ok()
-    {
-        tracing::info!("Server listening on {port}");
-    } else {
-        tracing::error!("Server failed to startup");
+    let bind_addr = format!("0.0.0.0:{port}");
+    let listener = tokio::net::TcpListener::bind(&bind_addr)
+        .await
+        .map_err(|error| {
+            tracing::error!(address = %bind_addr, %error, "Failed to bind HTTP listener");
+            error
+        })?;
+    let local_addr = listener.local_addr().map_err(|error| {
+        tracing::error!(address = %bind_addr, %error, "Could not determine listener address");
+        error
+    })?;
+    tracing::info!(address = %local_addr, "HTTP server listening");
+    if let Err(error) = axum::serve(listener, app.into_make_service()).await {
+        tracing::error!(address = %local_addr, %error, "HTTP server failed");
+        return Err(error.into());
     }
+    tracing::info!(address = %local_addr, "HTTP server stopped");
+    Ok(())
 }
 
 async fn handler_404() -> impl IntoResponse {
-    (StatusCode::NOT_FOUND, layout(
-        "Not Found",
-        &html! {
-            h2 { "Not Found" }
-            p {
-                "The page you are looking for does not exist. Try "
-                a href="/" { "posts" }
-                " instead."
-            }
-        },
-    ))
+    (
+        StatusCode::NOT_FOUND,
+        layout(
+            "Not Found",
+            &html! {
+                h2 { "Not Found" }
+                p {
+                    "The page you are looking for does not exist. Try "
+                    a href="/" { "posts" }
+                    " instead."
+                }
+            },
+        ),
+    )
 }
