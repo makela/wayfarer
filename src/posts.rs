@@ -1,4 +1,4 @@
-use chrono::{NaiveDate, NaiveDateTime};
+use chrono::{NaiveDate, NaiveDateTime, TimeZone};
 use rss::Item;
 use std::collections::{BTreeMap, HashMap};
 use std::fs;
@@ -12,6 +12,11 @@ pub struct Post {
 
 impl From<&Post> for Item {
     fn from(post: &Post) -> Self {
+        let pub_date = chrono_tz::Europe::Helsinki
+            .from_local_datetime(&post.published_at)
+            .earliest()
+            .map(|date| date.format("%a, %d %b %Y %T %Z").to_string());
+
         Item {
             title: Some(post.title.clone()),
             link: Some(format!("https://www.taichiwayfarer.com/post/{}", post.url)),
@@ -21,7 +26,7 @@ impl From<&Post> for Item {
             comments: None,
             enclosure: None,
             guid: None,
-            pub_date: Some(post.published_at.format("%a, %d %b %Y %T EET").to_string()),
+            pub_date,
             source: None,
             content: None,
             extensions: BTreeMap::new(),

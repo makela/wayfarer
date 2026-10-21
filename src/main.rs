@@ -39,7 +39,7 @@ fn layout(title: &str, content: &Markup) -> Markup {
             link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="true";
             link href="https://fonts.googleapis.com/css2?family=Shadows+Into+Light&family=Gloria+Hallelujah&family=Inter&display=swap" rel="stylesheet";
             link href="/static/styles.css" rel="stylesheet";
-            link rel="alternative" type="application/rss+xml" title="Subscribe to Posts" href="/feed.xml";
+            link rel="alternate" type="application/rss+xml" title="Subscribe to Posts" href="/feed.xml";
         }
         body {
             h1 { a href="/" { "Tai Chi Wayfarer" } }
@@ -196,11 +196,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let app = Router::new()
         .nest_service("/static", ServeDir::new("dist"))
-        // This is for legacy perseus build
-        .route(
-            "/.perseus/{*path}",
-            get(async |Path(path): Path<String>| Redirect::permanent(&format!("/{path}"))),
-        )
         .route("/", get(index))
         .route("/feed.xml", get(feed))
         .route("/about", get(about))
