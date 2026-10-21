@@ -7,6 +7,7 @@ use axum::{
 };
 use maud::{html, Markup, PreEscaped, DOCTYPE};
 use rss::{ChannelBuilder, Item};
+use std::sync::Arc;
 use tower_http::{
     services::{ServeDir, ServeFile},
     trace,
@@ -23,7 +24,7 @@ use posts::{PostLink, PostRepository};
 
 #[derive(Clone)]
 struct AppState {
-    posts: PostRepository,
+    posts: Arc<PostRepository>,
 }
 
 fn layout(title: &str, content: &Markup) -> Markup {
@@ -75,7 +76,7 @@ async fn index(State(state): State<AppState>) -> Markup {
                 ", and I will share the flyers and my updates with you."
             }
             ul .post-list {
-                @for post in state.posts.post_list {
+                @for post in &state.posts.post_list {
                     li {
                         div  {
                             div {
@@ -189,8 +190,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         )
         .init();
 
-    let posts = PostRepository::new();
-    let state = AppState { posts };
+    let state = AppState {
+        posts: Arc::new(PostRepository::new()),
+    };
 
     let app = Router::new()
         .nest_service("/static", ServeDir::new("dist"))
