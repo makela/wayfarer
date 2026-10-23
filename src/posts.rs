@@ -66,6 +66,14 @@ fn get_posts() -> Vec<Post> {
         },
         */
         Post {
+            title: "Don't Think — Just Do".into(),
+            url: "dont-think-just-do".into(),
+            published_at: NaiveDate::from_ymd_opt(2026, 10, 24)
+                .unwrap_or_default()
+                .and_hms_opt(15, 28, 0)
+                .unwrap_or_default(),
+        },
+        Post {
             title: "Learn by Watching".into(),
             url: "learn-by-watching".into(),
             published_at: NaiveDate::from_ymd_opt(2026, 10, 8)
