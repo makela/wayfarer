@@ -6,7 +6,7 @@ The road trip was kind of mental gymnastics, like Tai Chi or meditation. You thi
 
 ![Canyons in Utah](/static/img/2026-utah-canyon.jpg)
 
-At Sandy Island, we had one of the biggest turnouts I can remember, with 41 students and the master's sons. We reviewed the beginning of the sword set from last year and learned a couple of the next movements. We practiced the slow and fast sets multiple times in a row during many classes. We also practiced a lot of push hands, including three steps and four corners, and especially all the places to press, 擠 *jǐ*. We found over ten places to do this. They can be hard to explain, but I'll try to describe a few to get you started.
+At Sandy Island, we had one of the biggest turnouts I can remember. We reviewed the beginning of the sword set from last year and learned a couple of the next movements. We practiced the slow and fast sets multiple times in a row during many classes. We also practiced a lot of push hands, including three steps and four corners, and especially all the places to press, 擠 *jǐ*. We found over ten places to do this. They can be hard to explain, but I'll try to describe a few.
 
 The very first one is naturally the moment when you make contact with your partner. Right after the step, 掤 *pèng* your partner's hand against their chest and press. Always press toward your partner's center. When being pressed, take steps backward as needed. Don't fight. Cooperate to let your partner practice pressing properly. Be loose and relaxed to press fast and fully. Always keep contact with both hands. Push with your feet.
 
@@ -26,7 +26,7 @@ At the camp fire, we celebrated the year of the *Fire Horse*, and we had a littl
 
 One thing the grandmaster said about practicing was, *don't think - just do*, and this has been echoing in my mind ever since. It's actually what I've been doing for a long time: I've just followed my passion without thinking about the costs. In a way, it has been my motto, and I've taken it to the extreme. I've just been traveling to the camps and workshops, spending my time and wealth without expecting anything. My friends have also questioned how I can do all that, and sometimes I've wondered it too.
 
-On the contrary, I've also tended to overanalyze everything without accomplishing anything. I'm a software engineer by trade, and I've faced a problem called *analysis paralysis* more than once - being distracted or even blinded to the things I've actually been trying to do because of checking all the options. Instead of just doing and learning by failing, I've failed by doing nothing - learning hopefully.
+On the contrary, I've also tended to overanalyze everything without accomplishing anything. I'm a software engineer by trade, and I've faced a problem called *analysis paralysis* more than once - being distracted or even blinded to the things I've actually been trying to do because of checking all the options. Instead of just doing and learning by failing, I've failed by doing nothing - hopefully still learning something.
 
 There is a fine balance when to think and when to do. By looking too far ahead, you miss what's right in front of you. Trying to climb too high, you can get afraid of falling instead of progressing one pull-up at a time. Focus on the basics first, and only then you can envision something bigger.
 
