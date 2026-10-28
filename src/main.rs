@@ -30,11 +30,13 @@ struct AppState {
 fn layout(title: &str, content: &Markup) -> Markup {
     html! {
         (DOCTYPE)
+        html lang="en" {
         head {
-            title { (format!("{} ☯ Tai Chi Wayfarer", title)) }
+            title { (format!("{title} ☯ Tai Chi Wayfarer")) }
             meta charset="utf-8";
             meta http-equiv="X-UA-Compatible" content="IE=edge";
             meta name="viewport" content="width=device-width, initial-scale=1";
+            meta name="description" content="Tai Chi Wayfarer Blog";
             link rel="preconnect" href="https://fonts.googleapis.com";
             link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="true";
             link href="https://fonts.googleapis.com/css2?family=Shadows+Into+Light&family=Gloria+Hallelujah&family=Inter&display=swap" rel="stylesheet";
@@ -57,6 +59,7 @@ fn layout(title: &str, content: &Markup) -> Markup {
                 }
             }
             (content)
+        }
         }
     }
 }
@@ -142,7 +145,7 @@ async fn about() -> Markup {
     )
 }
 
-fn reference_link(link: Option<PostLink>, text: &str) -> Markup {
+fn reference_link(link: &Option<PostLink>, text: &str) -> Markup {
     match link {
         None => html! {},
         Some(x) => html! {
@@ -164,14 +167,14 @@ async fn post(Path(url): Path<String>, State(state): State<AppState>) -> impl In
                     h2 { (page.post.title) }
                     p .date {
                         "Published "
-                        (format!("{}", page.post.published_at.format("%B %e, %Y")))
+                        (page.post.published_at.format("%B %e, %Y"))
                     }
                     article {
-                        (PreEscaped(page.content.clone()))
+                        (PreEscaped(&page.content))
                         (extra_markup)
                     }
-                    (reference_link(page.next_link.clone(), "Read the next story? "))
-                    (reference_link(page.previous_link.clone(), "Read the previous story? "))
+                    (reference_link(&page.next_link, "Read the next story? "))
+                    (reference_link(&page.previous_link, "Read the previous story? "))
                 },
             )
             .into_response()
