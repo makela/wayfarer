@@ -1,4 +1,4 @@
-use chrono::{NaiveDate, NaiveDateTime, TimeZone};
+use chrono::{NaiveDateTime, TimeZone};
 use rss::Item;
 use std::collections::{BTreeMap, HashMap};
 use std::fs;
@@ -42,294 +42,59 @@ pub struct PostLink {
     pub url: String,
 }
 
-#[expect(clippy::too_many_lines)]
-#[must_use]
-fn get_posts() -> Vec<Post> {
-    // Note: The last post is first, so prepend new stories!
-    vec![
-        /*
-        Post {
-            title: "The Sword Set".into(),
-            url: "the-sword-set".into(),
-            published_at: NaiveDate::from_ymd_opt(2026, 8, 8)
-                .unwrap_or_default()
-                .and_hms_opt(8, 8, 0)
-                .unwrap_or_default(),
-        },
-        Post {
-            title: "Chinese Glossary".into(),
-            url: "chinese-glossary".into(),
-            published_at: NaiveDate::from_ymd_opt(2026, 8, 8)
-                .unwrap_or_default()
-                .and_hms_opt(8, 8, 0)
-                .unwrap_or_default(),
-        },
-        */
-        Post {
-            title: "Don't Think — Just Do".into(),
-            url: "dont-think-just-do".into(),
-            published_at: NaiveDate::from_ymd_opt(2026, 10, 24)
-                .unwrap_or_default()
-                .and_hms_opt(15, 28, 0)
-                .unwrap_or_default(),
-        },
-        Post {
-            title: "Learn by Watching".into(),
-            url: "learn-by-watching".into(),
-            published_at: NaiveDate::from_ymd_opt(2026, 10, 8)
-                .unwrap_or_default()
-                .and_hms_opt(11, 41, 0)
-                .unwrap_or_default(),
-        },
-        Post {
-            title: "The Slow Set".into(),
-            url: "the-slow-set".into(),
-            published_at: NaiveDate::from_ymd_opt(2026, 8, 18)
-                .unwrap_or_default()
-                .and_hms_opt(19, 52, 0)
-                .unwrap_or_default(),
-        },
-        Post {
-            title: "Come to the Center".into(),
-            url: "june-2026".into(),
-            published_at: NaiveDate::from_ymd_opt(2026, 7, 5)
-                .unwrap_or_default()
-                .and_hms_opt(22, 26, 0)
-                .unwrap_or_default(),
-        },
-        Post {
-            title: "Be Aware of Your Body".into(),
-            url: "etna-2026".into(),
-            published_at: NaiveDate::from_ymd_opt(2026, 5, 29)
-                .unwrap_or_default()
-                .and_hms_opt(13, 17, 0)
-                .unwrap_or_default(),
-        },
-        Post {
-            title: "Remember by Yourself".into(),
-            url: "april-2026".into(),
-            published_at: NaiveDate::from_ymd_opt(2026, 4, 30)
-                .unwrap_or_default()
-                .and_hms_opt(16, 34, 0)
-                .unwrap_or_default(),
-        },
-        Post {
-            title: "Take Your Time".into(),
-            url: "march-2026".into(),
-            published_at: NaiveDate::from_ymd_opt(2026, 3, 31)
-                .unwrap_or_default()
-                .and_hms_opt(16, 21, 0)
-                .unwrap_or_default(),
-        },
-        Post {
-            title: "Be a Shadow".into(),
-            url: "february-2026".into(),
-            published_at: NaiveDate::from_ymd_opt(2026, 2, 28)
-                .unwrap_or_default()
-                .and_hms_opt(12, 32, 0)
-                .unwrap_or_default(),
-        },
-        Post {
-            title: "Do Your Own Way".into(),
-            url: "january-2026".into(),
-            published_at: NaiveDate::from_ymd_opt(2026, 2, 11)
-                .unwrap_or_default()
-                .and_hms_opt(14, 27, 0)
-                .unwrap_or_default(),
-        },
-        Post {
-            title: "Use Your Mind".into(),
-            url: "december-2025".into(),
-            published_at: NaiveDate::from_ymd_opt(2025, 12, 14)
-                .unwrap_or_default()
-                .and_hms_opt(11, 44, 0)
-                .unwrap_or_default(),
-        },
-        Post {
-            title: "Practice On Your Own".into(),
-            url: "november-2025".into(),
-            published_at: NaiveDate::from_ymd_opt(2025, 12, 3)
-                .unwrap_or_default()
-                .and_hms_opt(18, 28, 0)
-                .unwrap_or_default(),
-        },
-        Post {
-            title: "Don't Stop".into(),
-            url: "october-2025".into(),
-            published_at: NaiveDate::from_ymd_opt(2025, 10, 20)
-                .unwrap_or_default()
-                .and_hms_opt(17, 55, 0)
-                .unwrap_or_default(),
-        },
-        Post {
-            title: "Do Bigger".into(),
-            url: "sandy-2025".into(),
-            published_at: NaiveDate::from_ymd_opt(2025, 9, 23)
-                .unwrap_or_default()
-                .and_hms_opt(14, 5, 0)
-                .unwrap_or_default(),
-        },
-        Post {
-            title: "Always Practice".into(),
-            url: "la-honda-2025".into(),
-            published_at: NaiveDate::from_ymd_opt(2025, 9, 13)
-                .unwrap_or_default()
-                .and_hms_opt(18, 8, 0)
-                .unwrap_or_default(),
-        },
-        Post {
-            title: "Together".into(),
-            url: "mera-2025".into(),
-            published_at: NaiveDate::from_ymd_opt(2025, 7, 2)
-                .unwrap_or_default()
-                .and_hms_opt(10, 44, 0)
-                .unwrap_or_default(),
-        },
-        Post {
-            title: "Don't Do Anything Extra".into(),
-            url: "lapland-2025".into(),
-            published_at: NaiveDate::from_ymd_opt(2025, 6, 25)
-                .unwrap_or_default()
-                .and_hms_opt(20, 25, 0)
-                .unwrap_or_default(),
-        },
-        Post {
-            title: "Raise Your Spirit".into(),
-            url: "may-2025".into(),
-            published_at: NaiveDate::from_ymd_opt(2025, 6, 20)
-                .unwrap_or_default()
-                .and_hms_opt(14, 22, 0)
-                .unwrap_or_default(),
-        },
-        Post {
-            title: "Don't Teach Too Much".into(),
-            url: "april-2025".into(),
-            published_at: NaiveDate::from_ymd_opt(2025, 4, 17)
-                .unwrap_or_default()
-                .and_hms_opt(14, 31, 0)
-                .unwrap_or_default(),
-        },
-        Post {
-            title: "Pay Attention".into(),
-            url: "march-2025".into(),
-            published_at: NaiveDate::from_ymd_opt(2025, 4, 8)
-                .unwrap_or_default()
-                .and_hms_opt(9, 45, 0)
-                .unwrap_or_default(),
-        },
-        Post {
-            title: "Match Your Energy".into(),
-            url: "february-2025".into(),
-            published_at: NaiveDate::from_ymd_opt(2025, 2, 13)
-                .unwrap_or_default()
-                .and_hms_opt(9, 45, 0)
-                .unwrap_or_default(),
-        },
-        Post {
-            title: "Know Your Space".into(),
-            url: "january-2025".into(),
-            published_at: NaiveDate::from_ymd_opt(2025, 1, 31)
-                .unwrap_or_default()
-                .and_hms_opt(17, 32, 0)
-                .unwrap_or_default(),
-        },
-        Post {
-            title: "It's all about the Body".into(),
-            url: "december-2024".into(),
-            published_at: NaiveDate::from_ymd_opt(2024, 12, 2)
-                .unwrap_or_default()
-                .and_hms_opt(17, 46, 0)
-                .unwrap_or_default(),
-        },
-        Post {
-            title: "Play Tai Chi".into(),
-            url: "november-2024".into(),
-            published_at: NaiveDate::from_ymd_opt(2024, 11, 30)
-                .unwrap_or_default()
-                .and_hms_opt(22, 2, 0)
-                .unwrap_or_default(),
-        },
-        Post {
-            title: "Copenhagen, October 2024".into(),
-            url: "october-2024".into(),
-            published_at: NaiveDate::from_ymd_opt(2024, 10, 23)
-                .unwrap_or_default()
-                .and_hms_opt(17, 5, 0)
-                .unwrap_or_default(),
-        },
-        Post {
-            title: "Sandy Island 2024".into(),
-            url: "sandy-2024".into(),
-            published_at: NaiveDate::from_ymd_opt(2024, 9, 18)
-                .unwrap_or_default()
-                .and_hms_opt(15, 15, 0)
-                .unwrap_or_default(),
-        },
-        Post {
-            title: "Lapland and Mera 2024".into(),
-            url: "june-2024".into(),
-            published_at: NaiveDate::from_ymd_opt(2024, 6, 20)
-                .unwrap_or_default()
-                .and_hms_opt(12, 21, 0)
-                .unwrap_or_default(),
-        },
-        Post {
-            title: "Etna Camp 2024".into(),
-            url: "etna-2024".into(),
-            published_at: NaiveDate::from_ymd_opt(2024, 5, 22)
-                .unwrap_or_default()
-                .and_hms_opt(12, 2, 0)
-                .unwrap_or_default(),
-        },
-        Post {
-            title: "Mèze and Mariehamn, March 2024".into(),
-            url: "march-2024".into(),
-            published_at: NaiveDate::from_ymd_opt(2024, 4, 4)
-                .unwrap_or_default()
-                .and_hms_opt(18, 22, 0)
-                .unwrap_or_default(),
-        },
-        Post {
-            title: "Helsinki and Palermo, February 2024".into(),
-            url: "february-2024".into(),
-            published_at: NaiveDate::from_ymd_opt(2024, 2, 29)
-                .unwrap_or_default()
-                .and_hms_opt(21, 5, 0)
-                .unwrap_or_default(),
-        },
-        Post {
-            title: "Modesto and Vermont 2023".into(),
-            url: "modesto-and-vermont-2023".into(),
-            published_at: NaiveDate::from_ymd_opt(2024, 1, 6)
-                .unwrap_or_default()
-                .and_hms_opt(14, 45, 0)
-                .unwrap_or_default(),
-        },
-        Post {
-            title: "Sandy Island 2023".into(),
-            url: "sandy-2023".into(),
-            published_at: NaiveDate::from_ymd_opt(2023, 12, 12)
-                .unwrap_or_default()
-                .and_hms_opt(15, 0, 0)
-                .unwrap_or_default(),
-        },
-        Post {
-            title: "European Tour 2023".into(),
-            url: "november-2023".into(),
-            published_at: NaiveDate::from_ymd_opt(2023, 11, 10)
-                .unwrap_or_default()
-                .and_hms_opt(16, 5, 0)
-                .unwrap_or_default(),
-        },
-        Post {
-            title: "Bosco Falconeria, Harvest of Catarratto".into(),
-            url: "bosco-harvest-2023".into(),
-            published_at: NaiveDate::from_ymd_opt(2023, 10, 27)
-                .unwrap_or_default()
-                .and_hms_opt(17, 15, 0)
-                .unwrap_or_default(),
-        },
-    ]
+/// Published posts as (title, url, published at in Helsinki time "YYYY-MM-DD HH:MM").
+/// Note: The last post is first, so prepend new stories!
+const POSTS: &[(&str, &str, &str)] = &[
+    // ("The Sword Set", "the-sword-set", "2026-08-08 08:08"),
+    // ("Chinese Glossary", "chinese-glossary", "2026-08-08 08:08"),
+    ("Don't Think — Just Do", "dont-think-just-do", "2026-10-24 15:28"),
+    ("Learn by Watching", "learn-by-watching", "2026-10-08 11:41"),
+    ("The Slow Set", "the-slow-set", "2026-08-18 19:52"),
+    ("Come to the Center", "june-2026", "2026-07-05 22:26"),
+    ("Be Aware of Your Body", "etna-2026", "2026-05-29 13:17"),
+    ("Remember by Yourself", "april-2026", "2026-04-30 16:34"),
+    ("Take Your Time", "march-2026", "2026-03-31 16:21"),
+    ("Be a Shadow", "february-2026", "2026-02-28 12:32"),
+    ("Do Your Own Way", "january-2026", "2026-02-11 14:27"),
+    ("Use Your Mind", "december-2025", "2025-12-14 11:44"),
+    ("Practice On Your Own", "november-2025", "2025-12-03 18:28"),
+    ("Don't Stop", "october-2025", "2025-10-20 17:55"),
+    ("Do Bigger", "sandy-2025", "2025-09-23 14:05"),
+    ("Always Practice", "la-honda-2025", "2025-09-13 18:08"),
+    ("Together", "mera-2025", "2025-07-02 10:44"),
+    ("Don't Do Anything Extra", "lapland-2025", "2025-06-25 20:25"),
+    ("Raise Your Spirit", "may-2025", "2025-06-20 14:22"),
+    ("Don't Teach Too Much", "april-2025", "2025-04-17 14:31"),
+    ("Pay Attention", "march-2025", "2025-04-08 09:45"),
+    ("Match Your Energy", "february-2025", "2025-02-13 09:45"),
+    ("Know Your Space", "january-2025", "2025-01-31 17:32"),
+    ("It's all about the Body", "december-2024", "2024-12-02 17:46"),
+    ("Play Tai Chi", "november-2024", "2024-11-30 22:02"),
+    ("Copenhagen, October 2024", "october-2024", "2024-10-23 17:05"),
+    ("Sandy Island 2024", "sandy-2024", "2024-09-18 15:15"),
+    ("Lapland and Mera 2024", "june-2024", "2024-06-20 12:21"),
+    ("Etna Camp 2024", "etna-2024", "2024-05-22 12:02"),
+    ("Mèze and Mariehamn, March 2024", "march-2024", "2024-04-04 18:22"),
+    ("Helsinki and Palermo, February 2024", "february-2024", "2024-02-29 21:05"),
+    ("Modesto and Vermont 2023", "modesto-and-vermont-2023", "2024-01-06 14:45"),
+    ("Sandy Island 2023", "sandy-2023", "2023-12-12 15:00"),
+    ("European Tour 2023", "november-2023", "2023-11-10 16:05"),
+    ("Bosco Falconeria, Harvest of Catarratto", "bosco-harvest-2023", "2023-10-27 17:15"),
+];
+
+fn get_posts() -> Result<Vec<Post>, String> {
+    POSTS
+        .iter()
+        .map(|&(title, url, published_at)| {
+            let published_at = NaiveDateTime::parse_from_str(published_at, "%Y-%m-%d %H:%M")
+                .map_err(|error| format!("invalid date {published_at:?} for post {url}: {error}"))?;
+            Ok(Post {
+                title: title.into(),
+                url: url.into(),
+                published_at,
+            })
+        })
+        .collect()
 }
 
 #[derive(Clone)]
@@ -347,8 +112,8 @@ pub struct PostRepository {
 }
 
 impl PostRepository {
-    pub fn new() -> std::io::Result<Self> {
-        let post_list = get_posts();
+    pub fn new() -> Result<Self, String> {
+        let post_list = get_posts()?;
         let mut post_map: HashMap<String, PostPage> = HashMap::new();
         let mut next_link: Option<PostLink> = None;
         for post in post_list.clone() {
@@ -361,7 +126,7 @@ impl PostRepository {
             }
             let file = format!("./posts/{}.md", post.url);
             let input = fs::read_to_string(std::path::Path::new(&file))
-                .map_err(|error| std::io::Error::new(error.kind(), format!("{file}: {error}")))?;
+                .map_err(|error| format!("{file}: {error}"))?;
             let content = markdown::to_html(&input);
             post_map.insert(
                 post.url.clone(),
@@ -381,5 +146,36 @@ impl PostRepository {
             post_list,
             post_map,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn every_post_file_loads() {
+        let result = PostRepository::new();
+        assert!(result.is_ok(), "{:?}", result.err());
+    }
+
+    #[test]
+    fn every_post_date_is_valid() {
+        let result = get_posts();
+        assert!(result.is_ok(), "{:?}", result.err());
+    }
+
+    #[test]
+    fn posts_are_sorted_newest_first() -> Result<(), String> {
+        let posts = get_posts()?;
+        for pair in posts.windows(2) {
+            assert!(
+                pair[0].published_at > pair[1].published_at,
+                "{} must be newer than {}",
+                pair[0].url,
+                pair[1].url
+            );
+        }
+        Ok(())
     }
 }
