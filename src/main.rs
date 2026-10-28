@@ -193,8 +193,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         )
         .init();
 
+    let posts = PostRepository::new().map_err(|error| {
+        tracing::error!(%error, "Failed to load posts");
+        error
+    })?;
     let state = AppState {
-        posts: Arc::new(PostRepository::new()),
+        posts: Arc::new(posts),
     };
 
     let app = Router::new()

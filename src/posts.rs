@@ -347,7 +347,7 @@ pub struct PostRepository {
 }
 
 impl PostRepository {
-    pub fn new() -> Self {
+    pub fn new() -> std::io::Result<Self> {
         let post_list = get_posts();
         let mut post_map: HashMap<String, PostPage> = HashMap::new();
         let mut next_link: Option<PostLink> = None;
@@ -360,7 +360,8 @@ impl PostRepository {
                 });
             }
             let file = format!("./posts/{}.md", post.url);
-            let input = fs::read_to_string(std::path::Path::new(&file)).unwrap_or_default();
+            let input = fs::read_to_string(std::path::Path::new(&file))
+                .map_err(|error| std::io::Error::new(error.kind(), format!("{file}: {error}")))?;
             let content = markdown::to_html(&input);
             post_map.insert(
                 post.url.clone(),
@@ -376,9 +377,9 @@ impl PostRepository {
                 url: post.url.clone(),
             });
         }
-        PostRepository {
+        Ok(PostRepository {
             post_list,
             post_map,
-        }
+        })
     }
 }
