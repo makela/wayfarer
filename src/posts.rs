@@ -15,7 +15,7 @@ impl From<&Post> for Item {
         let pub_date = chrono_tz::Europe::Helsinki
             .from_local_datetime(&post.published_at)
             .earliest()
-            .map(|date| date.format("%a, %d %b %Y %T %Z").to_string());
+            .map(|date| date.to_rfc2822());
 
         Item {
             title: Some(post.title.clone()),
