@@ -45,6 +45,7 @@ pub struct PostLink {
 
 /// Published posts as (title, url, published at in Helsinki time "YYYY-MM-DD HH:MM").
 /// Note: The last post is first, so prepend new stories!
+#[rustfmt::skip]
 const POSTS: &[(&str, &str, &str)] = &[
     // ("The Sword Set", "the-sword-set", "2026-08-08 08:08"),
     // ("Chinese Glossary", "chinese-glossary", "2026-08-08 08:08"),
@@ -88,7 +89,9 @@ fn get_posts() -> Result<Vec<Post>, String> {
         .iter()
         .map(|&(title, url, published_at)| {
             let published_at = NaiveDateTime::parse_from_str(published_at, "%Y-%m-%d %H:%M")
-                .map_err(|error| format!("invalid date {published_at:?} for post {url}: {error}"))?;
+                .map_err(|error| {
+                    format!("invalid date {published_at:?} for post {url}: {error}")
+                })?;
             Ok(Post {
                 title: title.into(),
                 url: url.into(),
@@ -119,7 +122,8 @@ impl PostRepository {
         let mut next_link: Option<PostLink> = None;
         for post in post_list.clone() {
             if let Some(next) = next_link.clone()
-            && let Some(next_page) = post_map.get_mut(&next.url) {
+                && let Some(next_page) = post_map.get_mut(&next.url)
+            {
                 next_page.previous_link = Some(PostLink {
                     title: post.title.clone(),
                     url: post.url.clone(),

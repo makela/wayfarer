@@ -1,17 +1,17 @@
 use axum::{
+    Router,
     extract::{Path, State},
-    http::{header, HeaderMap, HeaderValue, Response, StatusCode},
+    http::{HeaderMap, HeaderValue, Response, StatusCode, header},
     response::{IntoResponse, Redirect},
     routing::get,
-    Router,
 };
-use maud::{html, Markup, PreEscaped, DOCTYPE};
+use maud::{DOCTYPE, Markup, PreEscaped, html};
 use rss::{ChannelBuilder, Item};
 use std::sync::Arc;
 use tower_http::{
     compression::{
-        predicate::{NotForContentType, Predicate},
         CompressionLayer, DefaultPredicate,
+        predicate::{NotForContentType, Predicate},
     },
     services::{ServeDir, ServeFile},
     set_header::SetResponseHeader,
@@ -34,30 +34,30 @@ fn layout(title: &str, content: &Markup) -> Markup {
     html! {
         (DOCTYPE)
         html lang="en" {
-        head {
-            title { (format!("{title} ☯ Tai Chi Wayfarer")) }
-            meta charset="utf-8";
-            meta http-equiv="X-UA-Compatible" content="IE=edge";
-            meta name="viewport" content="width=device-width, initial-scale=1";
-            meta name="description" content="Tai Chi Wayfarer Blog";
-            link href="/static/styles.css" rel="stylesheet";
-            link rel="alternate" type="application/rss+xml" title="Subscribe to Posts" href="/feed.xml";
-        }
-        body {
-            h1 { a href="/" { "Tai Chi Wayfarer" } }
-            div .support-me {
-                a .kofi-button href="https://ko-fi.com/D1D61VF42Q" title="Support me on ko-fi.com" target="_blank" rel="noopener" {
-                    img src="/static/img/kofi-cup.png" alt="Support me on Ko-fi";
-                }
+            head {
+                title { (format!("{title} ☯ Tai Chi Wayfarer")) }
+                meta charset="utf-8";
+                meta http-equiv="X-UA-Compatible" content="IE=edge";
+                meta name="viewport" content="width=device-width, initial-scale=1";
+                meta name="description" content="Tai Chi Wayfarer Blog";
+                link href="/static/styles.css" rel="stylesheet";
+                link rel="alternate" type="application/rss+xml" title="Subscribe to Posts" href="/feed.xml";
             }
-            nav {
-                ul {
-                    li { a href="/about" { "About" } }
-                    li { a href="/" { "Posts" } }
+            body {
+                h1 { a href="/" { "Tai Chi Wayfarer" } }
+                div .support-me {
+                    a .kofi-button href="https://ko-fi.com/D1D61VF42Q" title="Support me on ko-fi.com" target="_blank" rel="noopener" {
+                        img src="/static/img/kofi-cup.png" alt="Support me on Ko-fi";
+                    }
                 }
+                nav {
+                    ul {
+                        li { a href="/about" { "About" } }
+                        li { a href="/" { "Posts" } }
+                    }
+                }
+                (content)
             }
-            (content)
-        }
         }
     }
 }
@@ -143,7 +143,7 @@ async fn about() -> Markup {
     )
 }
 
-fn reference_link(link: &Option<PostLink>, text: &str) -> Markup {
+fn reference_link(link: Option<&PostLink>, text: &str) -> Markup {
     match link {
         None => html! {},
         Some(x) => html! {
@@ -171,8 +171,8 @@ async fn post(Path(url): Path<String>, State(state): State<AppState>) -> impl In
                         (PreEscaped(&page.content))
                         (extra_markup)
                     }
-                    (reference_link(&page.next_link, "Read the next story? "))
-                    (reference_link(&page.previous_link, "Read the previous story? "))
+                    (reference_link(page.next_link.as_ref(), "Read the next story? "))
+                    (reference_link(page.previous_link.as_ref(), "Read the previous story? "))
                 },
             )
             .into_response()
@@ -181,7 +181,10 @@ async fn post(Path(url): Path<String>, State(state): State<AppState>) -> impl In
     }
 }
 
-async fn post_redirect(Path(url): Path<String>, State(state): State<AppState>) -> impl IntoResponse {
+async fn post_redirect(
+    Path(url): Path<String>,
+    State(state): State<AppState>,
+) -> impl IntoResponse {
     if state.posts.post_map.contains_key(&url) {
         Redirect::permanent(&format!("/post/{url}")).into_response()
     } else {
@@ -249,7 +252,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         // Support also directory style urls
         .route("/about/", get(async || Redirect::permanent("/about")))
         .route("/post/{url}/", get(post_redirect))
-        .route_service("/favicon.ico", ServeFile::new(static_dir.join("favicon.ico")))
+        .route_service(
+            "/favicon.ico",
+            ServeFile::new(static_dir.join("favicon.ico")),
+        )
         .fallback(handler_404)
         .layer(
             TraceLayer::new_for_http()
@@ -264,9 +270,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
     // Outermost, so that live reload can still inject into uncompressed HTML.
     // Images are already skipped by the default predicate, and so are fonts here.
-    let app = app.layer(CompressionLayer::new().compress_when(
-        DefaultPredicate::new().and(NotForContentType::const_new("font/woff2")),
-    ));
+    let app = app
+        .layer(CompressionLayer::new().compress_when(
+            DefaultPredicate::new().and(NotForContentType::const_new("font/woff2")),
+        ));
     let port = std::env::var("PORT").unwrap_or("3000".to_string());
     let bind_addr = format!("0.0.0.0:{port}");
     let listener = tokio::net::TcpListener::bind(&bind_addr)

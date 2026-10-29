@@ -1,4 +1,4 @@
-use maud::{html, Markup};
+use maud::{Markup, html};
 
 fn name_table(names: &[(&str, &str, &str, &str)]) -> Markup {
     html! {

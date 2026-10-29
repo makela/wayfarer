@@ -19,6 +19,10 @@
       {
         devShells.default = mkShell {
           LD_LIBRARY_PATH = lib.makeLibraryPath [ openssl ];
+          shellHook = ''
+            # Use the versioned hooks in .githooks (cargo fmt check before commit)
+            git config core.hooksPath .githooks 2>/dev/null || true
+          '';
           buildInputs = [
             rust-bin.stable.latest.default
             just
