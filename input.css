@@ -248,6 +248,9 @@ blockquote {
 div.support-me {
   @apply float-end mr-4;
 }
-.btn-container, a.kofi-button {
-  min-width: 27px !important;
+a.kofi-button {
+  @apply inline-flex items-center h-10 px-3 rounded-[7px] bg-slate-800 shadow-sm hover:opacity-85;
+}
+a.kofi-button img {
+  @apply h-[15px] w-[22px] rounded-none;
 }

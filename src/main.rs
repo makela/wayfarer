@@ -41,10 +41,8 @@ fn layout(title: &str, content: &Markup) -> Markup {
         body {
             h1 { a href="/" { "Tai Chi Wayfarer" } }
             div .support-me {
-                span {
-                    (PreEscaped("
-<script type='text/javascript' src='https://storage.ko-fi.com/cdn/widget/Widget_2.js'></script><script type='text/javascript'>kofiwidget2.init('', '#1E293B', 'D1D61VF42Q');kofiwidget2.draw();</script>
-                    "))
+                a .kofi-button href="https://ko-fi.com/D1D61VF42Q" title="Support me on ko-fi.com" target="_blank" rel="noopener" {
+                    img src="/static/img/kofi-cup.png" alt="Support me on Ko-fi";
                 }
             }
             nav {
