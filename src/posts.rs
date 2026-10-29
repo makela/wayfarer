@@ -168,6 +168,16 @@ mod tests {
     }
 
     #[test]
+    fn post_urls_are_unique() -> Result<(), String> {
+        let posts = get_posts()?;
+        let mut seen = std::collections::HashSet::new();
+        for post in &posts {
+            assert!(seen.insert(&post.url), "duplicate post url {}", post.url);
+        }
+        Ok(())
+    }
+
+    #[test]
     fn posts_are_sorted_newest_first() -> Result<(), String> {
         let posts = get_posts()?;
         for pair in posts.windows(2) {

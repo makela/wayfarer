@@ -181,6 +181,14 @@ async fn post(Path(url): Path<String>, State(state): State<AppState>) -> impl In
     }
 }
 
+async fn post_redirect(Path(url): Path<String>, State(state): State<AppState>) -> impl IntoResponse {
+    if state.posts.post_map.contains_key(&url) {
+        Redirect::permanent(&format!("/post/{url}")).into_response()
+    } else {
+        handler_404().await.into_response()
+    }
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Load .env before tracing so that RUST_LOG from it applies; variables
@@ -240,10 +248,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/post/{url}", get(post))
         // Support also directory style urls
         .route("/about/", get(async || Redirect::permanent("/about")))
-        .route(
-            "/post/{url}/",
-            get(async |Path(url): Path<String>| Redirect::permanent(&format!("/post/{url}"))),
-        )
+        .route("/post/{url}/", get(post_redirect))
         .route_service("/favicon.ico", ServeFile::new(static_dir.join("favicon.ico")))
         .fallback(handler_404)
         .layer(
