@@ -2,6 +2,7 @@ use chrono::{NaiveDateTime, TimeZone};
 use rss::Item;
 use std::collections::{BTreeMap, HashMap};
 use std::fs;
+use std::path::Path;
 
 #[derive(Clone)]
 pub struct Post {
@@ -112,7 +113,7 @@ pub struct PostRepository {
 }
 
 impl PostRepository {
-    pub fn new() -> Result<Self, String> {
+    pub fn new(post_dir: &Path) -> Result<Self, String> {
         let post_list = get_posts()?;
         let mut post_map: HashMap<String, PostPage> = HashMap::new();
         let mut next_link: Option<PostLink> = None;
@@ -124,9 +125,9 @@ impl PostRepository {
                     url: post.url.clone(),
                 });
             }
-            let file = format!("./posts/{}.md", post.url);
-            let input = fs::read_to_string(std::path::Path::new(&file))
-                .map_err(|error| format!("{file}: {error}"))?;
+            let file = post_dir.join(format!("{}.md", post.url));
+            let input = fs::read_to_string(&file)
+                .map_err(|error| format!("{}: {error}", file.display()))?;
             let content = markdown::to_html(&input);
             post_map.insert(
                 post.url.clone(),
@@ -155,7 +156,8 @@ mod tests {
 
     #[test]
     fn every_post_file_loads() {
-        let result = PostRepository::new();
+        let post_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("posts");
+        let result = PostRepository::new(&post_dir);
         assert!(result.is_ok(), "{:?}", result.err());
     }
 

@@ -185,6 +185,9 @@ async fn post(Path(url): Path<String>, State(state): State<AppState>) -> impl In
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Load .env before tracing so that RUST_LOG from it applies; variables
+    // already set in the environment take precedence over the file.
+    let dotenv = dotenvy::dotenv();
     tracing_subscriber::fmt()
         .with_env_filter(
             EnvFilter::try_from_default_env()
@@ -192,8 +195,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .unwrap_or_default(),
         )
         .init();
+    match dotenv {
+        Ok(path) => tracing::info!(path = %path.display(), "Loaded environment file"),
+        Err(error) if error.not_found() => {}
+        Err(error) => {
+            tracing::error!(%error, "Failed to load environment file");
+            return Err(error.into());
+        }
+    }
 
-    let posts = PostRepository::new().map_err(|error| {
+    let post_dir = std::env::var("POST_DIR").unwrap_or("posts".to_string());
+    let static_dir = std::env::var("STATIC_DIR").unwrap_or("dist".to_string());
+    let static_dir = std::path::Path::new(&static_dir);
+    let posts = PostRepository::new(std::path::Path::new(&post_dir)).map_err(|error| {
         tracing::error!(%error, "Failed to load posts");
         error
     })?;
@@ -202,7 +216,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     let app = Router::new()
-        .nest_service("/static", ServeDir::new("dist"))
+        .nest_service("/static", ServeDir::new(static_dir))
         .route("/", get(index))
         .route("/feed.xml", get(feed))
         .route("/about", get(about))
@@ -213,7 +227,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             "/post/{url}/",
             get(async |Path(url): Path<String>| Redirect::permanent(&format!("/post/{url}"))),
         )
-        .route_service("/favicon.ico", ServeFile::new("dist/favicon.ico"))
+        .route_service("/favicon.ico", ServeFile::new(static_dir.join("favicon.ico")))
         .fallback(handler_404)
         .layer(
             TraceLayer::new_for_http()
