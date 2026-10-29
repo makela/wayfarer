@@ -1,8 +1,15 @@
 #!/bin/sh
-# Refuse to commit unformatted Rust code. Enable with:
+# Refuse to commit unformatted or failing Rust code. Enable with:
 #   git config core.hooksPath .githooks
+# (the Nix dev shell does this automatically). Skip with: git commit --no-verify
 if ! cargo fmt --check; then
     echo >&2
     echo "pre-commit: code is not formatted. Run 'cargo fmt', stage the changes and commit again." >&2
+    exit 1
+fi
+
+if ! cargo test --quiet; then
+    echo >&2
+    echo "pre-commit: tests failed. Fix them and commit again." >&2
     exit 1
 fi
