@@ -18,6 +18,9 @@ tower-livereload = "0.10.2"
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 
+[dev-dependencies]
+tower = { version = "0.5", features = ["util"] }
+
 [lints.clippy]
 pedantic = { level = "warn", priority = -1 }
 missing_errors_doc = "allow"

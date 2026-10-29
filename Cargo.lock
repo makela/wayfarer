@@ -960,6 +960,7 @@ dependencies = [
  "maud",
  "rss",
  "tokio",
+ "tower",
  "tower-http",
  "tower-livereload",
  "tracing",

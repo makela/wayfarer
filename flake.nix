@@ -1,5 +1,5 @@
 {
-  description = "A very basic flake";
+  description = "Tai Chi Wayfarer blog";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
@@ -8,7 +8,11 @@
   };
 
   outputs = { self, nixpkgs, rust-overlay, flake-utils, ... }:
-    flake-utils.lib.eachDefaultSystem (system:
+    {
+      # Runs the blog as a systemd service, see nix/module.nix
+      nixosModules.default = import ./nix/module.nix;
+    }
+    // flake-utils.lib.eachDefaultSystem (system:
       let
         overlays = [ (import rust-overlay) ];
         pkgs = import nixpkgs {
@@ -17,6 +21,8 @@
       in
       with pkgs;
       {
+        packages.default = callPackage ./nix/package.nix { };
+
         devShells.default = mkShell {
           shellHook = ''
             # Use the versioned hooks in .githooks (cargo fmt check before commit)

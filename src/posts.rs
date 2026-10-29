@@ -5,8 +5,6 @@ use std::collections::{BTreeMap, HashMap};
 use std::fs;
 use std::path::Path;
 
-pub const SITE_URL: &str = "https://www.taichiwayfarer.com";
-
 /// Page descriptions are cut to about the length search engines show.
 const DESCRIPTION_LENGTH: usize = 160;
 
@@ -17,17 +15,19 @@ pub struct Post {
     pub published_at: NaiveDateTime,
 }
 
-impl From<&Post> for Item {
-    fn from(post: &Post) -> Self {
+impl Post {
+    /// The post as an RSS item, linking to it under `site_url`.
+    #[must_use]
+    pub fn to_item(&self, site_url: &str) -> Item {
         let pub_date = chrono_tz::Europe::Helsinki
-            .from_local_datetime(&post.published_at)
+            .from_local_datetime(&self.published_at)
             .earliest()
             .map(|date| date.to_rfc2822());
 
-        let link = format!("{SITE_URL}/post/{}", post.url);
+        let link = format!("{site_url}/post/{}", self.url);
 
         Item {
-            title: Some(post.title.clone()),
+            title: Some(self.title.clone()),
             link: Some(link.clone()),
             description: None,
             author: None,
@@ -234,7 +234,7 @@ mod tests {
         for post in get_posts()? {
             // Fails for times skipped when clocks go forward in Helsinki
             assert!(
-                Item::from(&post).pub_date.is_some(),
+                post.to_item("https://example.com").pub_date.is_some(),
                 "{} has no valid Helsinki time",
                 post.url
             );

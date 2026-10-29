@@ -1,13 +1,14 @@
 use axum::{
     Router,
     extract::{Path, Request, State},
-    http::{HeaderValue, StatusCode, header},
+    http::{HeaderName, HeaderValue, StatusCode, header},
     middleware::{self, Next},
     response::{IntoResponse, Redirect, Response},
     routing::get,
 };
 use maud::{DOCTYPE, Markup, PreEscaped, html};
 use rss::{ChannelBuilder, Item};
+use std::path::Path as FsPath;
 use std::sync::Arc;
 use tower_http::{
     compression::{
@@ -24,17 +25,24 @@ use tracing_subscriber::EnvFilter;
 
 use taichiwayfarer::assets;
 use taichiwayfarer::data::get_extra_markup;
-use taichiwayfarer::posts::{PostLink, PostRepository, SITE_URL};
+use taichiwayfarer::posts::{PostLink, PostRepository};
+
+const DEFAULT_SITE_URL: &str = "https://www.taichiwayfarer.com";
 
 #[derive(Clone)]
 struct AppState {
     posts: Arc<PostRepository>,
+    /// Public address of the site without a trailing slash, for absolute links.
+    site_url: Arc<str>,
+    /// Asks search engines not to index the site, e.g. for a test copy.
+    noindex: bool,
 }
 
 const DEFAULT_IMAGE: &str = "/static/img/2023-to-the-states.jpg";
 
 /// Page details for the document head, search engines and link previews.
 struct PageMeta<'a> {
+    site_url: &'a str,
     title: &'a str,
     description: &'a str,
     /// Canonical path of the page, or `None` for error pages.
@@ -43,11 +51,11 @@ struct PageMeta<'a> {
     og_type: &'a str,
 }
 
-fn absolute_url(path: &str) -> String {
+fn absolute_url(site_url: &str, path: &str) -> String {
     if path.starts_with("http") {
         path.to_string()
     } else {
-        format!("{SITE_URL}{path}")
+        format!("{site_url}{path}")
     }
 }
 
@@ -62,14 +70,14 @@ fn layout(meta: &PageMeta, content: &Markup) -> Markup {
                 meta name="viewport" content="width=device-width, initial-scale=1";
                 meta name="description" content=(meta.description);
                 @if let Some(path) = meta.path {
-                    link rel="canonical" href=(absolute_url(path));
-                    meta property="og:url" content=(absolute_url(path));
+                    link rel="canonical" href=(absolute_url(meta.site_url, path));
+                    meta property="og:url" content=(absolute_url(meta.site_url, path));
                 }
                 meta property="og:site_name" content="Tai Chi Wayfarer";
                 meta property="og:type" content=(meta.og_type);
                 meta property="og:title" content=(meta.title);
                 meta property="og:description" content=(meta.description);
-                meta property="og:image" content=(absolute_url(meta.image.unwrap_or(DEFAULT_IMAGE)));
+                meta property="og:image" content=(absolute_url(meta.site_url, meta.image.unwrap_or(DEFAULT_IMAGE)));
                 meta name="twitter:card" content="summary_large_image";
                 link href=(assets::url("styles.css")) rel="stylesheet";
                 link rel="alternate" type="application/rss+xml" title="Subscribe to Posts" href="/feed.xml";
@@ -96,6 +104,7 @@ fn layout(meta: &PageMeta, content: &Markup) -> Markup {
 async fn index(State(state): State<AppState>) -> Markup {
     layout(
         &PageMeta {
+            site_url: &state.site_url,
             title: "Posts",
             description: "In this blog, I share my love of Tai Chi. I hope you enjoy!",
             path: Some("/"),
@@ -142,7 +151,7 @@ async fn feed(State(state): State<AppState>) -> impl IntoResponse {
         .post_list
         .iter()
         .map(|post| {
-            let mut item = Item::from(post);
+            let mut item = post.to_item(&state.site_url);
             item.description = state
                 .posts
                 .post_map
@@ -154,7 +163,7 @@ async fn feed(State(state): State<AppState>) -> impl IntoResponse {
     let pub_date = items.first().and_then(|item| item.pub_date.clone());
     let channel = ChannelBuilder::default()
         .title("Tai Chi Wayfarer")
-        .link(SITE_URL)
+        .link(state.site_url.to_string())
         .description("RSS feed of Tai Chi Wayfarer posts.")
         .pub_date(pub_date)
         .items(items)
@@ -170,11 +179,11 @@ async fn sitemap(State(state): State<AppState>) -> impl IntoResponse {
         (PreEscaped(r#"<?xml version="1.0" encoding="UTF-8"?>"#))
         urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" {
             @for path in ["/", "/about"] {
-                url { loc { (SITE_URL) (path) } }
+                url { loc { (state.site_url) (path) } }
             }
             @for post in &state.posts.post_list {
                 url {
-                    loc { (SITE_URL) "/post/" (post.url) }
+                    loc { (state.site_url) "/post/" (post.url) }
                     lastmod { (post.published_at.format("%Y-%m-%d")) }
                 }
             }
@@ -186,11 +195,29 @@ async fn sitemap(State(state): State<AppState>) -> impl IntoResponse {
     )
 }
 
-async fn robots() -> impl IntoResponse {
-    (
-        [(header::CONTENT_TYPE, "text/plain; charset=utf-8")],
-        format!("User-agent: *\nDisallow:\n\nSitemap: {SITE_URL}/sitemap.xml\n"),
-    )
+async fn robots(State(state): State<AppState>) -> impl IntoResponse {
+    let body = if state.noindex {
+        "User-agent: *\nDisallow: /\n".to_string()
+    } else {
+        format!(
+            "User-agent: *\nDisallow:\n\nSitemap: {}/sitemap.xml\n",
+            state.site_url
+        )
+    };
+    ([(header::CONTENT_TYPE, "text/plain; charset=utf-8")], body)
+}
+
+/// Set (even empty, like `DEV=` in the Justfile) and not "0" or "false".
+fn env_flag(name: &str) -> bool {
+    std::env::var(name).is_ok_and(|value| !matches!(value.as_str(), "0" | "false"))
+}
+
+async fn add_noindex(mut response: Response) -> Response {
+    response.headers_mut().insert(
+        HeaderName::from_static("x-robots-tag"),
+        HeaderValue::from_static("noindex"),
+    );
+    response
 }
 
 /// Sets `Cache-Control` for static files. Versioned URLs (`?v=<hash>`, see
@@ -224,9 +251,10 @@ async fn cache_static(State(dev): State<bool>, request: Request, next: Next) -> 
     response
 }
 
-async fn about() -> Markup {
+async fn about(State(state): State<AppState>) -> Markup {
     layout(
         &PageMeta {
+            site_url: &state.site_url,
             title: "About",
             description: "Hi, my name is Timo. I've been practicing Tai Chi Chuan since 2002.",
             path: Some("/about"),
@@ -270,6 +298,7 @@ async fn post(Path(url): Path<String>, State(state): State<AppState>) -> impl In
             let path = format!("/post/{}", page.post.url);
             layout(
                 &PageMeta {
+                    site_url: &state.site_url,
                     title: &page.post.title,
                     description: &page.description,
                     path: Some(&path),
@@ -292,7 +321,7 @@ async fn post(Path(url): Path<String>, State(state): State<AppState>) -> impl In
             )
             .into_response()
         }
-        None => handler_404().await.into_response(),
+        None => not_found(&state.site_url),
     }
 }
 
@@ -303,45 +332,12 @@ async fn post_redirect(
     if state.posts.post_map.contains_key(&url) {
         Redirect::permanent(&format!("/post/{url}")).into_response()
     } else {
-        handler_404().await.into_response()
+        not_found(&state.site_url)
     }
 }
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Load .env before tracing so that RUST_LOG from it applies; variables
-    // already set in the environment take precedence over the file.
-    let dotenv = dotenvy::dotenv();
-    tracing_subscriber::fmt()
-        .with_env_filter(
-            EnvFilter::try_from_default_env()
-                .or_else(|_| EnvFilter::try_new("taichiwayfarer=debug,tower_http=info"))
-                .unwrap_or_default(),
-        )
-        .init();
-    match dotenv {
-        Ok(path) => tracing::info!(path = %path.display(), "Loaded environment file"),
-        Err(error) if error.not_found() => {}
-        Err(error) => {
-            tracing::error!(%error, "Failed to load environment file");
-            return Err(error.into());
-        }
-    }
-
-    let post_dir = std::env::var("POST_DIR").unwrap_or("posts".to_string());
-    let static_dir = std::env::var("STATIC_DIR").unwrap_or("dist".to_string());
-    let static_dir = std::path::Path::new(&static_dir);
-    assets::init(static_dir);
-    let posts = PostRepository::new(std::path::Path::new(&post_dir)).map_err(|error| {
-        tracing::error!(%error, "Failed to load posts");
-        error
-    })?;
-    let state = AppState {
-        posts: Arc::new(posts),
-    };
-
-    // Set but empty (`DEV=`) also counts as on, as used in the Justfile.
-    let dev = std::env::var("DEV").is_ok_and(|value| !matches!(value.as_str(), "0" | "false"));
+fn app(state: AppState, static_dir: &FsPath, dev: bool) -> Router {
+    let noindex = state.noindex;
     let static_files = Router::new()
         .nest_service("/static", ServeDir::new(static_dir))
         .route_service(
@@ -368,6 +364,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .on_response(trace::DefaultOnResponse::new().level(Level::INFO)),
         )
         .with_state(state);
+    let app = if noindex {
+        app.layer(middleware::map_response(add_noindex))
+    } else {
+        app
+    };
     let app = if dev {
         app.layer(LiveReloadLayer::new())
     } else {
@@ -375,12 +376,58 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
     // Outermost, so that live reload can still inject into uncompressed HTML.
     // Images are already skipped by the default predicate, and so are fonts here.
-    let app = app
-        .layer(CompressionLayer::new().compress_when(
-            DefaultPredicate::new().and(NotForContentType::const_new("font/woff2")),
-        ));
+    app.layer(
+        CompressionLayer::new()
+            .compress_when(DefaultPredicate::new().and(NotForContentType::const_new("font/woff2"))),
+    )
+}
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Load .env before tracing so that RUST_LOG from it applies; variables
+    // already set in the environment take precedence over the file.
+    let dotenv = dotenvy::dotenv();
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            EnvFilter::try_from_default_env()
+                .or_else(|_| EnvFilter::try_new("taichiwayfarer=debug,tower_http=info"))
+                .unwrap_or_default(),
+        )
+        .init();
+    match dotenv {
+        Ok(path) => tracing::info!(path = %path.display(), "Loaded environment file"),
+        Err(error) if error.not_found() => {}
+        Err(error) => {
+            tracing::error!(%error, "Failed to load environment file");
+            return Err(error.into());
+        }
+    }
+
+    let post_dir = std::env::var("POST_DIR").unwrap_or("posts".to_string());
+    let static_dir = std::env::var("STATIC_DIR").unwrap_or("dist".to_string());
+    let static_dir = FsPath::new(&static_dir);
+    assets::init(static_dir);
+    let posts = PostRepository::new(FsPath::new(&post_dir)).map_err(|error| {
+        tracing::error!(%error, "Failed to load posts");
+        error
+    })?;
+    let site_url = std::env::var("SITE_URL").unwrap_or(DEFAULT_SITE_URL.to_string());
+    let state = AppState {
+        posts: Arc::new(posts),
+        site_url: site_url.trim_end_matches('/').into(),
+        noindex: env_flag("NOINDEX"),
+    };
+    tracing::info!(site_url = %state.site_url, noindex = state.noindex, "Site settings");
+
+    let app = app(state, static_dir, env_flag("DEV"));
+    // Behind a reverse proxy, set HOST=127.0.0.1 to accept local connections only.
+    let host = std::env::var("HOST").unwrap_or("0.0.0.0".to_string());
     let port = std::env::var("PORT").unwrap_or("3000".to_string());
-    let bind_addr = format!("0.0.0.0:{port}");
+    let bind_addr = if host.contains(':') {
+        format!("[{host}]:{port}") // IPv6
+    } else {
+        format!("{host}:{port}")
+    };
     let listener = tokio::net::TcpListener::bind(&bind_addr)
         .await
         .map_err(|error| {
@@ -400,11 +447,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-async fn handler_404() -> impl IntoResponse {
+async fn handler_404(State(state): State<AppState>) -> Response {
+    not_found(&state.site_url)
+}
+
+fn not_found(site_url: &str) -> Response {
     (
         StatusCode::NOT_FOUND,
         layout(
             &PageMeta {
+                site_url,
                 title: "Not Found",
                 description: "The page you are looking for does not exist.",
                 path: None,
@@ -421,4 +473,78 @@ async fn handler_404() -> impl IntoResponse {
             },
         ),
     )
+        .into_response()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::body::{Body, to_bytes};
+    use axum::http::HeaderMap;
+    use tower::ServiceExt;
+
+    type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
+
+    fn test_app(site_url: &str, noindex: bool) -> TestResult<Router> {
+        let root = FsPath::new(env!("CARGO_MANIFEST_DIR"));
+        let state = AppState {
+            posts: Arc::new(PostRepository::new(&root.join("posts"))?),
+            site_url: site_url.into(),
+            noindex,
+        };
+        Ok(app(state, &root.join("dist"), false))
+    }
+
+    async fn fetch(app: &Router, uri: &str) -> TestResult<(HeaderMap, String)> {
+        let request = Request::builder().uri(uri).body(Body::empty())?;
+        let response = app.clone().oneshot(request).await?;
+        let headers = response.headers().clone();
+        let body = to_bytes(response.into_body(), usize::MAX).await?;
+        Ok((headers, String::from_utf8(body.to_vec())?))
+    }
+
+    #[tokio::test]
+    async fn links_use_site_url() -> TestResult {
+        let app = test_app("https://alt.example.com", false)?;
+
+        let (headers, page) = fetch(&app, "/post/the-slow-set").await?;
+        assert!(
+            page.contains(r#"rel="canonical" href="https://alt.example.com/post/the-slow-set""#)
+        );
+        assert!(!headers.contains_key("x-robots-tag"));
+
+        let (_, feed) = fetch(&app, "/feed.xml").await?;
+        assert!(feed.contains("<link>https://alt.example.com/post/the-slow-set</link>"));
+
+        let (_, sitemap) = fetch(&app, "/sitemap.xml").await?;
+        assert!(sitemap.contains("<loc>https://alt.example.com/about</loc>"));
+
+        let (_, robots) = fetch(&app, "/robots.txt").await?;
+        assert!(robots.contains("Sitemap: https://alt.example.com/sitemap.xml"));
+        assert!(robots.contains("Disallow:\n"));
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn noindex_blocks_search_engines() -> TestResult {
+        let app = test_app("https://alt.example.com", true)?;
+
+        let (_, robots) = fetch(&app, "/robots.txt").await?;
+        assert_eq!(robots, "User-agent: *\nDisallow: /\n");
+
+        for uri in [
+            "/",
+            "/post/the-slow-set",
+            "/static/embed-video.js",
+            "/missing",
+        ] {
+            let (headers, _) = fetch(&app, uri).await?;
+            assert_eq!(
+                headers.get("x-robots-tag").map(HeaderValue::as_bytes),
+                Some(&b"noindex"[..]),
+                "{uri}"
+            );
+        }
+        Ok(())
+    }
 }
