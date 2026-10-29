@@ -17,10 +17,8 @@ use tower_livereload::LiveReloadLayer;
 use tracing::Level;
 use tracing_subscriber::EnvFilter;
 
-mod data;
-use data::get_extra_markup;
-mod posts;
-use posts::{PostLink, PostRepository};
+use taichiwayfarer::data::get_extra_markup;
+use taichiwayfarer::posts::{PostLink, PostRepository};
 
 #[derive(Clone)]
 struct AppState {
