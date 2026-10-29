@@ -102,7 +102,7 @@
 }
 
 body {
-  @apply mx-auto max-w-2xl min-w-sm text-slate-50 bg-slate-900;
+  @apply mx-auto max-w-2xl text-slate-50 bg-slate-900;
 }
 
 h1, h2 {
@@ -110,7 +110,7 @@ h1, h2 {
 }
 
 h1 {
-  @apply text-8xl border-b-2 border-slate-50;
+  @apply text-7xl sm:text-8xl border-b-2 border-slate-50;
   font-family: 'Shadows Into Light', cursive;
 }
 

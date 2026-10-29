@@ -2,6 +2,7 @@ use chrono::{NaiveDateTime, TimeZone};
 use markdown::mdast::Node;
 use rss::{Guid, Item};
 use std::collections::{BTreeMap, HashMap};
+use std::fmt::Write;
 use std::fs;
 use std::path::Path;
 
@@ -159,6 +160,36 @@ fn summarize(input: &str) -> Result<(Option<String>, Option<String>), String> {
     Ok((description, first_image(&tree).map(str::to_string)))
 }
 
+/// Adds the size of each local image (`/static/...`, read from `static_dir`)
+/// to its `<img>` tag, so the text doesn't jump while photos load, and lets
+/// all but the first image load only when scrolled into view.
+fn enhance_images(html: &str, static_dir: &Path) -> Result<String, String> {
+    const IMG: &str = "<img src=\"";
+    let mut out = String::with_capacity(html.len());
+    let mut rest = html;
+    let mut first = true;
+    while let Some(start) = rest.find(IMG) {
+        out.push_str(&rest[..start]);
+        rest = &rest[start + IMG.len()..];
+        let src = &rest[..rest.find('"').ok_or("unterminated <img> src")?];
+        out.push_str("<img");
+        if let Some(path) = src.strip_prefix("/static/") {
+            let file = static_dir.join(path);
+            let size = imagesize::size(&file)
+                .map_err(|error| format!("image {}: {error}", file.display()))?;
+            write!(out, r#" width="{}" height="{}""#, size.width, size.height)
+                .map_err(|error| error.to_string())?;
+        }
+        if !first {
+            out.push_str(r#" loading="lazy""#);
+        }
+        first = false;
+        out.push_str(r#" src=""#);
+    }
+    out.push_str(rest);
+    Ok(out)
+}
+
 #[derive(Clone)]
 pub struct PostPage {
     pub post: Post,
@@ -176,7 +207,9 @@ pub struct PostRepository {
 }
 
 impl PostRepository {
-    pub fn new(post_dir: &Path) -> Result<Self, String> {
+    /// Loads the posts from `post_dir`. Images they refer to under `/static/`
+    /// must exist in `static_dir`.
+    pub fn new(post_dir: &Path, static_dir: &Path) -> Result<Self, String> {
         let post_list = get_posts()?;
         let mut post_map: HashMap<String, PostPage> = HashMap::new();
         let mut next_link: Option<PostLink> = None;
@@ -192,7 +225,8 @@ impl PostRepository {
             let file = post_dir.join(format!("{}.md", post.url));
             let input = fs::read_to_string(&file)
                 .map_err(|error| format!("{}: {error}", file.display()))?;
-            let content = markdown::to_html(&input);
+            let content = enhance_images(&markdown::to_html(&input), static_dir)
+                .map_err(|error| format!("{}: {error}", file.display()))?;
             let (description, image) =
                 summarize(&input).map_err(|error| format!("{}: {error}", file.display()))?;
             post_map.insert(
@@ -224,8 +258,8 @@ mod tests {
 
     #[test]
     fn every_post_file_loads() {
-        let post_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("posts");
-        let result = PostRepository::new(&post_dir);
+        let root = Path::new(env!("CARGO_MANIFEST_DIR"));
+        let result = PostRepository::new(&root.join("posts"), &root.join("dist"));
         assert!(result.is_ok(), "{:?}", result.err());
     }
 
@@ -249,6 +283,44 @@ mod tests {
         assert_eq!(description.as_deref(), Some("We practiced the slow set."));
         assert_eq!(image.as_deref(), Some("/static/img/group.jpg"));
         Ok(())
+    }
+
+    #[test]
+    fn images_get_size_and_lazy_loading() -> Result<(), String> {
+        let static_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("dist");
+        let html = markdown::to_html(
+            "![RSS](/static/img/rss.png)\n\n![Cup](/static/img/kofi-cup.png)\n\n![Ext](https://example.com/a.jpg)",
+        );
+        let html = enhance_images(&html, &static_dir)?;
+        let cup =
+            imagesize::size(static_dir.join("img/kofi-cup.png")).map_err(|e| e.to_string())?;
+        let rss = imagesize::size(static_dir.join("img/rss.png")).map_err(|e| e.to_string())?;
+        assert!(
+            html.contains(&format!(
+                r#"<img width="{}" height="{}" src="/static/img/rss.png""#,
+                rss.width, rss.height
+            )),
+            "{html}"
+        );
+        assert!(
+            html.contains(&format!(
+                r#"<img width="{}" height="{}" loading="lazy" src="/static/img/kofi-cup.png""#,
+                cup.width, cup.height
+            )),
+            "{html}"
+        );
+        assert!(
+            html.contains(r#"<img loading="lazy" src="https://example.com/a.jpg""#),
+            "{html}"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn missing_image_is_an_error() {
+        let static_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("dist");
+        let html = markdown::to_html("![Typo](/static/img/no-such-photo.jpg)");
+        assert!(enhance_images(&html, &static_dir).is_err());
     }
 
     #[test]

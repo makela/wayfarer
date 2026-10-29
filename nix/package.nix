@@ -5,6 +5,7 @@
   lib,
   rustPlatform,
   tailwindcss_4,
+  vips,
 }:
 let
   fs = lib.fileset;
@@ -29,13 +30,25 @@ rustPlatform.buildRustPackage {
 
   cargoLock.lockFile = ../Cargo.lock;
 
-  nativeBuildInputs = [ tailwindcss_4 ];
+  nativeBuildInputs = [
+    tailwindcss_4
+    vips
+  ];
 
   postInstall = ''
     share=$out/share/taichiwayfarer
     mkdir -p $share
     cp -r posts dist $share/
     tailwindcss -i ./input.css -o $share/dist/styles.css --minify
+
+    # Photos: at most 1200 px (twice the content column), converted to sRGB
+    # and without metadata such as GPS locations. The names stay the same, so
+    # posts keep referring to them as before. The output path is absolute:
+    # vipsthumbnail would otherwise write next to the input file.
+    for photo in dist/img/*.jpg; do
+      vipsthumbnail "$photo" --size '1200x1200>' --export-profile srgb \
+        -o "$share/dist/img/%s.jpg[Q=80,keep=none,optimize_coding,interlace]"
+    done
   '';
 
   meta = {

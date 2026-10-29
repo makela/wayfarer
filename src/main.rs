@@ -66,7 +66,6 @@ fn layout(meta: &PageMeta, content: &Markup) -> Markup {
             head {
                 meta charset="utf-8";
                 title { (format!("{} ☯ Tai Chi Wayfarer", meta.title)) }
-                meta http-equiv="X-UA-Compatible" content="IE=edge";
                 meta name="viewport" content="width=device-width, initial-scale=1";
                 meta name="description" content=(meta.description);
                 @if let Some(path) = meta.path {
@@ -407,7 +406,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let static_dir = std::env::var("STATIC_DIR").unwrap_or("dist".to_string());
     let static_dir = FsPath::new(&static_dir);
     assets::init(static_dir);
-    let posts = PostRepository::new(FsPath::new(&post_dir)).map_err(|error| {
+    let posts = PostRepository::new(FsPath::new(&post_dir), static_dir).map_err(|error| {
         tracing::error!(%error, "Failed to load posts");
         error
     })?;
@@ -488,7 +487,10 @@ mod tests {
     fn test_app(site_url: &str, noindex: bool) -> TestResult<Router> {
         let root = FsPath::new(env!("CARGO_MANIFEST_DIR"));
         let state = AppState {
-            posts: Arc::new(PostRepository::new(&root.join("posts"))?),
+            posts: Arc::new(PostRepository::new(
+                &root.join("posts"),
+                &root.join("dist"),
+            )?),
             site_url: site_url.into(),
             noindex,
         };
