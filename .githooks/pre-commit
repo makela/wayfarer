@@ -1,10 +1,20 @@
 #!/bin/sh
-# Refuse to commit unformatted or failing Rust code. Enable with:
+# Refuse to commit unformatted, lint-failing or test-failing Rust code. Enable with:
 #   git config core.hooksPath .githooks
 # (the Nix dev shell does this automatically). Skip with: git commit --no-verify
 if ! cargo fmt --check; then
     echo >&2
     echo "pre-commit: code is not formatted. Run 'cargo fmt', stage the changes and commit again." >&2
+    exit 1
+fi
+
+if ! cargo clippy --version >/dev/null 2>&1; then
+    echo "pre-commit: clippy is not installed. Commit from the Nix dev shell ('nix develop')." >&2
+    exit 1
+fi
+if ! cargo clippy --all-targets --quiet -- -D warnings; then
+    echo >&2
+    echo "pre-commit: clippy found problems. Fix them and commit again." >&2
     exit 1
 fi
 
