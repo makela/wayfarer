@@ -35,9 +35,6 @@ fn layout(title: &str, content: &Markup) -> Markup {
             meta http-equiv="X-UA-Compatible" content="IE=edge";
             meta name="viewport" content="width=device-width, initial-scale=1";
             meta name="description" content="Tai Chi Wayfarer Blog";
-            link rel="preconnect" href="https://fonts.googleapis.com";
-            link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="true";
-            link href="https://fonts.googleapis.com/css2?family=Shadows+Into+Light&family=Gloria+Hallelujah&family=Inter&display=swap" rel="stylesheet";
             link href="/static/styles.css" rel="stylesheet";
             link rel="alternate" type="application/rss+xml" title="Subscribe to Posts" href="/feed.xml";
         }
