@@ -1,8 +1,14 @@
 use chrono::{NaiveDateTime, TimeZone};
-use rss::Item;
+use markdown::mdast::Node;
+use rss::{Guid, Item};
 use std::collections::{BTreeMap, HashMap};
 use std::fs;
 use std::path::Path;
+
+pub const SITE_URL: &str = "https://www.taichiwayfarer.com";
+
+/// Page descriptions are cut to about the length search engines show.
+const DESCRIPTION_LENGTH: usize = 160;
 
 #[derive(Clone)]
 pub struct Post {
@@ -18,15 +24,20 @@ impl From<&Post> for Item {
             .earliest()
             .map(|date| date.to_rfc2822());
 
+        let link = format!("{SITE_URL}/post/{}", post.url);
+
         Item {
             title: Some(post.title.clone()),
-            link: Some(format!("https://www.taichiwayfarer.com/post/{}", post.url)),
+            link: Some(link.clone()),
             description: None,
             author: None,
             categories: Vec::new(),
             comments: None,
             enclosure: None,
-            guid: None,
+            guid: Some(Guid {
+                value: link,
+                permalink: true,
+            }),
             pub_date,
             source: None,
             content: None,
@@ -101,10 +112,59 @@ fn get_posts() -> Result<Vec<Post>, String> {
         .collect()
 }
 
+/// Collects the plain text of a markdown node, without formatting.
+fn plain_text(node: &Node, text: &mut String) {
+    match node {
+        Node::Text(t) => text.push_str(&t.value),
+        Node::InlineCode(code) => text.push_str(&code.value),
+        Node::Break(_) => text.push(' '),
+        _ => {
+            for child in node.children().into_iter().flatten() {
+                plain_text(child, text);
+            }
+        }
+    }
+}
+
+fn first_image(node: &Node) -> Option<&str> {
+    match node {
+        Node::Image(image) => Some(&image.url),
+        _ => node.children()?.iter().find_map(first_image),
+    }
+}
+
+/// Shortens text to at most `max` characters, cutting at a word boundary.
+fn truncate(text: &str, max: usize) -> String {
+    if text.chars().count() <= max {
+        return text.to_string();
+    }
+    let cut: String = text.chars().take(max - 1).collect();
+    let cut = cut.rsplit_once(' ').map_or(cut.as_str(), |(head, _)| head);
+    format!("{}…", cut.trim_end_matches([' ', ',', '.', ';', ':', '-']))
+}
+
+/// Returns the first paragraph as a short description, and the first image.
+fn summarize(input: &str) -> Result<(Option<String>, Option<String>), String> {
+    let tree = markdown::to_mdast(input, &markdown::ParseOptions::default())
+        .map_err(|error| error.to_string())?;
+    let description = tree.children().into_iter().flatten().find_map(|node| {
+        let Node::Paragraph(_) = node else {
+            return None;
+        };
+        let mut text = String::new();
+        plain_text(node, &mut text);
+        let text = text.split_whitespace().collect::<Vec<_>>().join(" ");
+        (!text.is_empty()).then(|| truncate(&text, DESCRIPTION_LENGTH))
+    });
+    Ok((description, first_image(&tree).map(str::to_string)))
+}
+
 #[derive(Clone)]
 pub struct PostPage {
     pub post: Post,
     pub content: String,
+    pub description: String,
+    pub image: Option<String>,
     pub previous_link: Option<PostLink>,
     pub next_link: Option<PostLink>,
 }
@@ -133,11 +193,15 @@ impl PostRepository {
             let input = fs::read_to_string(&file)
                 .map_err(|error| format!("{}: {error}", file.display()))?;
             let content = markdown::to_html(&input);
+            let (description, image) =
+                summarize(&input).map_err(|error| format!("{}: {error}", file.display()))?;
             post_map.insert(
                 post.url.clone(),
                 PostPage {
                     post: post.clone(),
                     content,
+                    description: description.unwrap_or_else(|| post.title.clone()),
+                    image,
                     next_link,
                     previous_link: None,
                 },
@@ -166,9 +230,33 @@ mod tests {
     }
 
     #[test]
-    fn every_post_date_is_valid() {
-        let result = get_posts();
-        assert!(result.is_ok(), "{:?}", result.err());
+    fn every_post_date_is_valid() -> Result<(), String> {
+        for post in get_posts()? {
+            // Fails for times skipped when clocks go forward in Helsinki
+            assert!(
+                Item::from(&post).pub_date.is_some(),
+                "{} has no valid Helsinki time",
+                post.url
+            );
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn summary_uses_first_paragraph_and_image() -> Result<(), String> {
+        let input = "![Group](/static/img/group.jpg)\n\nWe *practiced* the `slow set`.\n\nMore.";
+        let (description, image) = summarize(input)?;
+        assert_eq!(description.as_deref(), Some("We practiced the slow set."));
+        assert_eq!(image.as_deref(), Some("/static/img/group.jpg"));
+        Ok(())
+    }
+
+    #[test]
+    fn long_description_is_cut_at_a_word() {
+        let text = "word ".repeat(50);
+        let description = truncate(text.trim(), DESCRIPTION_LENGTH);
+        assert!(description.chars().count() <= DESCRIPTION_LENGTH);
+        assert!(description.ends_with("word…"), "{description}");
     }
 
     #[test]

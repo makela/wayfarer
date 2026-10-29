@@ -14,7 +14,7 @@ use tower_http::{
         predicate::{NotForContentType, Predicate},
     },
     services::{ServeDir, ServeFile},
-    set_header::SetResponseHeader,
+    set_header::SetResponseHeaderLayer,
     trace,
     trace::TraceLayer,
 };
@@ -22,25 +22,56 @@ use tower_livereload::LiveReloadLayer;
 use tracing::Level;
 use tracing_subscriber::EnvFilter;
 
+use taichiwayfarer::assets;
 use taichiwayfarer::data::get_extra_markup;
-use taichiwayfarer::posts::{PostLink, PostRepository};
+use taichiwayfarer::posts::{PostLink, PostRepository, SITE_URL};
 
 #[derive(Clone)]
 struct AppState {
     posts: Arc<PostRepository>,
 }
 
-fn layout(title: &str, content: &Markup) -> Markup {
+const DEFAULT_IMAGE: &str = "/static/img/2023-to-the-states.jpg";
+
+/// Page details for the document head, search engines and link previews.
+struct PageMeta<'a> {
+    title: &'a str,
+    description: &'a str,
+    /// Canonical path of the page, or `None` for error pages.
+    path: Option<&'a str>,
+    image: Option<&'a str>,
+    og_type: &'a str,
+}
+
+fn absolute_url(path: &str) -> String {
+    if path.starts_with("http") {
+        path.to_string()
+    } else {
+        format!("{SITE_URL}{path}")
+    }
+}
+
+fn layout(meta: &PageMeta, content: &Markup) -> Markup {
     html! {
         (DOCTYPE)
         html lang="en" {
             head {
-                title { (format!("{title} ☯ Tai Chi Wayfarer")) }
                 meta charset="utf-8";
+                title { (format!("{} ☯ Tai Chi Wayfarer", meta.title)) }
                 meta http-equiv="X-UA-Compatible" content="IE=edge";
                 meta name="viewport" content="width=device-width, initial-scale=1";
-                meta name="description" content="Tai Chi Wayfarer Blog";
-                link href="/static/styles.css" rel="stylesheet";
+                meta name="description" content=(meta.description);
+                @if let Some(path) = meta.path {
+                    link rel="canonical" href=(absolute_url(path));
+                    meta property="og:url" content=(absolute_url(path));
+                }
+                meta property="og:site_name" content="Tai Chi Wayfarer";
+                meta property="og:type" content=(meta.og_type);
+                meta property="og:title" content=(meta.title);
+                meta property="og:description" content=(meta.description);
+                meta property="og:image" content=(absolute_url(meta.image.unwrap_or(DEFAULT_IMAGE)));
+                meta name="twitter:card" content="summary_large_image";
+                link href=(assets::url("styles.css")) rel="stylesheet";
                 link rel="alternate" type="application/rss+xml" title="Subscribe to Posts" href="/feed.xml";
             }
             body {
@@ -64,12 +95,18 @@ fn layout(title: &str, content: &Markup) -> Markup {
 
 async fn index(State(state): State<AppState>) -> Markup {
     layout(
-        "Posts",
+        &PageMeta {
+            title: "Posts",
+            description: "In this blog, I share my love of Tai Chi. I hope you enjoy!",
+            path: Some("/"),
+            image: None,
+            og_type: "website",
+        },
         &html! {
             h2 { "Posts" }
             blockquote { "The journey of a thousand miles begins with one step." }
             blockquote { " - Lao Tzu" }
-            img .index src="/static/img/2023-to-the-states.jpg" alt="Tai Chi Wayfarer";
+            img .index src=(DEFAULT_IMAGE) alt="Tai Chi Wayfarer";
             p { "In this blog, I share my love of Tai Chi. I hope you enjoy!" }
             p {
                 "If you'd like to hear about upcoming camps and workshops or when I publish new posts, "
@@ -104,7 +141,7 @@ async fn feed(State(state): State<AppState>) -> impl IntoResponse {
     let pub_date = items.first().and_then(|item| item.pub_date.clone());
     let channel = ChannelBuilder::default()
         .title("Tai Chi Wayfarer")
-        .link("https://www.taichiwayfarer.com")
+        .link(SITE_URL)
         .description("RSS feed of Tai Chi Wayfarer posts.")
         .pub_date(pub_date)
         .items(items)
@@ -117,7 +154,13 @@ async fn feed(State(state): State<AppState>) -> impl IntoResponse {
 
 async fn about() -> Markup {
     layout(
-        "About",
+        &PageMeta {
+            title: "About",
+            description: "Hi, my name is Timo. I've been practicing Tai Chi Chuan since 2002.",
+            path: Some("/about"),
+            image: Some("/static/img/profile.jpg"),
+            og_type: "profile",
+        },
         &html! {
             article {
                 h2 { "About" }
@@ -152,8 +195,15 @@ async fn post(Path(url): Path<String>, State(state): State<AppState>) -> impl In
     match state.posts.post_map.get(&url) {
         Some(page) => {
             let extra_markup = get_extra_markup(&page.post.url);
+            let path = format!("/post/{}", page.post.url);
             layout(
-                &page.post.title,
+                &PageMeta {
+                    title: &page.post.title,
+                    description: &page.description,
+                    path: Some(&path),
+                    image: page.image.as_deref(),
+                    og_type: "article",
+                },
                 &html! {
                     h2 { (page.post.title) }
                     p .date {
@@ -209,6 +259,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let post_dir = std::env::var("POST_DIR").unwrap_or("posts".to_string());
     let static_dir = std::env::var("STATIC_DIR").unwrap_or("dist".to_string());
     let static_dir = std::path::Path::new(&static_dir);
+    assets::init(static_dir);
     let posts = PostRepository::new(std::path::Path::new(&post_dir)).map_err(|error| {
         tracing::error!(%error, "Failed to load posts");
         error
@@ -217,7 +268,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         posts: Arc::new(posts),
     };
 
-    let dev = std::env::var("DEV").is_ok();
+    // Set but empty (`DEV=`) also counts as on, as used in the Justfile.
+    let dev = std::env::var("DEV").is_ok_and(|value| !matches!(value.as_str(), "0" | "false"));
     // Static files are not fingerprinted, so keep the cache short enough for
     // changes to show up within a day. Errors are not cached.
     let cache_control = HeaderValue::from_static(if dev {
@@ -225,19 +277,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     } else {
         "public, max-age=86400"
     });
-    let static_files = SetResponseHeader::overriding(
-        ServeDir::new(static_dir),
-        header::CACHE_CONTROL,
-        move |response: &Response<_>| {
-            response
-                .status()
-                .is_success()
-                .then(|| cache_control.clone())
-        },
-    );
+    let static_files = Router::new()
+        .nest_service("/static", ServeDir::new(static_dir))
+        .route_service(
+            "/favicon.ico",
+            ServeFile::new(static_dir.join("favicon.ico")),
+        )
+        .layer(SetResponseHeaderLayer::overriding(
+            header::CACHE_CONTROL,
+            move |response: &Response<_>| {
+                response
+                    .status()
+                    .is_success()
+                    .then(|| cache_control.clone())
+            },
+        ));
 
     let app = Router::new()
-        .nest_service("/static", static_files)
+        .merge(static_files)
         .route("/", get(index))
         .route("/feed.xml", get(feed))
         .route("/about", get(about))
@@ -245,10 +302,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         // Support also directory style urls
         .route("/about/", get(async || Redirect::permanent("/about")))
         .route("/post/{url}/", get(post_redirect))
-        .route_service(
-            "/favicon.ico",
-            ServeFile::new(static_dir.join("favicon.ico")),
-        )
         .fallback(handler_404)
         .layer(
             TraceLayer::new_for_http()
@@ -292,7 +345,13 @@ async fn handler_404() -> impl IntoResponse {
     (
         StatusCode::NOT_FOUND,
         layout(
-            "Not Found",
+            &PageMeta {
+                title: "Not Found",
+                description: "The page you are looking for does not exist.",
+                path: None,
+                image: None,
+                og_type: "website",
+            },
             &html! {
                 h2 { "Not Found" }
                 p {

@@ -5,20 +5,18 @@ function acceptCookies() {
   renderCookieContent()
 }
 
-function renderVideo(id, videoId) {
-  let element = document.getElementById(id)
-  if (element) {
-    if (localStorage.getItem(storeKey)) {
-      element.innerHTML = video(videoId)
-    } else {
-      element.innerHTML = `
-        <div class="require-cookies">
-          Video requires accepting cookies from YouTube?
-          <button onclick="acceptCookies()">Accept</button>
-          or watch the video in
-          <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank">YouTube</a>
-        </div>`
-    }
+function renderVideo(element) {
+  const videoId = element.dataset.videoId
+  if (localStorage.getItem(storeKey)) {
+    element.innerHTML = video(videoId)
+  } else {
+    element.innerHTML = `
+      <div class="require-cookies">
+        Video requires accepting cookies from YouTube?
+        <button onclick="acceptCookies()">Accept</button>
+        or watch the video in
+        <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank">YouTube</a>
+      </div>`
   }
 }
 
@@ -35,7 +33,7 @@ function video(id) {
   }
 
 function renderCookieContent() {
-  renderVideo("slow-set-video", "mha0hp_cLHE")
+  document.querySelectorAll(".video[data-video-id]").forEach(renderVideo)
 }
 
 renderCookieContent()

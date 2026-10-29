@@ -1,3 +1,4 @@
+use crate::assets;
 use maud::{Markup, html};
 
 fn name_table(names: &[(&str, &str, &str, &str)]) -> Markup {
@@ -561,212 +562,225 @@ pub fn get_sword_names() -> Vec<(&'static str, &'static str, &'static str, &'sta
     ]
 }
 
+const SLOW_SET_VIDEO_ID: &str = "mha0hp_cLHE";
+
+type Term = (&'static str, &'static str, &'static str);
+
 #[expect(clippy::too_many_lines)]
-#[must_use]
-pub fn get_extra_markup(url: &str) -> Markup {
-    if url == "the-slow-set" {
-        let names = get_slow_set_names();
-        html! {
-            div #slow-set-video.video {}
-            script async src="/static/embed-video.js" {}
-            div .names-of-set {
-                // 太極拳架子名目
-                div .full { h3 { "Movements of the Slow Set" } }
-                (name_table(&names))
-            }
+fn get_glossary_terms() -> Vec<(&'static str, Vec<Term>)> {
+    vec![
+        (
+            "Syllabus",
+            vec![
+                ("太极拳", "Tàijíquán", "Tai Chi Chuan"),
+                ("慢拳", "Màn quán", "slow set"),
+                ("快拳", "Kuài quán", "fast set"),
+                ("董家", "Dǒng jiā", "Tung family set"),
+                ("太极刀", "Tàijí dāo", "Tai Chi knife"),
+                ("", "", "Tai Chi sticks"),
+                ("太极剑", "Tàijí jiàn", "Tai Chi sword"),
+                ("开合 | 開合", "Kāi hé", "opening and closing"),
+                ("对练", "Duì liàn", ""),
+                ("太极功", "Tàijí gōng", ""),
+                ("推手", "Tuīshǒu", "push hands"),
+                ("??", "shan shou", ""),
+                ("三步", "Sān bù", "three steps"),
+                ("大捋", "Dà lǚ", "four corners"),
+            ],
+        ),
+        (
+            "Mind and body",
+            vec![
+                ("意", "yì", "intention"),
+                ("身", "shēn", "body"),
+                ("腰", "yāo", "waist"),
+                ("腿", "tuǐ", "leg"),
+                ("手", "shǒu", "hand"),
+                ("捶", "chuí", "fist"),
+                ("根部", "gēnbù", "roots"),
+            ],
+        ),
+        (
+            "Directions",
+            vec![
+                ("左", "zuǒ", "left"),
+                ("右", "yòu", "right"),
+                ("下", "xià", "down"),
+            ],
+        ),
+        (
+            "Techniques",
+            vec![
+                ("掤", "pèng", "ward off"),
+                ("捋", "lǚ", "roll back"),
+                ("擠", "jǐ", "press"),
+                ("按", "àn", "push"),
+                ("靠", "kào", "shoulder strike"),
+                ("肘", "zhǒu", "elbow strike"),
+                ("採", "cǎi", "yank"),
+                ("靠", "liè", "split"),
+                ("分脚", "fēn jiǎo", "side kick"),
+                ("蹬脚", "dēng jiǎo", "heel kick"),
+            ],
+        ),
+        (
+            "Doers",
+            vec![
+                ("", "shīfu", "master"),
+                ("", "lǎoshī", "teacher"),
+                ("", "", "student"),
+            ],
+        ),
+        (
+            "Doings",
+            vec![
+                ("起", "qǐ", "to raise"),
+                ("听", "tīng", "to listen"),
+                ("停", "tíng", "to stop"),
+                ("练习", "liànxí", "to practice"),
+                ("面对", "miàn duì", "to face"),
+                ("弓腿", "gōng tuǐ", "working leg, bow stand"), // bend your legs?
+                ("坐腿", "zuò tuǐ", "sitting on legs"),
+                ("转腰", "zhuǎn yāo", "turn your waist"),
+                ("转身", "zhuǎn shēn", "turn your body"),
+                ("松肩", "sōng jiān", "relax your shoulders"),
+                ("??", "sōng kua", "relax your hips/pelvis?"),
+                ("进步", "Jìnbù", "step forward"),
+                ("上步", "shàng bù", "step again"),
+                ("跟步", "gēn bù", "follow step"),
+                ("半步", "bàn bù", "half step"),
+                ("退步", "tuì bù", "step back"),
+                ("下课", "xià kè", "close class"),
+            ],
+        ),
+        (
+            "Animals",
+            vec![
+                ("雀", "què", "bird"),
+                ("鹤", "hè", "crane"),
+                ("虎", "hǔ ", "tiger"),
+                ("猴", "hóu", "monkey"),
+                ("马", "mǎ", "horse"),
+                ("鸡", "jī", "rooster"),
+                ("蛇", "shé", "snake "),
+                ("鱼", "yú", "fish"),
+                ("龍", "lóng", "dragon"),
+                ("", "", "swallow"),
+                ("", "", "lion"),
+                ("", "", "wasp"),
+                ("", "", "ape"),
+                ("", "", "cat"),
+                ("", "", "mouse"),
+            ],
+        ),
+        (
+            "Adjectives",
+            vec![("白", "bái", "white"), ("大", "dà", "big")],
+        ),
+        (
+            "Energies",
+            vec![
+                ("", "zhan", ""),
+                ("", "nian", ""),
+                ("", "lian", ""),
+                ("", "sui", ""),
+                ("", "kang", ""),
+                ("", "diu", ""),
+                ("", "ding", ""),
+                ("", "bian", ""),
+                ("听劲", "tīng jìn", "listening energy"),
+                ("化劲", "huà jìn", "transforming energy"),
+                ("拿劲", "ná jìn", "controlling energy"),
+                ("发劲", "fā jìn", "releasing energy"),
+                ("发劲", "dong jìn", "releasing energy"),
+            ],
+        ),
+        (
+            "Sayings",
+            vec![
+                ("基本", "jīběn", "basics"), // TODO not right categorization
+                ("很好", "hěn hǎo", "very good"),
+                ("慢慢吃", "màn man chī", "enjoy your meal"),
+                ("再来一次", "zàilái yīcì", "one more time"),
+            ],
+        ),
+    ]
+}
+
+fn get_proverbs() -> Vec<Term> {
+    vec![
+        ("隨機應變", "Suíjīyìngbiàn", "Adapt to changing conditions"),
+        ("熟能生巧", "Shúnéngshēngqiǎo", "Practice makes perfect"),
+        (
+            "欲速則不達",
+            "Yù sù zé bù dá",
+            "Hastiness stands in the way of success",
+        ),
+        (
+            "有人若无人 无人若有人",
+            "Yǒu rén ruò wú rén. Wú rén ruò yǒu rén.",
+            "Somebody seems like nobody. Nobody seems like somebody.",
+        ),
+        (
+            "你不动，我不动， 你欲动，我先动",
+            "Nǐ bù dòng, wǒ bù dòng, nǐ yù dòng, wǒ xiān dòng",
+            "You don't move, I don't move. You intend to move, I'll move first.",
+        ),
+    ]
+}
+
+fn set_markup(title: &str, video_id: Option<&str>, names: &[(&str, &str, &str, &str)]) -> Markup {
+    html! {
+        @if let Some(video_id) = video_id {
+            div .video data-video-id=(video_id) {}
+            script async src=(assets::url("embed-video.js")) {}
         }
-    } else if url == "the-sword-set" {
-        let names = get_sword_names();
-        html! {
-            div #sword-set-video.video {}
-            script async src="/static/embed-video.js" {}
-            div .names-of-set {
-                div .full { h3 { "Movements of the Sword Set" } }
-                (name_table(&names))
-            }
+        div .names-of-set {
+            div .full { h3 { (title) } }
+            (name_table(names))
         }
-    } else if url == "chinese-glossary" {
-        let terms = vec![
-            (
-                "Syllabus",
-                vec![
-                    ("太极拳", "Tàijíquán", "Tai Chi Chuan"),
-                    ("慢拳", "Màn quán", "slow set"),
-                    ("快拳", "Kuài quán", "fast set"),
-                    ("董家", "Dǒng jiā", "Tung family set"),
-                    ("太极刀", "Tàijí dāo", "Tai Chi knife"),
-                    ("", "", "Tai Chi sticks"),
-                    ("太极剑", "Tàijí jiàn", "Tai Chi sword"),
-                    ("开合 | 開合", "Kāi hé", "opening and closing"),
-                    ("对练", "Duì liàn", ""),
-                    ("太极功", "Tàijí gōng", ""),
-                    ("推手", "Tuīshǒu", "push hands"),
-                    ("??", "shan shou", ""),
-                    ("三步", "Sān bù", "three steps"),
-                    ("大捋", "Dà lǚ", "four corners"),
-                ],
-            ),
-            (
-                "Mind and body",
-                vec![
-                    ("意", "yì", "intention"),
-                    ("身", "shēn", "body"),
-                    ("腰", "yāo", "waist"),
-                    ("腿", "tuǐ", "leg"),
-                    ("手", "shǒu", "hand"),
-                    ("捶", "chuí", "fist"),
-                    ("根部", "gēnbù", "roots"),
-                ],
-            ),
-            (
-                "Directions",
-                vec![
-                    ("左", "zuǒ", "left"),
-                    ("右", "yòu", "right"),
-                    ("下", "xià", "down"),
-                ],
-            ),
-            (
-                "Techniques",
-                vec![
-                    ("掤", "pèng", "ward off"),
-                    ("捋", "lǚ", "roll back"),
-                    ("擠", "jǐ", "press"),
-                    ("按", "àn", "push"),
-                    ("靠", "kào", "shoulder strike"),
-                    ("肘", "zhǒu", "elbow strike"),
-                    ("採", "cǎi", "yank"),
-                    ("靠", "liè", "split"),
-                    ("分脚", "fēn jiǎo", "side kick"),
-                    ("蹬脚", "dēng jiǎo", "heel kick"),
-                ],
-            ),
-            (
-                "Doers",
-                vec![
-                    ("", "shīfu", "master"),
-                    ("", "lǎoshī", "teacher"),
-                    ("", "", "student"),
-                ],
-            ),
-            (
-                "Doings",
-                vec![
-                    ("起", "qǐ", "to raise"),
-                    ("听", "tīng", "to listen"),
-                    ("停", "tíng", "to stop"),
-                    ("练习", "liànxí", "to practice"),
-                    ("面对", "miàn duì", "to face"),
-                    ("弓腿", "gōng tuǐ", "working leg, bow stand"), // bend your legs?
-                    ("坐腿", "zuò tuǐ", "sitting on legs"),
-                    ("转腰", "zhuǎn yāo", "turn your waist"),
-                    ("转身", "zhuǎn shēn", "turn your body"),
-                    ("松肩", "sōng jiān", "relax your shoulders"),
-                    ("??", "sōng kua", "relax your hips/pelvis?"),
-                    ("进步", "Jìnbù", "step forward"),
-                    ("上步", "shàng bù", "step again"),
-                    ("跟步", "gēn bù", "follow step"),
-                    ("半步", "bàn bù", "half step"),
-                    ("退步", "tuì bù", "step back"),
-                    ("下课", "xià kè", "close class"),
-                ],
-            ),
-            (
-                "Animals",
-                vec![
-                    ("雀", "què", "bird"),
-                    ("鹤", "hè", "crane"),
-                    ("虎", "hǔ ", "tiger"),
-                    ("猴", "hóu", "monkey"),
-                    ("马", "mǎ", "horse"),
-                    ("鸡", "jī", "rooster"),
-                    ("蛇", "shé", "snake "),
-                    ("鱼", "yú", "fish"),
-                    ("龍", "lóng", "dragon"),
-                    ("", "", "swallow"),
-                    ("", "", "lion"),
-                    ("", "", "wasp"),
-                    ("", "", "ape"),
-                    ("", "", "cat"),
-                    ("", "", "mouse"),
-                ],
-            ),
-            (
-                "Adjectives",
-                vec![("白", "bái", "white"), ("大", "dà", "big")],
-            ),
-            (
-                "Energies",
-                vec![
-                    ("", "zhan", ""),
-                    ("", "nian", ""),
-                    ("", "lian", ""),
-                    ("", "sui", ""),
-                    ("", "kang", ""),
-                    ("", "diu", ""),
-                    ("", "ding", ""),
-                    ("", "bian", ""),
-                    ("听劲", "tīng jìn", "listening energy"),
-                    ("化劲", "huà jìn", "transforming energy"),
-                    ("拿劲", "ná jìn", "controlling energy"),
-                    ("发劲", "fā jìn", "releasing energy"),
-                    ("发劲", "dong jìn", "releasing energy"),
-                ],
-            ),
-            (
-                "Sayings",
-                vec![
-                    ("基本", "jīběn", "basics"), // TODO not right categorization
-                    ("很好", "hěn hǎo", "very good"),
-                    ("慢慢吃", "màn man chī", "enjoy your meal"),
-                    ("再来一次", "zàilái yīcì", "one more time"),
-                ],
-            ),
-        ];
-        let proverbs = vec![
-            ("隨機應變", "Suíjīyìngbiàn", "Adapt to changing conditions"),
-            ("熟能生巧", "Shúnéngshēngqiǎo", "Practice makes perfect"),
-            (
-                "欲速則不達",
-                "Yù sù zé bù dá",
-                "Hastiness stands in the way of success",
-            ),
-            (
-                "有人若无人 无人若有人",
-                "Yǒu rén ruò wú rén. Wú rén ruò yǒu rén.",
-                "Somebody seems like nobody. Nobody seems like somebody.",
-            ),
-            (
-                "你不动，我不动， 你欲动，我先动",
-                "Nǐ bù dòng, wǒ bù dòng, nǐ yù dòng, wǒ xiān dòng",
-                "You don't move, I don't move. You intend to move, I'll move first.",
-            ),
-        ];
-        html! {
-            div .names-of-set {
-                @for (header, terms) in terms {
-                    div .full {
-                        h3 { (header) }
-                    }
-                    @for (characters, pinyin, translation) in terms {
-                        div .characters { (characters) }
-                        div .pinyin { (pinyin) }
-                        div .english { (translation) }
-                    }
+    }
+}
+
+fn glossary_markup() -> Markup {
+    html! {
+        div .names-of-set {
+            @for (header, terms) in get_glossary_terms() {
+                div .full {
+                    h3 { (header) }
                 }
-            }
-
-            div .proverbs {
-                div { h3 { "Proverbs" } }
-
-                @for (characters, pinyin, translation) in proverbs {
+                @for (characters, pinyin, translation) in terms {
                     div .characters { (characters) }
                     div .pinyin { (pinyin) }
                     div .english { (translation) }
                 }
             }
         }
-    } else {
-        html! {}
+
+        div .proverbs {
+            div { h3 { "Proverbs" } }
+
+            @for (characters, pinyin, translation) in get_proverbs() {
+                div .characters { (characters) }
+                div .pinyin { (pinyin) }
+                div .english { (translation) }
+            }
+        }
+    }
+}
+
+#[must_use]
+pub fn get_extra_markup(url: &str) -> Markup {
+    match url {
+        // 太極拳架子名目
+        "the-slow-set" => set_markup(
+            "Movements of the Slow Set",
+            Some(SLOW_SET_VIDEO_ID),
+            &get_slow_set_names(),
+        ),
+        // TODO: add the video id once the sword set video is published
+        "the-sword-set" => set_markup("Movements of the Sword Set", None, &get_sword_names()),
+        "chinese-glossary" => glossary_markup(),
+        _ => html! {},
     }
 }
