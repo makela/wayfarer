@@ -1,7 +1,7 @@
 use axum::{
     Router,
     extract::{Path, State},
-    http::{HeaderMap, HeaderValue, Response, StatusCode, header},
+    http::{HeaderValue, Response, StatusCode, header},
     response::{IntoResponse, Redirect},
     routing::get,
 };
@@ -84,7 +84,7 @@ async fn index(State(state): State<AppState>) -> Markup {
                                 a href=(format!("/post/{}", post.url)) { (post.title) }
                             }
                             div .date {
-                                (format!("{}", post.published_at.format("%B %e, %Y")))
+                                (post.published_at.format("%B %e, %Y"))
                             }
                         }
                     }
@@ -99,14 +99,9 @@ async fn index(State(state): State<AppState>) -> Markup {
     )
 }
 
-#[expect(clippy::unwrap_used)]
 async fn feed(State(state): State<AppState>) -> impl IntoResponse {
     let items: Vec<Item> = state.posts.post_list.iter().map(Item::from).collect();
-    let pub_date = if items.is_empty() {
-        None
-    } else {
-        items[0].pub_date.clone()
-    };
+    let pub_date = items.first().and_then(|item| item.pub_date.clone());
     let channel = ChannelBuilder::default()
         .title("Tai Chi Wayfarer")
         .link("https://www.taichiwayfarer.com")
@@ -114,12 +109,10 @@ async fn feed(State(state): State<AppState>) -> impl IntoResponse {
         .pub_date(pub_date)
         .items(items)
         .build();
-    let mut headers = HeaderMap::new();
-    headers.insert(
-        header::CONTENT_TYPE,
-        "text/xml; charset=utf-8".parse().unwrap(),
-    );
-    (headers, channel.to_string()).into_response()
+    (
+        [(header::CONTENT_TYPE, "text/xml; charset=utf-8")],
+        channel.to_string(),
+    )
 }
 
 async fn about() -> Markup {
