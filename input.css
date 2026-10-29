@@ -152,7 +152,7 @@ a {
 
 p, ul, ol {
   @apply m-6;
-  font-family: 'Inter', cursive;
+  font-family: 'Inter', sans-serif;
 }
 
 p {
