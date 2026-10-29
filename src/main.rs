@@ -1,6 +1,6 @@
 use axum::{
     extract::{Path, State},
-    http::{header, HeaderMap, StatusCode},
+    http::{header, HeaderMap, HeaderValue, Response, StatusCode},
     response::{IntoResponse, Redirect},
     routing::get,
     Router,
@@ -9,7 +9,12 @@ use maud::{html, Markup, PreEscaped, DOCTYPE};
 use rss::{ChannelBuilder, Item};
 use std::sync::Arc;
 use tower_http::{
+    compression::{
+        predicate::{NotForContentType, Predicate},
+        CompressionLayer, DefaultPredicate,
+    },
     services::{ServeDir, ServeFile},
+    set_header::SetResponseHeader,
     trace,
     trace::TraceLayer,
 };
@@ -208,8 +213,27 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         posts: Arc::new(posts),
     };
 
+    let dev = std::env::var("DEV").is_ok();
+    // Static files are not fingerprinted, so keep the cache short enough for
+    // changes to show up within a day. Errors are not cached.
+    let cache_control = HeaderValue::from_static(if dev {
+        "no-cache"
+    } else {
+        "public, max-age=86400"
+    });
+    let static_files = SetResponseHeader::overriding(
+        ServeDir::new(static_dir),
+        header::CACHE_CONTROL,
+        move |response: &Response<_>| {
+            response
+                .status()
+                .is_success()
+                .then(|| cache_control.clone())
+        },
+    );
+
     let app = Router::new()
-        .nest_service("/static", ServeDir::new(static_dir))
+        .nest_service("/static", static_files)
         .route("/", get(index))
         .route("/feed.xml", get(feed))
         .route("/about", get(about))
@@ -228,11 +252,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .on_response(trace::DefaultOnResponse::new().level(Level::INFO)),
         )
         .with_state(state);
-    let app = if std::env::var("DEV").is_ok() {
+    let app = if dev {
         app.layer(LiveReloadLayer::new())
     } else {
         app
     };
+    // Outermost, so that live reload can still inject into uncompressed HTML.
+    // Images are already skipped by the default predicate, and so are fonts here.
+    let app = app.layer(CompressionLayer::new().compress_when(
+        DefaultPredicate::new().and(NotForContentType::const_new("font/woff2")),
+    ));
     let port = std::env::var("PORT").unwrap_or("3000".to_string());
     let bind_addr = format!("0.0.0.0:{port}");
     let listener = tokio::net::TcpListener::bind(&bind_addr)
