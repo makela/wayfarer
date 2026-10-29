@@ -1,8 +1,9 @@
 use axum::{
     Router,
-    extract::{Path, State},
-    http::{HeaderValue, Response, StatusCode, header},
-    response::{IntoResponse, Redirect},
+    extract::{Path, Request, State},
+    http::{HeaderValue, StatusCode, header},
+    middleware::{self, Next},
+    response::{IntoResponse, Redirect, Response},
     routing::get,
 };
 use maud::{DOCTYPE, Markup, PreEscaped, html};
@@ -14,7 +15,6 @@ use tower_http::{
         predicate::{NotForContentType, Predicate},
     },
     services::{ServeDir, ServeFile},
-    set_header::SetResponseHeaderLayer,
     trace,
     trace::TraceLayer,
 };
@@ -137,7 +137,20 @@ async fn index(State(state): State<AppState>) -> Markup {
 }
 
 async fn feed(State(state): State<AppState>) -> impl IntoResponse {
-    let items: Vec<Item> = state.posts.post_list.iter().map(Item::from).collect();
+    let items: Vec<Item> = state
+        .posts
+        .post_list
+        .iter()
+        .map(|post| {
+            let mut item = Item::from(post);
+            item.description = state
+                .posts
+                .post_map
+                .get(&post.url)
+                .map(|page| page.description.clone());
+            item
+        })
+        .collect();
     let pub_date = items.first().and_then(|item| item.pub_date.clone());
     let channel = ChannelBuilder::default()
         .title("Tai Chi Wayfarer")
@@ -150,6 +163,65 @@ async fn feed(State(state): State<AppState>) -> impl IntoResponse {
         [(header::CONTENT_TYPE, "text/xml; charset=utf-8")],
         channel.to_string(),
     )
+}
+
+async fn sitemap(State(state): State<AppState>) -> impl IntoResponse {
+    let xml = html! {
+        (PreEscaped(r#"<?xml version="1.0" encoding="UTF-8"?>"#))
+        urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" {
+            @for path in ["/", "/about"] {
+                url { loc { (SITE_URL) (path) } }
+            }
+            @for post in &state.posts.post_list {
+                url {
+                    loc { (SITE_URL) "/post/" (post.url) }
+                    lastmod { (post.published_at.format("%Y-%m-%d")) }
+                }
+            }
+        }
+    };
+    (
+        [(header::CONTENT_TYPE, "application/xml; charset=utf-8")],
+        xml.into_string(),
+    )
+}
+
+async fn robots() -> impl IntoResponse {
+    (
+        [(header::CONTENT_TYPE, "text/plain; charset=utf-8")],
+        format!("User-agent: *\nDisallow:\n\nSitemap: {SITE_URL}/sitemap.xml\n"),
+    )
+}
+
+/// Sets `Cache-Control` for static files. Versioned URLs (`?v=<hash>`, see
+/// `assets::url`) change with their content, so they are cached for a year;
+/// other files for a day. Errors are not cached, and nothing is in dev mode.
+async fn cache_static(State(dev): State<bool>, request: Request, next: Next) -> Response {
+    let versioned = request
+        .uri()
+        .path()
+        .strip_prefix("/static/")
+        .zip(
+            request
+                .uri()
+                .query()
+                .and_then(|query| query.strip_prefix("v=")),
+        )
+        .is_some_and(|(name, version)| assets::is_current(name, version));
+    let mut response = next.run(request).await;
+    if response.status().is_success() {
+        let value = if dev {
+            "no-cache"
+        } else if versioned {
+            "public, max-age=31536000, immutable"
+        } else {
+            "public, max-age=86400"
+        };
+        response
+            .headers_mut()
+            .insert(header::CACHE_CONTROL, HeaderValue::from_static(value));
+    }
+    response
 }
 
 async fn about() -> Markup {
@@ -270,33 +342,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Set but empty (`DEV=`) also counts as on, as used in the Justfile.
     let dev = std::env::var("DEV").is_ok_and(|value| !matches!(value.as_str(), "0" | "false"));
-    // Static files are not fingerprinted, so keep the cache short enough for
-    // changes to show up within a day. Errors are not cached.
-    let cache_control = HeaderValue::from_static(if dev {
-        "no-cache"
-    } else {
-        "public, max-age=86400"
-    });
     let static_files = Router::new()
         .nest_service("/static", ServeDir::new(static_dir))
         .route_service(
             "/favicon.ico",
             ServeFile::new(static_dir.join("favicon.ico")),
         )
-        .layer(SetResponseHeaderLayer::overriding(
-            header::CACHE_CONTROL,
-            move |response: &Response<_>| {
-                response
-                    .status()
-                    .is_success()
-                    .then(|| cache_control.clone())
-            },
-        ));
+        .layer(middleware::from_fn_with_state(dev, cache_static));
 
     let app = Router::new()
         .merge(static_files)
         .route("/", get(index))
         .route("/feed.xml", get(feed))
+        .route("/sitemap.xml", get(sitemap))
+        .route("/robots.txt", get(robots))
         .route("/about", get(about))
         .route("/post/{url}", get(post))
         // Support also directory style urls

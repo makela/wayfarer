@@ -29,6 +29,15 @@ pub fn init(static_dir: &Path) {
     let _ = VERSIONS.set(versions);
 }
 
+/// Whether `version` is the current content hash of the static file `name`.
+#[must_use]
+pub fn is_current(name: &str, version: &str) -> bool {
+    VERSIONS
+        .get()
+        .and_then(|versions| versions.get(name))
+        .is_some_and(|current| current == version)
+}
+
 /// URL of a static file, e.g. `/static/styles.css?v=1a2b3c4d5e6f7a8b`.
 #[must_use]
 pub fn url(name: &str) -> String {
