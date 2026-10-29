@@ -716,9 +716,10 @@ pub fn get_extra_markup(url: &str) -> Markup {
             (
                 "Sayings",
                 vec![
-                    ("很好", "Hěn hǎo", "very good"),
-                    ("慢慢吃", "Màn man chī", "Enjoy your meal"),
-                    ("", "zailaiiizi", "One more time"),
+                    ("基本", "jīběn", "basics"), // TODO not right categorization
+                    ("很好", "hěn hǎo", "very good"),
+                    ("慢慢吃", "màn man chī", "enjoy your meal"),
+                    ("再来一次", "zàilái yīcì", "one more time"),
                 ],
             ),
         ];
