@@ -101,6 +101,29 @@ mod tests {
     }
 
     #[test]
+    fn images_are_formats_the_build_shrinks() -> std::io::Result<()> {
+        // nix/package.nix resizes these and removes their metadata, such as
+        // GPS locations. Others would be served as they are.
+        let img = Path::new(env!("CARGO_MANIFEST_DIR")).join("dist/img");
+        let mut others = Vec::new();
+        for entry in std::fs::read_dir(img)? {
+            let path = entry?.path();
+            let extension = path
+                .extension()
+                .and_then(|extension| extension.to_str())
+                .map(str::to_lowercase);
+            if !matches!(extension.as_deref(), Some("jpg" | "jpeg" | "png")) {
+                others.push(path);
+            }
+        }
+        assert!(
+            others.is_empty(),
+            "convert these to JPEG or PNG: {others:?}"
+        );
+        Ok(())
+    }
+
+    #[test]
     fn preloaded_fonts_match_stylesheet() {
         let css = include_str!("../input.css");
         for font in PRELOADED_FONTS {

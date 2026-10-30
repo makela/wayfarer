@@ -41,14 +41,22 @@ rustPlatform.buildRustPackage {
     cp -r posts dist $share/
     tailwindcss -i ./input.css -o $share/dist/styles.css --minify
 
-    # Photos: at most 1200 px (twice the content column), converted to sRGB
+    # Images: at most 1200 px (twice the content column), converted to sRGB
     # and without metadata such as GPS locations. The names stay the same, so
     # posts keep referring to them as before. The output path is absolute:
     # vipsthumbnail would otherwise write next to the input file.
-    for photo in dist/img/*.jpg; do
-      vipsthumbnail "$photo" --size '1200x1200>' --export-profile srgb \
-        -o "$share/dist/img/%s.jpg[Q=80,keep=none,optimize_coding,interlace]"
+    # A test in src/assets.rs makes sure dist/img has only these formats.
+    shopt -s nullglob nocaseglob
+    for image in dist/img/*.jpg dist/img/*.jpeg dist/img/*.png; do
+      name=$(basename "$image")
+      case "$name" in
+        *.[pP][nN][gG]) options="keep=none,compression=9" ;;
+        *) options="Q=80,keep=none,optimize_coding,interlace" ;;
+      esac
+      vipsthumbnail "$image" --size '1200x1200>' --export-profile srgb \
+        -o "$share/dist/img/$name[$options]"
     done
+    shopt -u nullglob nocaseglob
   '';
 
   meta = {
