@@ -2,3 +2,4 @@
 dist/styles.css
 .direnv
 /result
+/.env

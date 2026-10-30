@@ -5,8 +5,8 @@ watch: dev tailwind
 # watched too, so a rebuilt dist/styles.css gets a new asset hash.
 dev:
     DEV= watchexec --restart --no-vcs-ignore --no-project-ignore \
-        --watch src --watch posts --watch dist --watch Cargo.toml --watch .env \
-        -- cargo run
+        --watch src --watch posts --watch dist --watch Cargo.toml \
+        {{ if path_exists(".env") == "true" { "--watch .env" } else { "" } }} -- cargo run
 
 tailwind:
     tailwindcss -i ./input.css -o ./dist/styles.css --watch
