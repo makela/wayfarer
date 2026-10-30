@@ -40,9 +40,6 @@ struct AppState {
     noindex: bool,
 }
 
-/// Header photo of the index page, also the link preview image of pages without one.
-const DEFAULT_IMAGE: &str = "img/2023-to-the-states.jpg";
-
 /// Page details for the document head, search engines and link previews.
 struct PageMeta<'a> {
     site_url: &'a str,
@@ -81,17 +78,17 @@ fn layout(meta: &PageMeta, content: &Markup) -> Markup {
                 meta property="og:type" content=(meta.og_type);
                 meta property="og:title" content=(meta.title);
                 meta property="og:description" content=(meta.description);
-                meta property="og:image" content=(absolute_url(meta.site_url, &meta.image.map_or_else(|| format!("/static/{DEFAULT_IMAGE}"), str::to_string)));
+                meta property="og:image" content=(absolute_url(meta.site_url, &meta.image.map_or_else(|| assets::path(assets::HEADER_PHOTO), str::to_string)));
                 meta name="twitter:card" content="summary_large_image";
-                link href=(assets::url("styles.css")) rel="stylesheet";
+                link href=(assets::url(assets::STYLESHEET)) rel="stylesheet";
                 // The .ico for browsers without SVG icons; sizes keeps others from preferring it.
-                link rel="icon" href="/favicon.ico" sizes="32x32";
-                link rel="icon" href=(assets::url("favicon.svg")) type="image/svg+xml";
-                link rel="apple-touch-icon" href=(assets::url("apple-touch-icon.png"));
+                link rel="icon" href=(format!("/{}", assets::ICO_ICON)) sizes="32x32";
+                link rel="icon" href=(assets::url(assets::SVG_ICON)) type="image/svg+xml";
+                link rel="apple-touch-icon" href=(assets::url(assets::TOUCH_ICON));
                 // Fetch the fonts of the title and text together with the stylesheet
                 // instead of after it. The URLs must match what styles.css resolves to.
                 @for font in assets::PRELOADED_FONTS {
-                    link rel="preload" href=(format!("/static/{font}")) as="font" type="font/woff2" crossorigin;
+                    link rel="preload" href=(assets::path(font)) as="font" type="font/woff2" crossorigin;
                 }
                 link rel="alternate" type="application/rss+xml" title="Subscribe to Posts" href="/feed.xml";
             }
@@ -108,7 +105,7 @@ fn layout(meta: &PageMeta, content: &Markup) -> Markup {
                     }
                     div .support-me {
                         a .kofi-button href="https://ko-fi.com/taichiwayfarer" title="Support me on ko-fi.com" target="_blank" rel="noopener" {
-                            (static_image("img/kofi-cup.png", None, "Support me on Ko-fi"))
+                            (static_image(assets::KOFI_ICON, None, "Support me on Ko-fi"))
                         }
                     }
                 }
@@ -119,11 +116,12 @@ fn layout(meta: &PageMeta, content: &Markup) -> Markup {
 }
 
 /// An image from the static files, with its width and height so the page
-/// doesn't jump while it loads. The file must be in `assets::LINKED_FILES`.
+/// doesn't jump while it loads. Use the image names in `assets`, whose sizes
+/// are read at startup.
 fn static_image(name: &str, class: Option<&str>, alt: &str) -> Markup {
     let size = assets::image_size(name);
     html! {
-        img class=[class] src=(format!("/static/{name}")) alt=(alt)
+        img class=[class] src=(assets::path(name)) alt=(alt)
             width=[size.map(|(width, _)| width)] height=[size.map(|(_, height)| height)];
     }
 }
@@ -160,7 +158,7 @@ async fn index(State(state): State<AppState>) -> Markup {
         &html! {
             h2 { "Posts" }
             (quote("The journey of a thousand miles begins with one step.", "Lao Tzu"))
-            (static_image(DEFAULT_IMAGE, Some("index"), "Tai Chi Wayfarer"))
+            (static_image(assets::HEADER_PHOTO, Some("index"), "Tai Chi Wayfarer"))
             p { "In this blog, I share my love of Tai Chi. I hope you enjoy!" }
             p {
                 "If you'd like to hear about upcoming camps and workshops or when I publish new posts, "
@@ -181,7 +179,7 @@ async fn index(State(state): State<AppState>) -> Markup {
             }
             p .reference {
                 a href="/feed.xml" rel="external" {
-                    (static_image("img/rss.png", Some("rss"), "Subscribe to Posts"))
+                    (static_image(assets::RSS_ICON, Some("rss"), "Subscribe to Posts"))
                 }
             }
         },
@@ -303,20 +301,21 @@ async fn cache_static(State(dev): State<bool>, request: Request, next: Next) -> 
 }
 
 async fn about(State(state): State<AppState>) -> Markup {
+    let profile_photo = assets::path(assets::PROFILE_PHOTO);
     layout(
         &PageMeta {
             site_url: &state.site_url,
             title: "About",
             description: "Hi, my name is Timo. I've been practicing Tai Chi Chuan since 2002.",
             path: Some("/about"),
-            image: Some("/static/img/profile.jpg"),
+            image: Some(&profile_photo),
             og_type: "profile",
         },
         &html! {
             article {
                 h2 { "About" }
                 (quote("Be still like a mountain and flow like a great river.", "Lao Tzu"))
-                (static_image("img/profile.jpg", Some("index"), "Profile picture"))
+                (static_image(assets::PROFILE_PHOTO, Some("index"), "Profile picture"))
                 p { "Hi, my name is Timo. I've been practicing Tai Chi Chuan since 2002. Having this art in my life makes me feel so lucky, happy and grateful." }
                 p {
                     "I practice Yang-style Tai Chi in the "
@@ -392,8 +391,8 @@ fn app(state: AppState, static_dir: &FsPath, dev: bool) -> Router {
             ServeDir::new(static_dir).not_found_service(handler_404.with_state(state.clone())),
         )
         .route_service(
-            "/favicon.ico",
-            ServeFile::new(static_dir.join("favicon.ico")),
+            &format!("/{}", assets::ICO_ICON),
+            ServeFile::new(static_dir.join(assets::ICO_ICON)),
         )
         .layer(middleware::from_fn_with_state(dev, cache_static));
 

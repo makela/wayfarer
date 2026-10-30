@@ -733,7 +733,7 @@ fn set_markup(title: &str, video_id: Option<&str>, names: &[(&str, &str, &str, &
     html! {
         @if let Some(video_id) = video_id {
             div .video data-video-id=(video_id) {}
-            script async src=(assets::url("embed-video.js")) {}
+            script async src=(assets::url(assets::VIDEO_SCRIPT)) {}
         }
         div .names-of-set {
             div .full { h3 { (title) } }

@@ -3,14 +3,24 @@ use std::hash::{DefaultHasher, Hasher};
 use std::path::Path;
 use std::sync::OnceLock;
 
+// The static files pages link to, by their path under the static directory.
+// Code refers to them only through these names, so the startup check below
+// looks for exactly the files the pages use.
+pub const STYLESHEET: &str = "styles.css";
+pub const VIDEO_SCRIPT: &str = "embed-video.js";
+pub const SVG_ICON: &str = "favicon.svg";
+pub const TOUCH_ICON: &str = "apple-touch-icon.png";
+/// Served at the site root, `/favicon.ico`, where browsers look for it.
+pub const ICO_ICON: &str = "favicon.ico";
+pub const KOFI_ICON: &str = "img/kofi-cup.png";
+pub const RSS_ICON: &str = "img/rss.png";
+/// Header photo of the index page, also the link preview image of pages without one.
+pub const HEADER_PHOTO: &str = "img/2023-to-the-states.jpg";
+pub const PROFILE_PHOTO: &str = "img/profile.jpg";
+
 /// Static files whose URLs carry a content hash, so browsers fetch them
 /// again whenever they change.
-const VERSIONED_FILES: &[&str] = &[
-    "styles.css",
-    "embed-video.js",
-    "favicon.svg",
-    "apple-touch-icon.png",
-];
+const VERSIONED_FILES: &[&str] = &[STYLESHEET, VIDEO_SCRIPT, SVG_ICON, TOUCH_ICON];
 
 /// Latin subsets of the fonts every page shows at once (title and text), which
 /// pages ask the browser to fetch together with the stylesheet. They must match
@@ -22,13 +32,13 @@ pub const PRELOADED_FONTS: &[&str] = &[
 
 /// Other static files the page layout links to. Images in posts are checked
 /// when the posts are loaded.
-const LINKED_FILES: &[&str] = &[
-    "favicon.ico",
-    "img/kofi-cup.png",
-    "img/rss.png",
-    "img/2023-to-the-states.jpg",
-    "img/profile.jpg",
-];
+const LINKED_FILES: &[&str] = &[ICO_ICON, KOFI_ICON, RSS_ICON, HEADER_PHOTO, PROFILE_PHOTO];
+
+/// Unversioned URL of a static file, e.g. `/static/img/profile.jpg`.
+#[must_use]
+pub fn path(name: &str) -> String {
+    format!("/static/{name}")
+}
 
 static VERSIONS: OnceLock<HashMap<&'static str, String>> = OnceLock::new();
 
@@ -96,8 +106,8 @@ pub fn is_current(name: &str, version: &str) -> bool {
 #[must_use]
 pub fn url(name: &str) -> String {
     match VERSIONS.get().and_then(|versions| versions.get(name)) {
-        Some(version) => format!("/static/{name}?v={version}"),
-        None => format!("/static/{name}"),
+        Some(version) => format!("{}?v={version}", path(name)),
+        None => path(name),
     }
 }
 
