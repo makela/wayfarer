@@ -91,15 +91,19 @@ fn layout(meta: &PageMeta, content: &Markup) -> Markup {
             }
             body {
                 h1 { a href="/" { "Tai Chi Wayfarer" } }
-                div .support-me {
-                    a .kofi-button href="https://ko-fi.com/D1D61VF42Q" title="Support me on ko-fi.com" target="_blank" rel="noopener" {
-                        img src="/static/img/kofi-cup.png" alt="Support me on Ko-fi";
+                // In reading order, so keyboard and screen reader users meet the
+                // links in the same order as they are shown.
+                div .top-bar {
+                    nav {
+                        ul {
+                            li { a href="/" aria-current=[(meta.path == Some("/")).then_some("page")] { "Posts" } }
+                            li { a href="/about" aria-current=[(meta.path == Some("/about")).then_some("page")] { "About" } }
+                        }
                     }
-                }
-                nav {
-                    ul {
-                        li { a href="/" aria-current=[(meta.path == Some("/")).then_some("page")] { "Posts" } }
-                        li { a href="/about" aria-current=[(meta.path == Some("/about")).then_some("page")] { "About" } }
+                    div .support-me {
+                        a .kofi-button href="https://ko-fi.com/taichiwayfarer" title="Support me on ko-fi.com" target="_blank" rel="noopener" {
+                            img src="/static/img/kofi-cup.png" alt="Support me on Ko-fi";
+                        }
                     }
                 }
                 (content)
@@ -622,7 +626,9 @@ mod tests {
         assert!(about.contains(r#"<a href="/">Posts</a>"#));
         // Keyboard and screen reader order must match the visual order.
         let posts = about.find(">Posts</a>").ok_or("no Posts link")?;
-        assert!(posts < about.find(">About</a>").ok_or("no About link")?);
+        let about_link = about.find(">About</a>").ok_or("no About link")?;
+        let kofi = about.find("ko-fi.com").ok_or("no Ko-fi link")?;
+        assert!(posts < about_link && about_link < kofi);
         let (_, post) = fetch(&app, "/post/the-slow-set").await?;
         assert!(!post.contains("aria-current"));
         Ok(())

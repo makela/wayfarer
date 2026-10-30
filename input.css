@@ -245,8 +245,11 @@ figure.quote {
   @apply italic;
 }
 
-div.support-me {
-  @apply float-end mr-4;
+div.top-bar {
+  @apply flex justify-end items-center mr-4;
+}
+div.top-bar nav ul {
+  @apply m-0;
 }
 a.kofi-button {
   @apply inline-flex items-center h-10 px-3 rounded-[7px] bg-slate-800 shadow-sm hover:opacity-85;
