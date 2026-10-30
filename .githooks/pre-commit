@@ -1,25 +1,18 @@
-#!/bin/sh
-# Refuse to commit unformatted, lint-failing or test-failing Rust code. Enable with:
-#   git config core.hooksPath .githooks
-# (the Nix dev shell does this automatically). Skip with: git commit --no-verify
-if ! cargo fmt --check; then
-    echo >&2
-    echo "pre-commit: code is not formatted. Run 'cargo fmt', stage the changes and commit again." >&2
-    exit 1
+#!/usr/bin/env bash
+# Runs formatting, lint and test checks before each commit.
+# Enabled by the dev shell (core.hooksPath = .githooks). Skip once with `git commit --no-verify`.
+set -euo pipefail
+
+# Re-run inside the flake dev shell when the toolchain is not on PATH (e.g. GUI git clients).
+if ! command -v cargo-clippy >/dev/null 2>&1 && [ -z "${IN_NIX_SHELL:-}" ]; then
+    exec nix develop --command "$0" "$@"
 fi
 
-if ! cargo clippy --version >/dev/null 2>&1; then
-    echo "pre-commit: clippy is not installed. Commit from the Nix dev shell ('nix develop')." >&2
-    exit 1
-fi
-if ! cargo clippy --all-targets --quiet -- -D warnings; then
-    echo >&2
-    echo "pre-commit: clippy found problems. Fix them and commit again." >&2
-    exit 1
-fi
+echo "pre-commit: cargo fmt --check"
+cargo fmt --check
 
-if ! cargo test --quiet; then
-    echo >&2
-    echo "pre-commit: tests failed. Fix them and commit again." >&2
-    exit 1
-fi
+echo "pre-commit: cargo clippy"
+cargo clippy --all-targets --locked -- -D warnings
+
+echo "pre-commit: cargo test"
+cargo test --locked --quiet
