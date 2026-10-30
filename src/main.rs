@@ -1,6 +1,7 @@
 use axum::{
     Router,
     extract::{Path, Request, State},
+    handler::Handler,
     http::{HeaderName, HeaderValue, StatusCode, header},
     middleware::{self, Next},
     response::{IntoResponse, Redirect, Response},
@@ -67,6 +68,8 @@ fn layout(meta: &PageMeta, content: &Markup) -> Markup {
                 meta charset="utf-8";
                 title { (format!("{} ☯ Tai Chi Wayfarer", meta.title)) }
                 meta name="viewport" content="width=device-width, initial-scale=1";
+                // Mobile browsers tint their toolbar to match the page background (slate-900).
+                meta name="theme-color" content="#0f172b";
                 meta name="description" content=(meta.description);
                 @if let Some(path) = meta.path {
                     link rel="canonical" href=(absolute_url(meta.site_url, path));
@@ -79,6 +82,11 @@ fn layout(meta: &PageMeta, content: &Markup) -> Markup {
                 meta property="og:image" content=(absolute_url(meta.site_url, meta.image.unwrap_or(DEFAULT_IMAGE)));
                 meta name="twitter:card" content="summary_large_image";
                 link href=(assets::url("styles.css")) rel="stylesheet";
+                // Fetch the fonts of the title and text together with the stylesheet
+                // instead of after it. The URLs must match what styles.css resolves to.
+                @for font in assets::PRELOADED_FONTS {
+                    link rel="preload" href=(format!("/static/{font}")) as="font" type="font/woff2" crossorigin;
+                }
                 link rel="alternate" type="application/rss+xml" title="Subscribe to Posts" href="/feed.xml";
             }
             body {
@@ -90,12 +98,21 @@ fn layout(meta: &PageMeta, content: &Markup) -> Markup {
                 }
                 nav {
                     ul {
-                        li { a href="/about" { "About" } }
-                        li { a href="/" { "Posts" } }
+                        li { a href="/about" aria-current=[(meta.path == Some("/about")).then_some("page")] { "About" } }
+                        li { a href="/" aria-current=[(meta.path == Some("/")).then_some("page")] { "Posts" } }
                     }
                 }
                 (content)
             }
+        }
+    }
+}
+
+fn quote(text: &str, author: &str) -> Markup {
+    html! {
+        figure .quote {
+            blockquote { (text) }
+            figcaption { "- " (author) }
         }
     }
 }
@@ -112,8 +129,7 @@ async fn index(State(state): State<AppState>) -> Markup {
         },
         &html! {
             h2 { "Posts" }
-            blockquote { "The journey of a thousand miles begins with one step." }
-            blockquote { " - Lao Tzu" }
+            (quote("The journey of a thousand miles begins with one step.", "Lao Tzu"))
             img .index src=(DEFAULT_IMAGE) alt="Tai Chi Wayfarer";
             p { "In this blog, I share my love of Tai Chi. I hope you enjoy!" }
             p {
@@ -263,8 +279,7 @@ async fn about(State(state): State<AppState>) -> Markup {
         &html! {
             article {
                 h2 { "About" }
-                blockquote { "Be still like a mountain and flow like a great river." }
-                blockquote { " - Lao Tzu" }
+                (quote("Be still like a mountain and flow like a great river.", "Lao Tzu"))
                 img .index src="/static/img/profile.jpg" alt="Profile picture";
                 p { "Hi, my name is Timo. I've been practicing Tai Chi Chuan since 2002. Having this art in my life makes me feel so lucky, happy and grateful." }
                 p {
@@ -338,7 +353,11 @@ async fn post_redirect(
 fn app(state: AppState, static_dir: &FsPath, dev: bool) -> Router {
     let noindex = state.noindex;
     let static_files = Router::new()
-        .nest_service("/static", ServeDir::new(static_dir))
+        // Missing files get the same not found page as missing pages.
+        .nest_service(
+            "/static",
+            ServeDir::new(static_dir).not_found_service(handler_404.with_state(state.clone())),
+        )
         .route_service(
             "/favicon.ico",
             ServeFile::new(static_dir.join("favicon.ico")),
@@ -405,6 +424,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let post_dir = std::env::var("POST_DIR").unwrap_or("posts".to_string());
     let static_dir = std::env::var("STATIC_DIR").unwrap_or("dist".to_string());
     let static_dir = FsPath::new(&static_dir);
+    // A wrong STATIC_DIR would otherwise serve pages without styles or images.
+    let missing = assets::missing(static_dir);
+    if !missing.is_empty() {
+        tracing::error!(static_dir = %static_dir.display(), ?missing, "Static files not found, check STATIC_DIR");
+        return Err(format!(
+            "static files not found in {}: {}",
+            static_dir.display(),
+            missing.join(", ")
+        )
+        .into());
+    }
     assets::init(static_dir);
     let posts = PostRepository::new(FsPath::new(&post_dir), static_dir).map_err(|error| {
         tracing::error!(%error, "Failed to load posts");
@@ -418,7 +448,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
     tracing::info!(site_url = %state.site_url, noindex = state.noindex, "Site settings");
 
-    let app = app(state, static_dir, env_flag("DEV"));
+    let dev = env_flag("DEV");
+    let app = app(state, static_dir, dev);
     // Behind a reverse proxy, set HOST=127.0.0.1 to accept local connections only.
     let host = std::env::var("HOST").unwrap_or("0.0.0.0".to_string());
     let port = std::env::var("PORT").unwrap_or("3000".to_string());
@@ -438,12 +469,54 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         error
     })?;
     tracing::info!(address = %local_addr, "HTTP server listening");
-    if let Err(error) = axum::serve(listener, app.into_make_service()).await {
+    let serve = axum::serve(listener, app.into_make_service());
+    let result = if dev {
+        // Live reload keeps an event stream open for each browser tab, which a
+        // graceful shutdown would wait for, so dev restarts stop at once.
+        tokio::select! {
+            result = serve.into_future() => result,
+            () = shutdown_signal() => Ok(()),
+        }
+    } else {
+        // Finish requests in progress, e.g. when systemd stops the service.
+        serve.with_graceful_shutdown(shutdown_signal()).await
+    };
+    if let Err(error) = result {
         tracing::error!(address = %local_addr, %error, "HTTP server failed");
         return Err(error.into());
     }
     tracing::info!(address = %local_addr, "HTTP server stopped");
     Ok(())
+}
+
+/// Completes on Ctrl-C or, on Unix, SIGTERM (sent e.g. by systemd and watchexec).
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        if let Err(error) = tokio::signal::ctrl_c().await {
+            tracing::error!(%error, "Failed to listen for Ctrl-C");
+            std::future::pending::<()>().await;
+        }
+    };
+    #[cfg(unix)]
+    let terminate = async {
+        match tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate()) {
+            Ok(mut signal) => {
+                signal.recv().await;
+            }
+            Err(error) => {
+                tracing::error!(%error, "Failed to listen for SIGTERM");
+                std::future::pending::<()>().await;
+            }
+        }
+    };
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        () = ctrl_c => {}
+        () = terminate => {}
+    }
+    tracing::info!("Shutdown signal received");
 }
 
 async fn handler_404(State(state): State<AppState>) -> Response {
@@ -524,6 +597,31 @@ mod tests {
         let (_, robots) = fetch(&app, "/robots.txt").await?;
         assert!(robots.contains("Sitemap: https://alt.example.com/sitemap.xml"));
         assert!(robots.contains("Disallow:\n"));
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn missing_static_file_gets_not_found_page() -> TestResult {
+        let app = test_app("https://www.example.com", false)?;
+        let request = Request::builder()
+            .uri("/static/no-such-file.css")
+            .body(Body::empty())?;
+        let response = app.oneshot(request).await?;
+        assert_eq!(response.status(), StatusCode::NOT_FOUND);
+        assert!(!response.headers().contains_key(header::CACHE_CONTROL));
+        let body = to_bytes(response.into_body(), usize::MAX).await?;
+        assert!(String::from_utf8(body.to_vec())?.contains("<h2>Not Found</h2>"));
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn nav_marks_current_page() -> TestResult {
+        let app = test_app("https://www.example.com", false)?;
+        let (_, about) = fetch(&app, "/about").await?;
+        assert!(about.contains(r#"<a href="/about" aria-current="page">About</a>"#));
+        assert!(about.contains(r#"<a href="/">Posts</a>"#));
+        let (_, post) = fetch(&app, "/post/the-slow-set").await?;
+        assert!(!post.contains("aria-current"));
         Ok(())
     }
 

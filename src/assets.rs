@@ -7,12 +7,42 @@ use std::sync::OnceLock;
 /// again whenever they change.
 const VERSIONED_FILES: &[&str] = &["styles.css", "embed-video.js"];
 
+/// Latin subsets of the fonts every page shows at once (title and text), which
+/// pages ask the browser to fetch together with the stylesheet. They must match
+/// the `@font-face` URLs in input.css.
+pub const PRELOADED_FONTS: &[&str] = &[
+    "fonts/shadows-into-light-latin.woff2",
+    "fonts/inter-latin.woff2",
+];
+
+/// Other static files the page layout links to. Images in posts are checked
+/// when the posts are loaded.
+const LINKED_FILES: &[&str] = &[
+    "favicon.ico",
+    "img/kofi-cup.png",
+    "img/rss.png",
+    "img/2023-to-the-states.jpg",
+    "img/profile.jpg",
+];
+
 static VERSIONS: OnceLock<HashMap<&'static str, String>> = OnceLock::new();
 
 fn content_hash(bytes: &[u8]) -> String {
     let mut hasher = DefaultHasher::new();
     hasher.write(bytes);
     format!("{:016x}", hasher.finish())
+}
+
+/// The files pages link to that are not in `static_dir`.
+#[must_use]
+pub fn missing(static_dir: &Path) -> Vec<&'static str> {
+    VERSIONED_FILES
+        .iter()
+        .chain(PRELOADED_FONTS)
+        .chain(LINKED_FILES)
+        .copied()
+        .filter(|name| !static_dir.join(name).is_file())
+        .collect()
 }
 
 /// Hashes the versioned files in `static_dir`. Call once at startup.
@@ -55,5 +85,26 @@ mod tests {
     fn hash_changes_with_content() {
         assert_eq!(content_hash(b"a"), content_hash(b"a"));
         assert_ne!(content_hash(b"a"), content_hash(b"b"));
+    }
+
+    #[test]
+    fn missing_lists_files_not_in_static_dir() {
+        let dist = Path::new(env!("CARGO_MANIFEST_DIR")).join("dist");
+        // styles.css is built by Tailwind, so it may not exist yet.
+        assert!(
+            missing(&dist).iter().all(|&name| name == "styles.css"),
+            "{:?}",
+            missing(&dist)
+        );
+        let all = VERSIONED_FILES.len() + PRELOADED_FONTS.len() + LINKED_FILES.len();
+        assert_eq!(missing(Path::new("no-such-dir")).len(), all);
+    }
+
+    #[test]
+    fn preloaded_fonts_match_stylesheet() {
+        let css = include_str!("../input.css");
+        for font in PRELOADED_FONTS {
+            assert!(css.contains(&format!("url({font})")), "{font}");
+        }
     }
 }

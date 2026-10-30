@@ -204,7 +204,7 @@ article ol {
   @apply list-decimal;
 }
 
-blockquote {
+figure.quote {
   @apply mx-6 px-2 text-lg italic border-l-2;
   font-family: 'Gloria Hallelujah', cursive;
 }
