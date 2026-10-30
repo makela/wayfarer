@@ -9,6 +9,13 @@ use std::path::Path;
 /// Page descriptions are cut to about the length search engines show.
 const DESCRIPTION_LENGTH: usize = 160;
 
+/// Path of the page of the post named `url`, e.g. `/post/the-slow-set`.
+/// The one place post links are formatted; the routes in main.rs match it.
+#[must_use]
+pub fn post_path(url: &str) -> String {
+    format!("/post/{url}")
+}
+
 #[derive(Clone)]
 pub struct Post {
     pub title: String,
@@ -17,6 +24,12 @@ pub struct Post {
 }
 
 impl Post {
+    /// Path of the post's page, see [`post_path`].
+    #[must_use]
+    pub fn path(&self) -> String {
+        post_path(&self.url)
+    }
+
     /// The post as an RSS item, linking to it under `site_url`.
     #[must_use]
     pub fn to_item(&self, site_url: &str) -> Item {
@@ -25,7 +38,7 @@ impl Post {
             .earliest()
             .map(|date| date.to_rfc2822());
 
-        let link = format!("{site_url}/post/{}", self.url);
+        let link = format!("{site_url}{}", self.path());
 
         Item {
             title: Some(self.title.clone()),
@@ -53,6 +66,14 @@ impl Post {
 pub struct PostLink {
     pub title: String,
     pub url: String,
+}
+
+impl PostLink {
+    /// Path of the linked post's page, see [`post_path`].
+    #[must_use]
+    pub fn path(&self) -> String {
+        post_path(&self.url)
+    }
 }
 
 /// Published posts as (title, url, published at in Helsinki time "YYYY-MM-DD HH:MM").

@@ -26,7 +26,7 @@ use tracing_subscriber::EnvFilter;
 
 use taichiwayfarer::assets;
 use taichiwayfarer::data::get_extra_markup;
-use taichiwayfarer::posts::{PostLink, PostRepository};
+use taichiwayfarer::posts::{PostLink, PostRepository, post_path};
 
 const DEFAULT_SITE_URL: &str = "https://www.taichiwayfarer.com";
 
@@ -146,7 +146,7 @@ async fn index(State(state): State<AppState>) -> Markup {
                     li {
                         div  {
                             div {
-                                a href=(format!("/post/{}", post.url)) { (post.title) }
+                                a href=(post.path()) { (post.title) }
                             }
                             div .date {
                                 (post.published_at.format("%B %e, %Y"))
@@ -202,7 +202,7 @@ async fn sitemap(State(state): State<AppState>) -> impl IntoResponse {
             }
             @for post in &state.posts.post_list {
                 url {
-                    loc { (state.site_url) "/post/" (post.url) }
+                    loc { (state.site_url) (post.path()) }
                     lastmod { (post.published_at.format("%Y-%m-%d")) }
                 }
             }
@@ -303,7 +303,7 @@ fn reference_link(link: Option<&PostLink>, text: &str) -> Markup {
         Some(x) => html! {
             p .reference {
                 (text)
-                a href=(x.url) { (x.title) }
+                a href=(x.path()) { (x.title) }
             }
         },
     }
@@ -313,7 +313,7 @@ async fn post(Path(url): Path<String>, State(state): State<AppState>) -> impl In
     match state.posts.post_map.get(&url) {
         Some(page) => {
             let extra_markup = get_extra_markup(&page.post.url);
-            let path = format!("/post/{}", page.post.url);
+            let path = page.post.path();
             layout(
                 &PageMeta {
                     site_url: &state.site_url,
@@ -348,7 +348,7 @@ async fn post_redirect(
     State(state): State<AppState>,
 ) -> impl IntoResponse {
     if state.posts.post_map.contains_key(&url) {
-        Redirect::permanent(&format!("/post/{url}")).into_response()
+        Redirect::permanent(&post_path(&url)).into_response()
     } else {
         not_found(&state.site_url)
     }
@@ -615,6 +615,36 @@ mod tests {
         assert!(!response.headers().contains_key(header::CACHE_CONTROL));
         let body = to_bytes(response.into_body(), usize::MAX).await?;
         assert!(String::from_utf8(body.to_vec())?.contains("<h2>Not Found</h2>"));
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn every_post_link_resolves() -> TestResult {
+        // post_path formats the links and the router's patterns serve them, so
+        // following every link on the index checks that the two agree.
+        let app = test_app("https://www.example.com", false)?;
+        let (_, index) = fetch(&app, "/").await?;
+        let links: Vec<&str> = index
+            .split(r#"href=""#)
+            .skip(1)
+            .filter_map(|rest| rest.split('"').next())
+            .filter(|href| href.starts_with("/post/"))
+            .collect();
+        assert!(links.len() > 30, "{links:?}");
+        for link in links {
+            let request = Request::builder().uri(link).body(Body::empty())?;
+            let response = app.clone().oneshot(request).await?;
+            assert_eq!(response.status(), StatusCode::OK, "{link}");
+        }
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn story_links_are_absolute() -> TestResult {
+        let app = test_app("https://www.example.com", false)?;
+        let (_, page) = fetch(&app, "/post/the-slow-set").await?;
+        assert!(page.contains(r#"Read the next story? <a href="/post/learn-by-watching">"#));
+        assert!(page.contains(r#"Read the previous story? <a href="/post/june-2026">"#));
         Ok(())
     }
 
