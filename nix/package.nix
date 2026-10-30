@@ -50,7 +50,13 @@ rustPlatform.buildRustPackage {
     for image in dist/img/*.jpg dist/img/*.jpeg dist/img/*.png; do
       name=$(basename "$image")
       case "$name" in
-        *.[pP][nN][gG]) options="keep=none,compression=9" ;;
+        *.[pP][nN][gG])
+          options="keep=none,compression=9"
+          # Keep icons drawn with few colours small: save them with a palette again.
+          if [ "$(vipsheader -f palette "$image" 2>/dev/null)" = 1 ]; then
+            options="$options,palette,Q=100"
+          fi
+          ;;
         *) options="Q=80,keep=none,optimize_coding,interlace" ;;
       esac
       vipsthumbnail "$image" --size '1200x1200>' --export-profile srgb \

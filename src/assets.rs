@@ -27,6 +27,9 @@ const LINKED_FILES: &[&str] = &[
 
 static VERSIONS: OnceLock<HashMap<&'static str, String>> = OnceLock::new();
 
+/// Width and height of the images among `LINKED_FILES`.
+static IMAGE_SIZES: OnceLock<HashMap<&'static str, (usize, usize)>> = OnceLock::new();
+
 fn content_hash(bytes: &[u8]) -> String {
     let mut hasher = DefaultHasher::new();
     hasher.write(bytes);
@@ -45,18 +48,34 @@ pub fn missing(static_dir: &Path) -> Vec<&'static str> {
         .collect()
 }
 
-/// Hashes the versioned files in `static_dir`. Call once at startup.
-/// A missing file is skipped, and its URL is then left unversioned.
+/// Hashes the versioned files in `static_dir` and reads the sizes of the
+/// linked images. Only the first call has an effect.
+/// A missing file is skipped: its URL is left unversioned, or its size unknown.
 pub fn init(static_dir: &Path) {
-    let versions = VERSIONED_FILES
-        .iter()
-        .filter_map(|&name| {
-            let bytes = std::fs::read(static_dir.join(name)).ok()?;
-            Some((name, content_hash(&bytes)))
-        })
-        .collect();
-    // Only the first call has an effect.
-    let _ = VERSIONS.set(versions);
+    VERSIONS.get_or_init(|| {
+        VERSIONED_FILES
+            .iter()
+            .filter_map(|&name| {
+                let bytes = std::fs::read(static_dir.join(name)).ok()?;
+                Some((name, content_hash(&bytes)))
+            })
+            .collect()
+    });
+    IMAGE_SIZES.get_or_init(|| {
+        LINKED_FILES
+            .iter()
+            .filter_map(|&name| {
+                let size = imagesize::size(static_dir.join(name)).ok()?;
+                Some((name, (size.width, size.height)))
+            })
+            .collect()
+    });
+}
+
+/// Width and height of a linked image, e.g. `img/profile.jpg`, as read by `init`.
+#[must_use]
+pub fn image_size(name: &str) -> Option<(usize, usize)> {
+    IMAGE_SIZES.get()?.get(name).copied()
 }
 
 /// Whether `version` is the current content hash of the static file `name`.

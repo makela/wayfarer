@@ -40,7 +40,8 @@ struct AppState {
     noindex: bool,
 }
 
-const DEFAULT_IMAGE: &str = "/static/img/2023-to-the-states.jpg";
+/// Header photo of the index page, also the link preview image of pages without one.
+const DEFAULT_IMAGE: &str = "img/2023-to-the-states.jpg";
 
 /// Page details for the document head, search engines and link previews.
 struct PageMeta<'a> {
@@ -80,7 +81,7 @@ fn layout(meta: &PageMeta, content: &Markup) -> Markup {
                 meta property="og:type" content=(meta.og_type);
                 meta property="og:title" content=(meta.title);
                 meta property="og:description" content=(meta.description);
-                meta property="og:image" content=(absolute_url(meta.site_url, meta.image.unwrap_or(DEFAULT_IMAGE)));
+                meta property="og:image" content=(absolute_url(meta.site_url, &meta.image.map_or_else(|| format!("/static/{DEFAULT_IMAGE}"), str::to_string)));
                 meta name="twitter:card" content="summary_large_image";
                 link href=(assets::url("styles.css")) rel="stylesheet";
                 // Fetch the fonts of the title and text together with the stylesheet
@@ -103,13 +104,23 @@ fn layout(meta: &PageMeta, content: &Markup) -> Markup {
                     }
                     div .support-me {
                         a .kofi-button href="https://ko-fi.com/taichiwayfarer" title="Support me on ko-fi.com" target="_blank" rel="noopener" {
-                            img src="/static/img/kofi-cup.png" alt="Support me on Ko-fi";
+                            (static_image("img/kofi-cup.png", None, "Support me on Ko-fi"))
                         }
                     }
                 }
                 (content)
             }
         }
+    }
+}
+
+/// An image from the static files, with its width and height so the page
+/// doesn't jump while it loads. The file must be in `assets::LINKED_FILES`.
+fn static_image(name: &str, class: Option<&str>, alt: &str) -> Markup {
+    let size = assets::image_size(name);
+    html! {
+        img class=[class] src=(format!("/static/{name}")) alt=(alt)
+            width=[size.map(|(width, _)| width)] height=[size.map(|(_, height)| height)];
     }
 }
 
@@ -145,7 +156,7 @@ async fn index(State(state): State<AppState>) -> Markup {
         &html! {
             h2 { "Posts" }
             (quote("The journey of a thousand miles begins with one step.", "Lao Tzu"))
-            img .index src=(DEFAULT_IMAGE) alt="Tai Chi Wayfarer";
+            (static_image(DEFAULT_IMAGE, Some("index"), "Tai Chi Wayfarer"))
             p { "In this blog, I share my love of Tai Chi. I hope you enjoy!" }
             p {
                 "If you'd like to hear about upcoming camps and workshops or when I publish new posts, "
@@ -166,7 +177,7 @@ async fn index(State(state): State<AppState>) -> Markup {
             }
             p .reference {
                 a href="/feed.xml" rel="external" {
-                    img .rss src="/static/img/rss.png" alt="Subscribe to Posts";
+                    (static_image("img/rss.png", Some("rss"), "Subscribe to Posts"))
                 }
             }
         },
@@ -301,7 +312,7 @@ async fn about(State(state): State<AppState>) -> Markup {
             article {
                 h2 { "About" }
                 (quote("Be still like a mountain and flow like a great river.", "Lao Tzu"))
-                img .index src="/static/img/profile.jpg" alt="Profile picture";
+                (static_image("img/profile.jpg", Some("index"), "Profile picture"))
                 p { "Hi, my name is Timo. I've been practicing Tai Chi Chuan since 2002. Having this art in my life makes me feel so lucky, happy and grateful." }
                 p {
                     "I practice Yang-style Tai Chi in the "
@@ -577,6 +588,7 @@ mod tests {
 
     fn test_app(site_url: &str, noindex: bool) -> TestResult<Router> {
         let root = FsPath::new(env!("CARGO_MANIFEST_DIR"));
+        assets::init(&root.join("dist"));
         let state = AppState {
             posts: Arc::new(PostRepository::new(
                 &root.join("posts"),
@@ -674,6 +686,28 @@ mod tests {
         assert!(index.contains(r#"<time datetime="2026-10-24">October 24, 2026</time>"#));
         let (_, post) = fetch(&app, "/post/the-slow-set").await?;
         assert!(post.contains(r#"Published <time datetime="2026-08-18">August 18, 2026</time>"#));
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn layout_images_have_sizes() -> TestResult {
+        let app = test_app("https://www.example.com", false)?;
+        let dist = FsPath::new(env!("CARGO_MANIFEST_DIR")).join("dist");
+        for (uri, name) in [
+            ("/", "img/2023-to-the-states.jpg"),
+            ("/", "img/rss.png"),
+            ("/about", "img/profile.jpg"),
+            ("/about", "img/kofi-cup.png"),
+        ] {
+            let size = imagesize::size(dist.join(name))?;
+            let (_, page) = fetch(&app, uri).await?;
+            let tag = page
+                .split("<img ")
+                .find(|tag| tag.contains(&format!(r#"src="/static/{name}""#)))
+                .ok_or(format!("no {name} on {uri}"))?;
+            let expected = format!(r#"width="{}" height="{}""#, size.width, size.height);
+            assert!(tag.contains(&expected), "{name}: {tag}");
+        }
         Ok(())
     }
 
