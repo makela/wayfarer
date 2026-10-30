@@ -58,6 +58,7 @@ impl Post {
             extensions: BTreeMap::new(),
             itunes_ext: None,
             dublin_core_ext: None,
+            atom_ext: None,
         }
     }
 }

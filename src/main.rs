@@ -8,6 +8,7 @@ use axum::{
     routing::get,
 };
 use maud::{DOCTYPE, Markup, PreEscaped, html};
+use rss::extension::atom::{AtomExtension, Link};
 use rss::{ChannelBuilder, Item};
 use std::path::Path as FsPath;
 use std::sync::Arc;
@@ -26,7 +27,7 @@ use tracing_subscriber::EnvFilter;
 
 use taichiwayfarer::assets;
 use taichiwayfarer::data::get_extra_markup;
-use taichiwayfarer::posts::{PostLink, PostRepository, post_path};
+use taichiwayfarer::posts::{Post, PostLink, PostRepository, post_path};
 
 const DEFAULT_SITE_URL: &str = "https://www.taichiwayfarer.com";
 
@@ -112,6 +113,16 @@ fn layout(meta: &PageMeta, content: &Markup) -> Markup {
     }
 }
 
+/// The post's publication date, readable for people and, through `datetime`,
+/// for browsers and search engines.
+fn date(post: &Post) -> Markup {
+    html! {
+        time datetime=(post.published_at.format("%Y-%m-%d")) {
+            (post.published_at.format("%B %e, %Y"))
+        }
+    }
+}
+
 fn quote(text: &str, author: &str) -> Markup {
     html! {
         figure .quote {
@@ -148,9 +159,7 @@ async fn index(State(state): State<AppState>) -> Markup {
                             div {
                                 a href=(post.path()) { (post.title) }
                             }
-                            div .date {
-                                (post.published_at.format("%B %e, %Y"))
-                            }
+                            div .date { (date(post)) }
                         }
                     }
                 }
@@ -180,13 +189,21 @@ async fn feed(State(state): State<AppState>) -> impl IntoResponse {
         })
         .collect();
     let pub_date = items.first().and_then(|item| item.pub_date.clone());
-    let channel = ChannelBuilder::default()
+    let mut channel = ChannelBuilder::default()
         .title("Tai Chi Wayfarer")
         .link(state.site_url.to_string())
         .description("RSS feed of Tai Chi Wayfarer posts.")
         .pub_date(pub_date)
         .items(items)
         .build();
+    // The feed's own address, which feed validators ask for.
+    let mut self_link = Link::default();
+    self_link.set_href(format!("{}/feed.xml", state.site_url));
+    self_link.set_rel("self");
+    self_link.set_mime_type(Some("application/rss+xml".to_string()));
+    channel.set_atom_ext(AtomExtension {
+        links: vec![self_link],
+    });
     (
         [(header::CONTENT_TYPE, "text/xml; charset=utf-8")],
         channel.to_string(),
@@ -325,10 +342,7 @@ async fn post(Path(url): Path<String>, State(state): State<AppState>) -> impl In
                 },
                 &html! {
                     h2 { (page.post.title) }
-                    p .date {
-                        "Published "
-                        (page.post.published_at.format("%B %e, %Y"))
-                    }
+                    p .date { "Published " (date(&page.post)) }
                     article {
                         (PreEscaped(&page.content))
                         (extra_markup)
@@ -636,6 +650,30 @@ mod tests {
             let response = app.clone().oneshot(request).await?;
             assert_eq!(response.status(), StatusCode::OK, "{link}");
         }
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn feed_links_to_itself() -> TestResult {
+        let app = test_app("https://alt.example.com", false)?;
+        let (_, feed) = fetch(&app, "/feed.xml").await?;
+        assert!(
+            feed.contains(r#"xmlns:atom="http://www.w3.org/2005/Atom""#),
+            "{feed}"
+        );
+        assert!(feed.contains(
+            r#"<atom:link href="https://alt.example.com/feed.xml" rel="self" type="application/rss+xml"/>"#
+        ), "{feed}");
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn dates_are_machine_readable() -> TestResult {
+        let app = test_app("https://www.example.com", false)?;
+        let (_, index) = fetch(&app, "/").await?;
+        assert!(index.contains(r#"<time datetime="2026-10-24">October 24, 2026</time>"#));
+        let (_, post) = fetch(&app, "/post/the-slow-set").await?;
+        assert!(post.contains(r#"Published <time datetime="2026-08-18">August 18, 2026</time>"#));
         Ok(())
     }
 
