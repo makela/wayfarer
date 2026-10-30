@@ -98,8 +98,8 @@ fn layout(meta: &PageMeta, content: &Markup) -> Markup {
                 }
                 nav {
                     ul {
-                        li { a href="/about" aria-current=[(meta.path == Some("/about")).then_some("page")] { "About" } }
                         li { a href="/" aria-current=[(meta.path == Some("/")).then_some("page")] { "Posts" } }
+                        li { a href="/about" aria-current=[(meta.path == Some("/about")).then_some("page")] { "About" } }
                     }
                 }
                 (content)
@@ -620,6 +620,9 @@ mod tests {
         let (_, about) = fetch(&app, "/about").await?;
         assert!(about.contains(r#"<a href="/about" aria-current="page">About</a>"#));
         assert!(about.contains(r#"<a href="/">Posts</a>"#));
+        // Keyboard and screen reader order must match the visual order.
+        let posts = about.find(">Posts</a>").ok_or("no Posts link")?;
+        assert!(posts < about.find(">About</a>").ok_or("no About link")?);
         let (_, post) = fetch(&app, "/post/the-slow-set").await?;
         assert!(!post.contains("aria-current"));
         Ok(())

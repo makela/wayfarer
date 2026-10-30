@@ -127,7 +127,7 @@ h3 {
 }
 
 nav ul {
-  @apply flex flex-row-reverse;
+  @apply flex justify-end;
 }
 nav ul li {
   @apply mx-2;
