@@ -93,23 +93,28 @@ fn layout(meta: &PageMeta, content: &Markup) -> Markup {
                 link rel="alternate" type="application/rss+xml" title="Subscribe to Posts" href="/feed.xml";
             }
             body {
-                h1 { a href="/" { "Tai Chi Wayfarer" } }
-                // In reading order, so keyboard and screen reader users meet the
-                // links in the same order as they are shown.
-                div .top-bar {
-                    nav {
-                        ul {
-                            li { a href="/" aria-current=[(meta.path == Some("/")).then_some("page")] { "Posts" } }
-                            li { a href="/about" aria-current=[(meta.path == Some("/about")).then_some("page")] { "About" } }
+                // Page regions, which screen reader users can jump between.
+                header {
+                    h1 { a href="/" { "Tai Chi Wayfarer" } }
+                    // In reading order, so keyboard and screen reader users meet the
+                    // links in the same order as they are shown.
+                    div .top-bar {
+                        nav {
+                            ul {
+                                li { a href="/" aria-current=[(meta.path == Some("/")).then_some("page")] { "Posts" } }
+                                li { a href="/about" aria-current=[(meta.path == Some("/about")).then_some("page")] { "About" } }
+                            }
                         }
-                    }
-                    div .support-me {
-                        a .kofi-button href="https://ko-fi.com/taichiwayfarer" title="Support me on ko-fi.com" target="_blank" rel="noopener" {
-                            (static_image(assets::KOFI_ICON, None, "Support me on Ko-fi"))
+                        div .support-me {
+                            a .kofi-button href="https://ko-fi.com/taichiwayfarer" title="Support me on ko-fi.com" target="_blank" rel="noopener" {
+                                (static_image(assets::KOFI_ICON, None, "Support me on Ko-fi"))
+                            }
                         }
                     }
                 }
-                (content)
+                main {
+                    (content)
+                }
             }
         }
     }
@@ -689,6 +694,20 @@ mod tests {
         assert!(index.contains(r#"<time datetime="2026-10-24">October 24, 2026</time>"#));
         let (_, post) = fetch(&app, "/post/the-slow-set").await?;
         assert!(post.contains(r#"Published <time datetime="2026-08-18">August 18, 2026</time>"#));
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn pages_have_header_and_main_regions() -> TestResult {
+        let app = test_app("https://www.example.com", false)?;
+        for uri in ["/", "/about", "/post/the-slow-set", "/missing"] {
+            let (_, page) = fetch(&app, uri).await?;
+            let header = page
+                .find("<header><h1>")
+                .ok_or(format!("no header on {uri}"))?;
+            let main = page.find("<main>").ok_or(format!("no main on {uri}"))?;
+            assert!(header < main && page.contains("</main></body>"), "{uri}");
+        }
         Ok(())
     }
 
