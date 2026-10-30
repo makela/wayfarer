@@ -79,5 +79,16 @@ sudo nixos-rebuild switch
   their URL and are cached for a year, other static files for a day.
 - Static files the page layout links to are listed in `LINKED_FILES`
   (`src/assets.rs`), so add new ones there.
+- Icons: `dist/favicon.svg` is the yin-yang, the same as on taichichuan.mobi.
+  `favicon.ico` (16, 32 and 48 px) and `apple-touch-icon.png` (180 px, on the
+  page background) are made from it. Render the SVG with libvips (librsvg):
+  ImageMagick's own SVG renderer draws this yin-yang mirrored.
+
+  ```sh
+  vipsthumbnail dist/favicon.svg --size 148 -o yy.v
+  vips flatten yy.v yy-flat.v --background '15 23 43'
+  vips embed yy-flat.v 'dist/apple-touch-icon.png[keep=none,compression=9]' \
+      16 16 180 180 --extend background --background '15 23 43'
+  ```
 - YouTube videos load only after the visitor accepts YouTube's cookies,
   see `dist/embed-video.js`.

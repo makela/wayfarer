@@ -84,6 +84,10 @@ fn layout(meta: &PageMeta, content: &Markup) -> Markup {
                 meta property="og:image" content=(absolute_url(meta.site_url, &meta.image.map_or_else(|| format!("/static/{DEFAULT_IMAGE}"), str::to_string)));
                 meta name="twitter:card" content="summary_large_image";
                 link href=(assets::url("styles.css")) rel="stylesheet";
+                // The .ico for browsers without SVG icons; sizes keeps others from preferring it.
+                link rel="icon" href="/favicon.ico" sizes="32x32";
+                link rel="icon" href=(assets::url("favicon.svg")) type="image/svg+xml";
+                link rel="apple-touch-icon" href=(assets::url("apple-touch-icon.png"));
                 // Fetch the fonts of the title and text together with the stylesheet
                 // instead of after it. The URLs must match what styles.css resolves to.
                 @for font in assets::PRELOADED_FONTS {
@@ -686,6 +690,21 @@ mod tests {
         assert!(index.contains(r#"<time datetime="2026-10-24">October 24, 2026</time>"#));
         let (_, post) = fetch(&app, "/post/the-slow-set").await?;
         assert!(post.contains(r#"Published <time datetime="2026-08-18">August 18, 2026</time>"#));
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn icons_are_linked() -> TestResult {
+        let app = test_app("https://www.example.com", false)?;
+        let (_, page) = fetch(&app, "/").await?;
+        assert!(page.contains(r#"<link rel="icon" href="/favicon.ico" sizes="32x32">"#));
+        for (rel, name) in [
+            ("icon", "favicon.svg"),
+            ("apple-touch-icon", "apple-touch-icon.png"),
+        ] {
+            let link = format!(r#"<link rel="{rel}" href="/static/{name}?v="#);
+            assert!(page.contains(&link), "{link}");
+        }
         Ok(())
     }
 

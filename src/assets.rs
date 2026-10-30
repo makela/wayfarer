@@ -5,7 +5,12 @@ use std::sync::OnceLock;
 
 /// Static files whose URLs carry a content hash, so browsers fetch them
 /// again whenever they change.
-const VERSIONED_FILES: &[&str] = &["styles.css", "embed-video.js"];
+const VERSIONED_FILES: &[&str] = &[
+    "styles.css",
+    "embed-video.js",
+    "favicon.svg",
+    "apple-touch-icon.png",
+];
 
 /// Latin subsets of the fonts every page shows at once (title and text), which
 /// pages ask the browser to fetch together with the stylesheet. They must match
