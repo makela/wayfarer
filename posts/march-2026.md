@@ -20,6 +20,6 @@ I am often a little afraid of finalizing things, locking them to some arbitrary 
 
 I never meant to be this open about myself, but apparently I feel safe sharing how I see things - being honest and vulnerable. Be open or closed. Tell or don't. Receive or not. Let go, or fall by holding on too tightly. Use it or lose it. Maybe one day I will have something else to share as well. Maybe I'll publish a video of my own practice, or write a book or poems - perhaps even in Chinese, 中文 *zhōngwén*.
 
-Speaking of tips, one friend offered to pay me for my help, which gave me an idea to allow anyone to support me do what I love - focusing on practice and writing, learning and sharing. So if you'd like to [buy me a coffee](https://ko-fi.com/D1D61VF42Q), I would be grateful.
+Speaking of tips, one friend offered to pay me for my help, which gave me an idea to allow anyone to support me do what I love - focusing on practice and writing, learning and sharing. So if you'd like to [buy me a coffee](https://ko-fi.com/taichiwayfarer), I would be grateful.
 
 One more thing about finishing - you may hear master say 下课 *xià kè*, to close the class. And now, it's time to close this post. I took my time, and I didn't rush.
