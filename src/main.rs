@@ -153,6 +153,27 @@ fn date(post: &Post) -> Markup {
     }
 }
 
+/// The top of the post list and the search results: a heading, a Lao Tzu
+/// quote, and the header photo beside an introduction.
+fn listing_intro(heading: &str, lao_tzu: &str, intro: &Markup) -> Markup {
+    html! {
+        h2 { (heading) }
+        (quote(lao_tzu, "Lao Tzu"))
+        (static_image(assets::HEADER_PHOTO, Some("index"), "Tai Chi Wayfarer"))
+        (intro)
+    }
+}
+
+/// A post's title and date, as one row of the post list and the search results.
+fn post_row(post: &Post) -> Markup {
+    html! {
+        div {
+            div { a href=(post.path()) { (post.title) } }
+            div .date { (date(post)) }
+        }
+    }
+}
+
 fn search_form(query: &str) -> Markup {
     html! {
         form .search action="/search" method="get" role="search" {
@@ -165,8 +186,12 @@ fn search_form(query: &str) -> Markup {
 async fn search(
     Query(params): Query<HashMap<String, String>>,
     State(state): State<AppState>,
-) -> Markup {
+) -> Response {
     let query = params.get("q").map_or("", |query| query.trim());
+    // Nothing to search for: back to the list of all posts.
+    if query.is_empty() {
+        return Redirect::to("/").into_response();
+    }
     let hits = state.posts.search(query);
     layout(
         &PageMeta {
@@ -180,32 +205,33 @@ async fn search(
             search_query: query,
         },
         &html! {
-            h2 { "Search" }
-            @if query.is_empty() {
-                p { "Type what you are looking for in the search box above." }
-            } @else {
-                p .search-summary {
-                    @match hits.len() {
-                        0 => "No posts found",
-                        1 => "1 post found",
-                        count => { (count) " posts found" }
+            (listing_intro(
+                "Search",
+                "Without going outside, you may know the whole world.",
+                &html! {
+                    p .search-summary {
+                        @match hits.len() {
+                            0 => "No posts found",
+                            1 => "1 post found",
+                            count => { (count) " posts found" }
+                        }
+                        " for “" (query) "”."
                     }
-                    " for “" (query) "”."
-                }
-                ul .search-results {
-                    @for hit in &hits {
-                        li {
-                            a href=(hit.post.path()) { (hit.post.title) }
-                            " · " (date(hit.post))
-                            @if let Some(excerpt) = &hit.excerpt {
-                                p { (excerpt.before) mark { (excerpt.matched) } (excerpt.after) }
-                            }
+                },
+            ))
+            ul .post-list.search-results {
+                @for hit in &hits {
+                    li {
+                        (post_row(hit.post))
+                        @if let Some(excerpt) = &hit.excerpt {
+                            p { (excerpt.before) mark { (excerpt.matched) } (excerpt.after) }
                         }
                     }
                 }
             }
         },
     )
+    .into_response()
 }
 
 fn quote(text: &str, author: &str) -> Markup {
@@ -230,25 +256,21 @@ async fn index(State(state): State<AppState>) -> Markup {
             search_query: "",
         },
         &html! {
-            h2 { "Posts" }
-            (quote("The journey of a thousand miles begins with one step.", "Lao Tzu"))
-            (static_image(assets::HEADER_PHOTO, Some("index"), "Tai Chi Wayfarer"))
-            p { "In this blog, I share my love of Tai Chi. I hope you enjoy!" }
-            p {
-                "If you'd like to hear about upcoming camps and workshops or when I publish new posts, "
-                a href="mailto:taichiwayfarer@gmail.com?subject=Subscribe&body=Please tell me something about yourself. Who is your teacher, or what kind of content are you interested in?" { "send me an email" }
-                ", and I will share the flyers and my updates with you."
-            }
+            (listing_intro(
+                "Posts",
+                "The journey of a thousand miles begins with one step.",
+                &html! {
+                    p { "In this blog, I share my love of Tai Chi. I hope you enjoy!" }
+                    p {
+                        "If you'd like to hear about upcoming camps and workshops or when I publish new posts, "
+                        a href="mailto:taichiwayfarer@gmail.com?subject=Subscribe&body=Please tell me something about yourself. Who is your teacher, or what kind of content are you interested in?" { "send me an email" }
+                        ", and I will share the flyers and my updates with you."
+                    }
+                },
+            ))
             ul .post-list {
                 @for post in &state.posts.post_list {
-                    li {
-                        div  {
-                            div {
-                                a href=(post.path()) { (post.title) }
-                            }
-                            div .date { (date(post)) }
-                        }
-                    }
+                    li { (post_row(post)) }
                 }
             }
             p .reference {
@@ -793,8 +815,9 @@ mod tests {
         let (_, page) = fetch(&app, "/search?q=man+quan").await?;
         assert!(page.contains(r#"<meta name="robots" content="noindex">"#));
         assert!(page.contains(r#"value="man quan""#));
+        // The same rows of title and date as the post list.
         assert!(
-            page.contains(r#"<a href="/post/the-slow-set">The Slow Set</a>"#),
+            page.contains(r#"<ul class="post-list search-results"><li><div><div><a href="/post/the-slow-set">The Slow Set</a></div><div class="date"><time datetime="2026-08-18">"#),
             "{page}"
         );
         assert!(page.contains("<mark>màn quán</mark>"), "{page}");
@@ -806,8 +829,30 @@ mod tests {
         let (_, escaped) = fetch(&app, "/search?q=%3Cscript%3E").await?;
         assert!(!escaped.contains("<script>") && escaped.contains("&lt;script&gt;"));
 
-        let (_, empty) = fetch(&app, "/search").await?;
-        assert!(empty.contains("in the search box above") && !empty.contains("search-summary"));
+        // An empty search goes back to the list of all posts.
+        for uri in ["/search", "/search?q=", "/search?q=+++"] {
+            let request = Request::builder().uri(uri).body(Body::empty())?;
+            let response = app.clone().oneshot(request).await?;
+            assert_eq!(response.status(), StatusCode::SEE_OTHER, "{uri}");
+            assert_eq!(
+                response
+                    .headers()
+                    .get(header::LOCATION)
+                    .map(HeaderValue::as_bytes),
+                Some(&b"/"[..]),
+                "{uri}"
+            );
+        }
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn search_page_looks_like_post_list() -> TestResult {
+        let app = test_app("https://www.example.com", false)?;
+        let (_, page) = fetch(&app, "/search?q=sword").await?;
+        assert!(page.contains("<main><h2>Search</h2><figure class=\"quote\">"));
+        assert!(page.contains("Without going outside, you may know the whole world."));
+        assert!(page.contains(r#"<img class="index" src="/static/img/2023-to-the-states.jpg""#));
         Ok(())
     }
 
@@ -815,7 +860,13 @@ mod tests {
     async fn every_page_has_search_in_top_bar() -> TestResult {
         let app = test_app("https://www.example.com", false)?;
         let form = r#"</nav><div class="search-and-support"><form class="search" action="/search" method="get" role="search">"#;
-        for uri in ["/", "/about", "/post/the-slow-set", "/missing", "/search"] {
+        for uri in [
+            "/",
+            "/about",
+            "/post/the-slow-set",
+            "/missing",
+            "/search?q=sword",
+        ] {
             let (_, page) = fetch(&app, uri).await?;
             assert!(page.contains(form), "{uri}");
             // Only once: the results page has no second search box.
