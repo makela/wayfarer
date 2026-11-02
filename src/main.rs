@@ -1,6 +1,6 @@
 use axum::{
     Router,
-    extract::{Path, Request, State},
+    extract::{Path, Query, Request, State},
     handler::Handler,
     http::{HeaderName, HeaderValue, StatusCode, header},
     middleware::{self, Next},
@@ -10,6 +10,7 @@ use axum::{
 use maud::{DOCTYPE, Markup, PreEscaped, html};
 use rss::extension::atom::{AtomExtension, Link};
 use rss::{ChannelBuilder, Item};
+use std::collections::HashMap;
 use std::path::Path as FsPath;
 use std::sync::Arc;
 use tower_http::{
@@ -49,6 +50,10 @@ struct PageMeta<'a> {
     path: Option<&'a str>,
     image: Option<&'a str>,
     og_type: &'a str,
+    /// Asks search engines not to index this page, e.g. search results.
+    noindex: bool,
+    /// Words in the search box of the top bar, those of the shown results.
+    search_query: &'a str,
 }
 
 fn absolute_url(site_url: &str, path: &str) -> String {
@@ -70,6 +75,9 @@ fn layout(meta: &PageMeta, content: &Markup) -> Markup {
                 // Mobile browsers tint their toolbar to match the page background (slate-900).
                 meta name="theme-color" content="#0f172b";
                 meta name="description" content=(meta.description);
+                @if meta.noindex {
+                    meta name="robots" content="noindex";
+                }
                 @if let Some(path) = meta.path {
                     link rel="canonical" href=(absolute_url(meta.site_url, path));
                     meta property="og:url" content=(absolute_url(meta.site_url, path));
@@ -105,9 +113,13 @@ fn layout(meta: &PageMeta, content: &Markup) -> Markup {
                                 li { a href="/about" aria-current=[(meta.path == Some("/about")).then_some("page")] { "About" } }
                             }
                         }
-                        div .support-me {
-                            a .kofi-button href="https://ko-fi.com/taichiwayfarer" title="Support me on ko-fi.com" target="_blank" rel="noopener" {
-                                (static_image(assets::KOFI_ICON, None, "Support me on Ko-fi"))
+                        // Together, so that on narrow screens they move to the next line as one.
+                        div .search-and-support {
+                            (search_form(meta.search_query))
+                            div .support-me {
+                                a .kofi-button href="https://ko-fi.com/taichiwayfarer" title="Support me on ko-fi.com" target="_blank" rel="noopener" {
+                                    (static_image(assets::KOFI_ICON, None, "Support me on Ko-fi"))
+                                }
                             }
                         }
                     }
@@ -141,6 +153,61 @@ fn date(post: &Post) -> Markup {
     }
 }
 
+fn search_form(query: &str) -> Markup {
+    html! {
+        form .search action="/search" method="get" role="search" {
+            // Enter, or the search key of a phone keyboard, sends the form.
+            input type="search" name="q" value=(query) aria-label="Search posts" placeholder="Search";
+        }
+    }
+}
+
+async fn search(
+    Query(params): Query<HashMap<String, String>>,
+    State(state): State<AppState>,
+) -> Markup {
+    let query = params.get("q").map_or("", |query| query.trim());
+    let hits = state.posts.search(query);
+    layout(
+        &PageMeta {
+            site_url: &state.site_url,
+            title: "Search",
+            description: "Search the posts of Tai Chi Wayfarer.",
+            path: None,
+            image: None,
+            og_type: "website",
+            noindex: true,
+            search_query: query,
+        },
+        &html! {
+            h2 { "Search" }
+            @if query.is_empty() {
+                p { "Type what you are looking for in the search box above." }
+            } @else {
+                p .search-summary {
+                    @match hits.len() {
+                        0 => "No posts found",
+                        1 => "1 post found",
+                        count => { (count) " posts found" }
+                    }
+                    " for “" (query) "”."
+                }
+                ul .search-results {
+                    @for hit in &hits {
+                        li {
+                            a href=(hit.post.path()) { (hit.post.title) }
+                            " · " (date(hit.post))
+                            @if let Some(excerpt) = &hit.excerpt {
+                                p { (excerpt.before) mark { (excerpt.matched) } (excerpt.after) }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+    )
+}
+
 fn quote(text: &str, author: &str) -> Markup {
     html! {
         figure .quote {
@@ -159,6 +226,8 @@ async fn index(State(state): State<AppState>) -> Markup {
             path: Some("/"),
             image: None,
             og_type: "website",
+            noindex: false,
+            search_query: "",
         },
         &html! {
             h2 { "Posts" }
@@ -315,6 +384,8 @@ async fn about(State(state): State<AppState>) -> Markup {
             path: Some("/about"),
             image: Some(&profile_photo),
             og_type: "profile",
+            noindex: false,
+            search_query: "",
         },
         &html! {
             article {
@@ -358,6 +429,8 @@ async fn post(Path(url): Path<String>, State(state): State<AppState>) -> impl In
                     path: Some(&path),
                     image: page.image.as_deref(),
                     og_type: "article",
+                    noindex: false,
+                    search_query: "",
                 },
                 &html! {
                     h2 { (page.post.title) }
@@ -408,6 +481,7 @@ fn app(state: AppState, static_dir: &FsPath, dev: bool) -> Router {
         .route("/sitemap.xml", get(sitemap))
         .route("/robots.txt", get(robots))
         .route("/about", get(about))
+        .route("/search", get(search))
         .route("/post/{url}", get(post))
         // Support also directory style urls
         .route("/about/", get(async || Redirect::permanent("/about")))
@@ -571,6 +645,8 @@ fn not_found(site_url: &str) -> Response {
                 path: None,
                 image: None,
                 og_type: "website",
+                noindex: false,
+                search_query: "",
             },
             &html! {
                 h2 { "Not Found" }
@@ -712,6 +788,45 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn search_page_lists_matches() -> TestResult {
+        let app = test_app("https://www.example.com", false)?;
+        let (_, page) = fetch(&app, "/search?q=man+quan").await?;
+        assert!(page.contains(r#"<meta name="robots" content="noindex">"#));
+        assert!(page.contains(r#"value="man quan""#));
+        assert!(
+            page.contains(r#"<a href="/post/the-slow-set">The Slow Set</a>"#),
+            "{page}"
+        );
+        assert!(page.contains("<mark>màn quán</mark>"), "{page}");
+
+        let (_, none) = fetch(&app, "/search?q=qwertyuiop").await?;
+        assert!(none.contains("No posts found for “qwertyuiop”."));
+
+        // The query is shown as text, never as markup.
+        let (_, escaped) = fetch(&app, "/search?q=%3Cscript%3E").await?;
+        assert!(!escaped.contains("<script>") && escaped.contains("&lt;script&gt;"));
+
+        let (_, empty) = fetch(&app, "/search").await?;
+        assert!(empty.contains("in the search box above") && !empty.contains("search-summary"));
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn every_page_has_search_in_top_bar() -> TestResult {
+        let app = test_app("https://www.example.com", false)?;
+        let form = r#"</nav><div class="search-and-support"><form class="search" action="/search" method="get" role="search">"#;
+        for uri in ["/", "/about", "/post/the-slow-set", "/missing", "/search"] {
+            let (_, page) = fetch(&app, uri).await?;
+            assert!(page.contains(form), "{uri}");
+            // Only once: the results page has no second search box.
+            assert_eq!(page.matches(r#"name="q""#).count(), 1, "{uri}");
+        }
+        let (_, index) = fetch(&app, "/").await?;
+        assert!(!index.contains(r#"name="robots""#));
+        Ok(())
+    }
+
+    #[tokio::test]
     async fn icons_are_linked() -> TestResult {
         let app = test_app("https://www.example.com", false)?;
         let (_, page) = fetch(&app, "/").await?;
@@ -766,8 +881,9 @@ mod tests {
         // Keyboard and screen reader order must match the visual order.
         let posts = about.find(">Posts</a>").ok_or("no Posts link")?;
         let about_link = about.find(">About</a>").ok_or("no About link")?;
+        let search = about.find(r#"name="q""#).ok_or("no search box")?;
         let kofi = about.find("ko-fi.com").ok_or("no Ko-fi link")?;
-        assert!(posts < about_link && about_link < kofi);
+        assert!(posts < about_link && about_link < search && search < kofi);
         let (_, post) = fetch(&app, "/post/the-slow-set").await?;
         assert!(!post.contains("aria-current"));
         Ok(())

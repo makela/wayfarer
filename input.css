@@ -133,6 +133,29 @@ nav ul li {
   @apply mx-2;
 }
 
+/* On phones, as wide as the room between the links and Ko-fi allows. When
+   that is less than its minimum, it moves with Ko-fi onto a line of its own. */
+div.search-and-support {
+  @apply flex flex-1 sm:flex-none items-center justify-end;
+}
+form.search {
+  @apply flex-1 min-w-24 sm:flex-none mx-2;
+  font-family: 'Inter', sans-serif;
+}
+form.search input {
+  @apply w-full sm:w-40 rounded-lg px-3 py-1 bg-slate-50 text-slate-900;
+}
+
+ul.search-results li {
+  @apply mb-4;
+}
+ul.search-results li p {
+  @apply m-0 mt-1 text-sm text-left;
+}
+mark {
+  @apply rounded-sm bg-yellow-200 px-0.5 text-slate-900;
+}
+
 ul.post-list {
   @apply clear-both;
 }
@@ -245,8 +268,9 @@ figure.quote {
   @apply italic;
 }
 
+/* Padding, not margin, which would merge with the title's: keeps the bar below its y. */
 div.top-bar {
-  @apply flex justify-end items-center mr-4;
+  @apply flex flex-wrap justify-end items-center gap-y-2 pt-3 mx-4;
 }
 div.top-bar nav ul {
   @apply m-0;

@@ -3,7 +3,9 @@
 *Blog about my love to Tai Chi — https://www.taichiwayfarer.com*
 
 A small Rust server (axum + maud) that renders the posts from markdown files,
-with an RSS feed (`/feed.xml`), a sitemap (`/sitemap.xml`) and `/robots.txt`.
+with an RSS feed (`/feed.xml`), a sitemap (`/sitemap.xml`), `/robots.txt` and a
+search (`/search?q=…`, see `src/search.rs`). Search ignores case and accents, so
+"man quan" finds "màn quán", and also covers the extra content under posts.
 
 ## Development
 

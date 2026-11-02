@@ -1,3 +1,5 @@
+use crate::data::get_extra_markup;
+use crate::search::{Excerpt, SearchText, find_word, html_text, normalize, query_words};
 use chrono::{NaiveDateTime, TimeZone};
 use markdown::mdast::Node;
 use rss::{Guid, Item};
@@ -149,6 +151,34 @@ fn plain_text(node: &Node, text: &mut String) {
     }
 }
 
+/// All text of a markdown document for searching, with descriptions of images
+/// and a space after each block, so words of separate paragraphs don't join.
+fn document_text(node: &Node, text: &mut String) {
+    match node {
+        Node::Text(t) => text.push_str(&t.value),
+        Node::InlineCode(code) => text.push_str(&code.value),
+        Node::Code(code) => text.push_str(&code.value),
+        Node::Image(image) => text.push_str(&image.alt),
+        _ => {
+            for child in node.children().into_iter().flatten() {
+                document_text(child, text);
+            }
+        }
+    }
+    if matches!(
+        node,
+        Node::Paragraph(_)
+            | Node::Heading(_)
+            | Node::ListItem(_)
+            | Node::TableCell(_)
+            | Node::Code(_)
+            | Node::Image(_)
+            | Node::Break(_)
+    ) {
+        text.push(' ');
+    }
+}
+
 fn first_image(node: &Node) -> Option<&str> {
     match node {
         Node::Image(image) => Some(&image.url),
@@ -216,6 +246,8 @@ fn enhance_images(html: &str, static_dir: &Path) -> Result<String, String> {
 pub struct PostPage {
     pub post: Post,
     pub content: String,
+    /// The post's text and the extra content under it, for searching.
+    pub search_text: SearchText,
     pub description: String,
     pub image: Option<String>,
     pub previous_link: Option<PostLink>,
@@ -251,11 +283,17 @@ impl PostRepository {
                 .map_err(|error| format!("{}: {error}", file.display()))?;
             let (description, image) =
                 summarize(&input).map_err(|error| format!("{}: {error}", file.display()))?;
+            let tree = markdown::to_mdast(&input, &markdown::ParseOptions::default())
+                .map_err(|error| format!("{}: {error}", file.display()))?;
+            let mut text = String::new();
+            document_text(&tree, &mut text);
+            text.push_str(&html_text(&get_extra_markup(&post.url).into_string()));
             post_map.insert(
                 post.url.clone(),
                 PostPage {
                     post: post.clone(),
                     content,
+                    search_text: SearchText::new(&text),
                     description: description.unwrap_or_else(|| post.title.clone()),
                     image,
                     next_link,
@@ -272,6 +310,50 @@ impl PostRepository {
             post_map,
         })
     }
+
+    /// Posts with a word starting with each word of `query` in their title or
+    /// text. Those with the words together as a phrase come first, then those
+    /// with more of the words in their title, otherwise newest first.
+    #[must_use]
+    pub fn search(&self, query: &str) -> Vec<SearchHit<'_>> {
+        let words = query_words(query);
+        if words.is_empty() {
+            return Vec::new();
+        }
+        let phrase = words.join(" ");
+        let mut hits: Vec<((bool, usize), SearchHit)> = self
+            .post_list
+            .iter()
+            .filter_map(|post| {
+                let page = self.post_map.get(&post.url)?;
+                let title = normalize(&post.title);
+                let in_title = |word: &str| find_word(&title, word).is_some();
+                if !words
+                    .iter()
+                    .all(|word| in_title(word) || page.search_text.contains(word))
+                {
+                    return None;
+                }
+                // Around the words as a phrase if they appear together, else the first word.
+                let has_phrase = in_title(&phrase) || page.search_text.contains(&phrase);
+                let excerpt = page
+                    .search_text
+                    .excerpt(&phrase)
+                    .or_else(|| words.iter().find_map(|word| page.search_text.excerpt(word)));
+                let words_in_title = words.iter().filter(|word| in_title(word)).count();
+                Some(((has_phrase, words_in_title), SearchHit { post, excerpt }))
+            })
+            .collect();
+        // A stable sort, so posts that rank the same stay newest first.
+        hits.sort_by_key(|(rank, _)| std::cmp::Reverse(*rank));
+        hits.into_iter().map(|(_, hit)| hit).collect()
+    }
+}
+
+/// A post found by a search, with an excerpt around the first match in its text.
+pub struct SearchHit<'a> {
+    pub post: &'a Post,
+    pub excerpt: Option<Excerpt>,
 }
 
 #[cfg(test)]
@@ -343,6 +425,54 @@ mod tests {
         let static_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("dist");
         let html = markdown::to_html("![Typo](/static/img/no-such-photo.jpg)");
         assert!(enhance_images(&html, &static_dir).is_err());
+    }
+
+    fn repository() -> Result<PostRepository, String> {
+        let root = Path::new(env!("CARGO_MANIFEST_DIR"));
+        PostRepository::new(&root.join("posts"), &root.join("dist"))
+    }
+
+    fn found(repository: &PostRepository, query: &str) -> Vec<String> {
+        repository
+            .search(query)
+            .iter()
+            .map(|hit| hit.post.url.clone())
+            .collect()
+    }
+
+    #[test]
+    fn search_finds_posts_by_text_title_and_extra_content() -> Result<(), String> {
+        let posts = repository()?;
+        // In the movement names under the post, not in its markdown.
+        assert!(found(&posts, "single whip").contains(&"the-slow-set".to_string()));
+        // Accents don't matter, and the excerpt keeps them. The phrase ranks first.
+        let hits = posts.search("MAN QUAN");
+        let hit = hits.first().ok_or("no hit for man quan")?;
+        assert_eq!(hit.post.url, "the-slow-set");
+        assert_eq!(
+            hit.excerpt.as_ref().map(|e| e.matched.as_str()),
+            Some("màn quán")
+        );
+        // Every word must match.
+        assert_eq!(
+            found(&posts, "single whip qwertyuiop"),
+            Vec::<String>::new()
+        );
+        assert_eq!(found(&posts, ""), Vec::<String>::new());
+        Ok(())
+    }
+
+    #[test]
+    fn search_puts_title_matches_first() -> Result<(), String> {
+        let posts = repository()?;
+        let urls = found(&posts, "slow set");
+        assert_eq!(
+            urls.first().map(String::as_str),
+            Some("the-slow-set"),
+            "{urls:?}"
+        );
+        assert!(urls.len() > 1, "{urls:?}");
+        Ok(())
     }
 
     #[test]
