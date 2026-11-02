@@ -28,7 +28,7 @@ use tracing_subscriber::EnvFilter;
 
 use taichiwayfarer::assets;
 use taichiwayfarer::data::get_extra_markup;
-use taichiwayfarer::posts::{Post, PostLink, PostRepository, post_path};
+use taichiwayfarer::posts::{Post, PostImage, PostLink, PostRepository, post_path};
 
 const DEFAULT_SITE_URL: &str = "https://www.taichiwayfarer.com";
 
@@ -154,13 +154,26 @@ fn date(post: &Post) -> Markup {
 }
 
 /// The top of the post list and the search results: a heading, a Lao Tzu
-/// quote, and the header photo beside an introduction.
-fn listing_intro(heading: &str, lao_tzu: &str, intro: &Markup) -> Markup {
+/// quote, and a photo beside an introduction.
+fn listing_intro(heading: &str, lao_tzu: &str, photo: &Markup, intro: &Markup) -> Markup {
     html! {
         h2 { (heading) }
         (quote(lao_tzu, "Lao Tzu"))
-        (static_image(assets::HEADER_PHOTO, Some("index"), "Tai Chi Wayfarer"))
+        (photo)
         (intro)
+    }
+}
+
+/// The photo of the post list, also used where nothing better is at hand.
+fn header_photo() -> Markup {
+    static_image(assets::HEADER_PHOTO, Some("index"), "Tai Chi Wayfarer")
+}
+
+/// A post's image beside the introduction of the search results.
+fn post_photo(image: &PostImage) -> Markup {
+    html! {
+        img .index src=(image.src) alt=(image.alt)
+            width=[image.size.map(|(width, _)| width)] height=[image.size.map(|(_, height)| height)];
     }
 }
 
@@ -193,6 +206,11 @@ async fn search(
         return Redirect::to("/").into_response();
     }
     let hits = state.posts.search(query);
+    // The first photo of the first result that has one, as a glimpse of what was found.
+    let photo = hits
+        .iter()
+        .find_map(|hit| state.posts.post_map.get(&hit.post.url)?.image.as_ref())
+        .map_or_else(header_photo, post_photo);
     layout(
         &PageMeta {
             site_url: &state.site_url,
@@ -208,6 +226,7 @@ async fn search(
             (listing_intro(
                 "Search",
                 "Without going outside, you may know the whole world.",
+                &photo,
                 &html! {
                     p .search-summary {
                         @match hits.len() {
@@ -259,6 +278,7 @@ async fn index(State(state): State<AppState>) -> Markup {
             (listing_intro(
                 "Posts",
                 "The journey of a thousand miles begins with one step.",
+                &header_photo(),
                 &html! {
                     p { "In this blog, I share my love of Tai Chi. I hope you enjoy!" }
                     p {
@@ -449,7 +469,7 @@ async fn post(Path(url): Path<String>, State(state): State<AppState>) -> impl In
                     title: &page.post.title,
                     description: &page.description,
                     path: Some(&path),
-                    image: page.image.as_deref(),
+                    image: page.image.as_ref().map(|image| image.src.as_str()),
                     og_type: "article",
                     noindex: false,
                     search_query: "",
@@ -852,7 +872,32 @@ mod tests {
         let (_, page) = fetch(&app, "/search?q=sword").await?;
         assert!(page.contains("<main><h2>Search</h2><figure class=\"quote\">"));
         assert!(page.contains("Without going outside, you may know the whole world."));
-        assert!(page.contains(r#"<img class="index" src="/static/img/2023-to-the-states.jpg""#));
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn search_page_shows_photo_of_first_result_with_one() -> TestResult {
+        let app = test_app("https://www.example.com", false)?;
+        let photo = |page: &str| {
+            page.split("<img ")
+                .find(|tag| tag.starts_with(r#"class="index""#))
+                .map(|tag| tag.split('>').next().unwrap_or_default().to_string())
+        };
+        // The first result, "Don't Think — Just Do", has a photo.
+        let (_, page) = fetch(&app, "/search?q=sword").await?;
+        let tag = photo(&page).ok_or("no photo")?;
+        assert!(
+            tag.contains(r#"src="/static/img/2026-utah-canyon.jpg" alt="Canyons in Utah" width=""#),
+            "{tag}"
+        );
+        // "The Slow Set" comes first but has no photo, so the next result's.
+        let (_, page) = fetch(&app, "/search?q=single+whip").await?;
+        let tag = photo(&page).ok_or("no photo")?;
+        assert!(tag.contains("2025-november-copenhagen.jpg"), "{tag}");
+        // Nothing found: the photo of the post list.
+        let (_, page) = fetch(&app, "/search?q=qwertyuiop").await?;
+        let tag = photo(&page).ok_or("no photo")?;
+        assert!(tag.contains("2023-to-the-states.jpg"), "{tag}");
         Ok(())
     }
 

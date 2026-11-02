@@ -179,11 +179,21 @@ fn document_text(node: &Node, text: &mut String) {
     }
 }
 
-fn first_image(node: &Node) -> Option<&str> {
+fn first_image(node: &Node) -> Option<&markdown::mdast::Image> {
     match node {
-        Node::Image(image) => Some(&image.url),
+        Node::Image(image) => Some(image),
         _ => node.children()?.iter().find_map(first_image),
     }
+}
+
+/// An image shown in a post.
+#[derive(Clone)]
+pub struct PostImage {
+    /// Its URL, e.g. `/static/img/photo.jpg`.
+    pub src: String,
+    pub alt: String,
+    /// Width and height, known for images under `/static/`.
+    pub size: Option<(usize, usize)>,
 }
 
 /// Shortens text to at most `max` characters, cutting at a word boundary.
@@ -196,8 +206,9 @@ fn truncate(text: &str, max: usize) -> String {
     format!("{}…", cut.trim_end_matches([' ', ',', '.', ';', ':', '-']))
 }
 
-/// Returns the first paragraph as a short description, and the first image.
-fn summarize(input: &str) -> Result<(Option<String>, Option<String>), String> {
+/// Returns the first paragraph as a short description, and the first image
+/// without its size.
+fn summarize(input: &str) -> Result<(Option<String>, Option<PostImage>), String> {
     let tree = markdown::to_mdast(input, &markdown::ParseOptions::default())
         .map_err(|error| error.to_string())?;
     let description = tree.children().into_iter().flatten().find_map(|node| {
@@ -209,7 +220,12 @@ fn summarize(input: &str) -> Result<(Option<String>, Option<String>), String> {
         let text = text.split_whitespace().collect::<Vec<_>>().join(" ");
         (!text.is_empty()).then(|| truncate(&text, DESCRIPTION_LENGTH))
     });
-    Ok((description, first_image(&tree).map(str::to_string)))
+    let image = first_image(&tree).map(|image| PostImage {
+        src: image.url.clone(),
+        alt: image.alt.clone(),
+        size: None,
+    });
+    Ok((description, image))
 }
 
 /// Adds the size of each local image (`/static/...`, read from `static_dir`)
@@ -249,7 +265,8 @@ pub struct PostPage {
     /// The post's text and the extra content under it, for searching.
     pub search_text: SearchText,
     pub description: String,
-    pub image: Option<String>,
+    /// The first image of the post, for link previews and search results.
+    pub image: Option<PostImage>,
     pub previous_link: Option<PostLink>,
     pub next_link: Option<PostLink>,
 }
@@ -281,8 +298,15 @@ impl PostRepository {
                 .map_err(|error| format!("{}: {error}", file.display()))?;
             let content = enhance_images(&markdown::to_html(&input), static_dir)
                 .map_err(|error| format!("{}: {error}", file.display()))?;
-            let (description, image) =
+            let (description, mut image) =
                 summarize(&input).map_err(|error| format!("{}: {error}", file.display()))?;
+            if let Some(image) = &mut image {
+                image.size = image
+                    .src
+                    .strip_prefix("/static/")
+                    .and_then(|path| imagesize::size(static_dir.join(path)).ok())
+                    .map(|size| (size.width, size.height));
+            }
             let tree = markdown::to_mdast(&input, &markdown::ParseOptions::default())
                 .map_err(|error| format!("{}: {error}", file.display()))?;
             let mut text = String::new();
@@ -385,7 +409,11 @@ mod tests {
         let input = "![Group](/static/img/group.jpg)\n\nWe *practiced* the `slow set`.\n\nMore.";
         let (description, image) = summarize(input)?;
         assert_eq!(description.as_deref(), Some("We practiced the slow set."));
-        assert_eq!(image.as_deref(), Some("/static/img/group.jpg"));
+        let image = image.ok_or("no image")?;
+        assert_eq!(
+            (image.src.as_str(), image.alt.as_str()),
+            ("/static/img/group.jpg", "Group")
+        );
         Ok(())
     }
 
