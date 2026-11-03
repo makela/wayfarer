@@ -1,6 +1,6 @@
 use crate::data::get_extra_markup;
 use crate::search::{Excerpt, SearchText, find_word, html_text, normalize, query_words};
-use chrono::{NaiveDateTime, TimeZone};
+use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
 use markdown::mdast::Node;
 use rss::{Guid, Item};
 use std::collections::{BTreeMap, HashMap};
@@ -26,6 +26,15 @@ pub struct Post {
 }
 
 impl Post {
+    /// Whether the post's publication time, in Helsinki time, has come by `now`.
+    #[must_use]
+    pub fn is_published(&self, now: DateTime<Utc>) -> bool {
+        chrono_tz::Europe::Helsinki
+            .from_local_datetime(&self.published_at)
+            .earliest()
+            .is_some_and(|published_at| published_at <= now)
+    }
+
     /// Path of the post's page, see [`post_path`].
     #[must_use]
     pub fn path(&self) -> String {
@@ -335,19 +344,35 @@ impl PostRepository {
         })
     }
 
-    /// Posts with a word starting with each word of `query` in their title or
-    /// text. Those with the words together as a phrase come first, then those
-    /// with more of the words in their title, otherwise newest first.
+    /// The posts published by `now`, newest first. A post with a later
+    /// publication time stays hidden until then.
+    pub fn published(&self, now: DateTime<Utc>) -> impl Iterator<Item = &Post> {
+        self.post_list
+            .iter()
+            .filter(move |post| post.is_published(now))
+    }
+
+    /// The page of the post named `url`, if it is published by `now`.
     #[must_use]
-    pub fn search(&self, query: &str) -> Vec<SearchHit<'_>> {
+    pub fn published_page(&self, url: &str, now: DateTime<Utc>) -> Option<&PostPage> {
+        self.post_map
+            .get(url)
+            .filter(|page| page.post.is_published(now))
+    }
+
+    /// Posts published by `now` with a word starting with each word of `query`
+    /// in their title or text. Those with the words together as a phrase come
+    /// first, then those with more of the words in their title, otherwise
+    /// newest first.
+    #[must_use]
+    pub fn search(&self, query: &str, now: DateTime<Utc>) -> Vec<SearchHit<'_>> {
         let words = query_words(query);
         if words.is_empty() {
             return Vec::new();
         }
         let phrase = words.join(" ");
         let mut hits: Vec<((bool, usize), SearchHit)> = self
-            .post_list
-            .iter()
+            .published(now)
             .filter_map(|post| {
                 let page = self.post_map.get(&post.url)?;
                 let title = normalize(&post.title);
@@ -462,7 +487,7 @@ mod tests {
 
     fn found(repository: &PostRepository, query: &str) -> Vec<String> {
         repository
-            .search(query)
+            .search(query, Utc::now())
             .iter()
             .map(|hit| hit.post.url.clone())
             .collect()
@@ -474,7 +499,7 @@ mod tests {
         // In the movement names under the post, not in its markdown.
         assert!(found(&posts, "single whip").contains(&"the-slow-set".to_string()));
         // Accents don't matter, and the excerpt keeps them. The phrase ranks first.
-        let hits = posts.search("MAN QUAN");
+        let hits = posts.search("MAN QUAN", Utc::now());
         let hit = hits.first().ok_or("no hit for man quan")?;
         assert_eq!(hit.post.url, "the-slow-set");
         assert_eq!(
@@ -487,6 +512,39 @@ mod tests {
             Vec::<String>::new()
         );
         assert_eq!(found(&posts, ""), Vec::<String>::new());
+        Ok(())
+    }
+
+    #[test]
+    fn scheduled_posts_stay_hidden_until_published() -> Result<(), String> {
+        let posts = repository()?;
+        let newest = posts.post_list.first().ok_or("no posts")?;
+        // A minute before the newest post's time, and at it.
+        let at = chrono_tz::Europe::Helsinki
+            .from_local_datetime(&newest.published_at)
+            .earliest()
+            .ok_or("no Helsinki time")?
+            .with_timezone(&Utc);
+        let before = at - chrono::Duration::minutes(1);
+
+        assert!(!newest.is_published(before) && newest.is_published(at));
+        assert!(posts.published(before).all(|post| post.url != newest.url));
+        assert_eq!(posts.published(before).count(), posts.post_list.len() - 1);
+        assert!(posts.published_page(&newest.url, before).is_none());
+        assert!(posts.published_page(&newest.url, at).is_some());
+        let query = newest.title.clone();
+        assert!(
+            !posts
+                .search(&query, before)
+                .iter()
+                .any(|hit| hit.post.url == newest.url)
+        );
+        assert!(
+            posts
+                .search(&query, at)
+                .iter()
+                .any(|hit| hit.post.url == newest.url)
+        );
         Ok(())
     }
 

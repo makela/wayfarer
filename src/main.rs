@@ -7,6 +7,7 @@ use axum::{
     response::{IntoResponse, Redirect, Response},
     routing::get,
 };
+use chrono::{DateTime, Utc};
 use maud::{DOCTYPE, Markup, PreEscaped, html};
 use rss::extension::atom::{AtomExtension, Link};
 use rss::{ChannelBuilder, Item};
@@ -39,6 +40,9 @@ struct AppState {
     site_url: Arc<str>,
     /// Asks search engines not to index the site, e.g. for a test copy.
     noindex: bool,
+    /// The current time, which decides which posts are published. A function,
+    /// so that tests can pick the time.
+    now: fn() -> DateTime<Utc>,
 }
 
 /// Page details for the document head, search engines and link previews.
@@ -215,7 +219,7 @@ async fn search(
     if query.is_empty() {
         return Redirect::to("/").into_response();
     }
-    let hits = state.posts.search(query);
+    let hits = state.posts.search(query, (state.now)());
     // The first photo of the first result that has one, as a glimpse of what was found.
     let photo = hits
         .iter()
@@ -299,7 +303,7 @@ async fn index(State(state): State<AppState>) -> Markup {
                 },
             ))
             ul .post-list {
-                @for post in &state.posts.post_list {
+                @for post in state.posts.published((state.now)()) {
                     li { (post_row(post)) }
                 }
             }
@@ -315,8 +319,7 @@ async fn index(State(state): State<AppState>) -> Markup {
 async fn feed(State(state): State<AppState>) -> impl IntoResponse {
     let items: Vec<Item> = state
         .posts
-        .post_list
-        .iter()
+        .published((state.now)())
         .map(|post| {
             let mut item = post.to_item(&state.site_url);
             item.description = state
@@ -356,7 +359,7 @@ async fn sitemap(State(state): State<AppState>) -> impl IntoResponse {
             @for path in ["/", "/about"] {
                 url { loc { (state.site_url) (path) } }
             }
-            @for post in &state.posts.post_list {
+            @for post in state.posts.published((state.now)()) {
                 url {
                     loc { (state.site_url) (post.path()) }
                     lastmod { (post.published_at.format("%Y-%m-%d")) }
@@ -380,6 +383,16 @@ async fn robots(State(state): State<AppState>) -> impl IntoResponse {
         )
     };
     ([(header::CONTENT_TYPE, "text/plain; charset=utf-8")], body)
+}
+
+/// The time that decides which posts are published. In dev mode it is far in
+/// the future, so scheduled posts show up while they are being written.
+fn clock(dev: bool) -> fn() -> DateTime<Utc> {
+    if dev {
+        || DateTime::<Utc>::MAX_UTC
+    } else {
+        Utc::now
+    }
 }
 
 /// Set (even empty, like `DEV=` in the Justfile) and not "0" or "false".
@@ -469,8 +482,14 @@ fn reference_link(link: Option<&PostLink>, text: &str) -> Markup {
 }
 
 async fn post(Path(url): Path<String>, State(state): State<AppState>) -> impl IntoResponse {
-    match state.posts.post_map.get(&url) {
+    let now = (state.now)();
+    match state.posts.published_page(&url, now) {
         Some(page) => {
+            // Older posts are always published before this one, newer ones may not be.
+            let next_link = page
+                .next_link
+                .as_ref()
+                .filter(|next| state.posts.published_page(&next.url, now).is_some());
             let extra_markup = get_extra_markup(&page.post.url);
             let path = page.post.path();
             layout(
@@ -493,7 +512,7 @@ async fn post(Path(url): Path<String>, State(state): State<AppState>) -> impl In
                     }
                     // At the end of the story, where readers look for what's next.
                     nav .more-stories aria-label="More stories" {
-                        (reference_link(page.next_link.as_ref(), "Read the next story? "))
+                        (reference_link(next_link, "Read the next story? "))
                         (reference_link(page.previous_link.as_ref(), "Read the previous story? "))
                         p .reference { "Or browse " a href="/" { "all posts" } "." }
                     }
@@ -509,7 +528,7 @@ async fn post_redirect(
     Path(url): Path<String>,
     State(state): State<AppState>,
 ) -> impl IntoResponse {
-    if state.posts.post_map.contains_key(&url) {
+    if state.posts.published_page(&url, (state.now)()).is_some() {
         Redirect::permanent(&post_path(&url)).into_response()
     } else {
         not_found(&state.site_url)
@@ -608,14 +627,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         error
     })?;
     let site_url = std::env::var("SITE_URL").unwrap_or(DEFAULT_SITE_URL.to_string());
+    let dev = env_flag("DEV");
     let state = AppState {
         posts: Arc::new(posts),
         site_url: site_url.trim_end_matches('/').into(),
         noindex: env_flag("NOINDEX"),
+        now: clock(dev),
     };
-    tracing::info!(site_url = %state.site_url, noindex = state.noindex, "Site settings");
+    tracing::info!(site_url = %state.site_url, noindex = state.noindex, dev, "Site settings");
+    if dev {
+        tracing::info!("Dev mode: showing scheduled posts as published");
+    }
 
-    let dev = env_flag("DEV");
     let app = app(state, static_dir, dev);
     // Behind a reverse proxy, set HOST=127.0.0.1 to accept local connections only.
     let host = std::env::var("HOST").unwrap_or("0.0.0.0".to_string());
@@ -722,11 +745,21 @@ mod tests {
     use super::*;
     use axum::body::{Body, to_bytes};
     use axum::http::HeaderMap;
+    use chrono::TimeZone;
     use tower::ServiceExt;
 
     type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
 
     fn test_app(site_url: &str, noindex: bool) -> TestResult<Router> {
+        test_app_at(site_url, noindex, Utc::now)
+    }
+
+    /// The app as if the time were what `now` returns.
+    fn test_app_at(
+        site_url: &str,
+        noindex: bool,
+        now: fn() -> DateTime<Utc>,
+    ) -> TestResult<Router> {
         let root = FsPath::new(env!("CARGO_MANIFEST_DIR"));
         assets::init(&root.join("dist"));
         let state = AppState {
@@ -736,6 +769,7 @@ mod tests {
             )?),
             site_url: site_url.into(),
             noindex,
+            now,
         };
         Ok(app(state, &root.join("dist"), false))
     }
@@ -996,6 +1030,56 @@ mod tests {
         let (_, script) = fetch(&app, "/static/embed-video.js").await?;
         assert!(script.contains("https://www.youtube-nocookie.com/embed/"));
         assert!(!script.contains("https://www.youtube.com/embed/"));
+        Ok(())
+    }
+
+    /// Ten days before "Don't Think — Just Do", the newest post, but after
+    /// "Learn by Watching", the one before it.
+    fn october_14() -> DateTime<Utc> {
+        Utc.with_ymd_and_hms(2026, 10, 14, 12, 0, 0)
+            .single()
+            .unwrap_or_default()
+    }
+
+    #[test]
+    fn dev_mode_shows_scheduled_posts() -> TestResult {
+        let root = FsPath::new(env!("CARGO_MANIFEST_DIR"));
+        let posts = PostRepository::new(&root.join("posts"), &root.join("dist"))?;
+        // In dev mode every post counts as published, however far ahead it is.
+        assert_eq!(
+            posts.published(clock(true)()).count(),
+            posts.post_list.len()
+        );
+        assert!(clock(true)() > Utc::now() + chrono::Duration::days(365 * 1000));
+        // Otherwise the real time decides.
+        let real = clock(false)();
+        assert!((Utc::now() - real).num_seconds().abs() < 5);
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn scheduled_post_is_hidden_everywhere() -> TestResult {
+        let app = test_app_at("https://www.example.com", false, october_14)?;
+        let scheduled = "/post/dont-think-just-do";
+
+        let (_, index) = fetch(&app, "/").await?;
+        assert!(!index.contains(scheduled) && index.contains("/post/learn-by-watching"));
+        let (_, feed) = fetch(&app, "/feed.xml").await?;
+        assert!(!feed.contains(scheduled));
+        let (_, sitemap) = fetch(&app, "/sitemap.xml").await?;
+        assert!(!sitemap.contains(scheduled));
+        let (_, search) = fetch(&app, "/search?q=sword").await?;
+        assert!(!search.contains(scheduled) && search.contains("posts found"));
+
+        for uri in [scheduled, "/post/dont-think-just-do/"] {
+            let request = Request::builder().uri(uri).body(Body::empty())?;
+            let response = app.clone().oneshot(request).await?;
+            assert_eq!(response.status(), StatusCode::NOT_FOUND, "{uri}");
+        }
+        // The post before it has no "next story" yet.
+        let (_, previous) = fetch(&app, "/post/learn-by-watching").await?;
+        assert!(!previous.contains("Read the next story?"));
+        assert!(previous.contains("Read the previous story?"));
         Ok(())
     }
 

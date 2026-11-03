@@ -38,7 +38,10 @@ file the pages link to is missing, and logs which one.
 1. Write the post in `posts/<name>.md`.
 2. Add it to the top of `POSTS` in `src/posts.rs`, newest first:
    `("Title", "<name>", "2026-10-24 15:28")`, with the time in Helsinki time.
-   A line commented out there is a draft.
+   A post with a time in the future is published when that time comes, without
+   a restart. Until then it is left out of the posts, the feed, the sitemap and
+   search, and its page is not found. In dev mode (`just watch`) scheduled
+   posts show up right away. A line commented out there is a draft.
 3. Put photos in `dist/img` and show them with `![Description](/static/img/photo.jpg)`.
    Full-size photos are fine, they are resized when the package is built.
 
