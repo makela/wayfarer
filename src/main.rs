@@ -107,7 +107,8 @@ fn layout(meta: &PageMeta, content: &Markup) -> Markup {
                     // In reading order, so keyboard and screen reader users meet the
                     // links in the same order as they are shown.
                     div .top-bar {
-                        nav {
+                        // Named, as posts also have a "More stories" navigation.
+                        nav aria-label="Main" {
                             ul {
                                 li { (nav_link("/", "Posts", meta.path)) }
                                 li { (nav_link("/about", "About", meta.path)) }
@@ -173,8 +174,9 @@ fn listing_intro(heading: &str, lao_tzu: &str, photo: &Markup, intro: &Markup) -
 }
 
 /// The photo of the post list, also used where nothing better is at hand.
+/// Decoration only, so screen readers skip it.
 fn header_photo() -> Markup {
-    static_image(assets::HEADER_PHOTO, Some("index"), "Tai Chi Wayfarer")
+    static_image(assets::HEADER_PHOTO, Some("index"), "")
 }
 
 /// A post's image beside the introduction of the search results.
@@ -441,7 +443,7 @@ async fn about(State(state): State<AppState>) -> Markup {
             article {
                 h2 { "About" }
                 (quote("Be still like a mountain and flow like a great river.", "Lao Tzu"))
-                (static_image(assets::PROFILE_PHOTO, Some("index"), "Profile picture"))
+                (static_image(assets::PROFILE_PHOTO, Some("index"), "Timo practicing Tai Chi in a garden"))
                 p { "Hi, my name is Timo. I've been practicing Tai Chi Chuan since 2002. Having this art in my life makes me feel so lucky, happy and grateful." }
                 p {
                     "I practice Yang-style Tai Chi in the "
@@ -931,6 +933,32 @@ mod tests {
         }
         let (_, index) = fetch(&app, "/").await?;
         assert!(!index.contains(r#"name="robots""#));
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn navigations_are_named() -> TestResult {
+        let app = test_app("https://www.example.com", false)?;
+        let (_, post) = fetch(&app, "/post/the-slow-set").await?;
+        assert!(post.contains(r#"<nav aria-label="Main">"#));
+        assert!(post.contains(r#"<nav class="more-stories" aria-label="More stories">"#));
+        assert_eq!(post.matches("<nav").count(), 2);
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn photos_have_fitting_alt_text() -> TestResult {
+        let app = test_app("https://www.example.com", false)?;
+        // Decoration: an empty alt text, so screen readers skip it.
+        let decoration = r#"src="/static/img/2023-to-the-states.jpg" alt="""#;
+        let (_, index) = fetch(&app, "/").await?;
+        assert!(index.contains(decoration));
+        let (_, none) = fetch(&app, "/search?q=qwertyuiop").await?;
+        assert!(none.contains(decoration));
+        let (_, about) = fetch(&app, "/about").await?;
+        assert!(about.contains(
+            r#"src="/static/img/profile.jpg" alt="Timo practicing Tai Chi in a garden""#
+        ));
         Ok(())
     }
 
