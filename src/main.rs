@@ -109,8 +109,8 @@ fn layout(meta: &PageMeta, content: &Markup) -> Markup {
                     div .top-bar {
                         nav {
                             ul {
-                                li { a href="/" aria-current=[(meta.path == Some("/")).then_some("page")] { "Posts" } }
-                                li { a href="/about" aria-current=[(meta.path == Some("/about")).then_some("page")] { "About" } }
+                                li { (nav_link("/", "Posts", meta.path)) }
+                                li { (nav_link("/about", "About", meta.path)) }
                             }
                         }
                         // Together, so that on narrow screens they move to the next line as one.
@@ -129,6 +129,14 @@ fn layout(meta: &PageMeta, content: &Markup) -> Markup {
                 }
             }
         }
+    }
+}
+
+/// A link of the top bar, marked when it is the page the reader is on. Only
+/// then: from a post, Posts leads to the list of posts, so it stays a link.
+fn nav_link(href: &str, label: &str, path: Option<&str>) -> Markup {
+    html! {
+        a href=(href) aria-current=[(path == Some(href)).then_some("page")] { (label) }
     }
 }
 
@@ -481,8 +489,12 @@ async fn post(Path(url): Path<String>, State(state): State<AppState>) -> impl In
                         (PreEscaped(&page.content))
                         (extra_markup)
                     }
-                    (reference_link(page.next_link.as_ref(), "Read the next story? "))
-                    (reference_link(page.previous_link.as_ref(), "Read the previous story? "))
+                    // At the end of the story, where readers look for what's next.
+                    nav .more-stories aria-label="More stories" {
+                        (reference_link(page.next_link.as_ref(), "Read the next story? "))
+                        (reference_link(page.previous_link.as_ref(), "Read the previous story? "))
+                        p .reference { "Or browse " a href="/" { "all posts" } "." }
+                    }
                 },
             )
             .into_response()
@@ -960,6 +972,31 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn posts_end_with_link_to_all_posts() -> TestResult {
+        let app = test_app("https://www.example.com", false)?;
+        for uri in [
+            "/post/the-slow-set",
+            "/post/bosco-harvest-2023",
+            "/post/dont-think-just-do",
+        ] {
+            let (_, page) = fetch(&app, uri).await?;
+            let all = page
+                .find(r#"<p class="reference">Or browse <a href="/">all posts</a>.</p></nav>"#)
+                .ok_or(format!("no link to all posts on {uri}"))?;
+            let more = page
+                .find(r#"<nav class="more-stories" aria-label="More stories">"#)
+                .ok_or(format!("no more stories on {uri}"))?;
+            assert!(more < all, "{uri}");
+            // After the next and previous stories, as the last way on.
+            assert!(
+                page.rfind("story? <a").is_none_or(|story| story < all),
+                "{uri}"
+            );
+        }
+        Ok(())
+    }
+
+    #[tokio::test]
     async fn story_links_are_absolute() -> TestResult {
         let app = test_app("https://www.example.com", false)?;
         let (_, page) = fetch(&app, "/post/the-slow-set").await?;
@@ -980,8 +1017,13 @@ mod tests {
         let search = about.find(r#"name="q""#).ok_or("no search box")?;
         let kofi = about.find("ko-fi.com").ok_or("no Ko-fi link")?;
         assert!(posts < about_link && about_link < search && search < kofi);
+        // From a post, both lead elsewhere and stay ordinary links.
         let (_, post) = fetch(&app, "/post/the-slow-set").await?;
         assert!(!post.contains("aria-current"));
+        assert!(post.contains(r#"<a href="/">Posts</a>"#));
+        assert!(post.contains(r#"<a href="/about">About</a>"#));
+        let (_, search) = fetch(&app, "/search?q=sword").await?;
+        assert!(!search.contains("aria-current"));
         Ok(())
     }
 

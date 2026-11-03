@@ -132,6 +132,11 @@ nav ul {
 nav ul li {
   @apply mx-2;
 }
+/* The current page in the colour of the text, so it stands out as where you
+   are, and the others as links. */
+nav a[aria-current="page"] {
+  @apply text-slate-50;
+}
 
 /* On phones, as wide as the room between the links and Ko-fi allows. When
    that is less than its minimum, it moves with Ko-fi onto a line of its own. */
@@ -170,6 +175,10 @@ ul.post-list li div div.date {
   @apply flex-none text-sm;
 }
 
+/* The underline in the link's own colour but faint, the text not. */
+a:hover {
+  @apply underline underline-offset-4 decoration-current/30;
+}
 a {
   @apply text-blue-200;
 }
@@ -214,6 +223,15 @@ img.rss {
 
 article {
   @apply pb-4;
+}
+
+/* After a post, the links close together, and some room below them before
+   the end of the page. */
+nav.more-stories {
+  @apply mt-2 mb-12;
+}
+nav.more-stories p {
+  @apply my-2;
 }
 
 article ul, article ol {
