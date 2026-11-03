@@ -1,12 +1,14 @@
 use crate::assets;
 use maud::{Markup, html};
 
+// Chinese text is marked as such, so screen readers pronounce it as Chinese
+// and browsers pick Chinese forms of the characters.
 fn name_table(names: &[(&str, &str, &str, &str)]) -> Markup {
     html! {
         @for (i, (_, characters, pinyin, name)) in names.iter().enumerate() {
             div .index { (format!("{}.", i+1)) }
-            div .characters { (characters) }
-            div .pinyin { (pinyin) }
+            div .characters lang="zh" { (characters) }
+            div .pinyin lang="zh-Latn-pinyin" { (pinyin) }
             div .english { (name) }
         }
     }
@@ -732,7 +734,12 @@ fn get_proverbs() -> Vec<Term> {
 fn set_markup(title: &str, video_id: Option<&str>, names: &[(&str, &str, &str, &str)]) -> Markup {
     html! {
         @if let Some(video_id) = video_id {
-            div .video data-video-id=(video_id) {}
+            div .video data-video-id=(video_id) {
+                // Without JavaScript; the script replaces it with the consent box or the video.
+                a .video-fallback href=(format!("https://www.youtube.com/watch?v={video_id}")) {
+                    "Watch the video on YouTube"
+                }
+            }
             script async src=(assets::url(assets::VIDEO_SCRIPT)) {}
         }
         div .names-of-set {
@@ -750,8 +757,8 @@ fn glossary_markup() -> Markup {
                     h3 { (header) }
                 }
                 @for (characters, pinyin, translation) in terms {
-                    div .characters { (characters) }
-                    div .pinyin { (pinyin) }
+                    div .characters lang="zh" { (characters) }
+                    div .pinyin lang="zh-Latn-pinyin" { (pinyin) }
                     div .english { (translation) }
                 }
             }
@@ -761,8 +768,8 @@ fn glossary_markup() -> Markup {
             div { h3 { "Proverbs" } }
 
             @for (characters, pinyin, translation) in get_proverbs() {
-                div .characters { (characters) }
-                div .pinyin { (pinyin) }
+                div .characters lang="zh" { (characters) }
+                div .pinyin lang="zh-Latn-pinyin" { (pinyin) }
                 div .english { (translation) }
             }
         }

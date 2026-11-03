@@ -963,6 +963,43 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn chinese_text_is_marked_as_chinese() -> TestResult {
+        let app = test_app("https://www.example.com", false)?;
+        let (_, page) = fetch(&app, "/post/the-slow-set").await?;
+        let characters = page
+            .matches(r#"<div class="characters" lang="zh">"#)
+            .count();
+        let pinyin = page
+            .matches(r#"<div class="pinyin" lang="zh-Latn-pinyin">"#)
+            .count();
+        assert!(characters > 50, "{characters}");
+        assert_eq!(characters, pinyin);
+        assert_eq!(page.matches(r#"<div class="characters">"#).count(), 0);
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn video_has_a_link_without_javascript() -> TestResult {
+        let app = test_app("https://www.example.com", false)?;
+        let (_, page) = fetch(&app, "/post/the-slow-set").await?;
+        assert!(page.contains(concat!(
+            r#"<div class="video" data-video-id="mha0hp_cLHE">"#,
+            r#"<a class="video-fallback" href="https://www.youtube.com/watch?v=mha0hp_cLHE">"#,
+            "Watch the video on YouTube</a></div>"
+        )));
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn videos_are_embedded_from_youtube_nocookie() -> TestResult {
+        let app = test_app("https://www.example.com", false)?;
+        let (_, script) = fetch(&app, "/static/embed-video.js").await?;
+        assert!(script.contains("https://www.youtube-nocookie.com/embed/"));
+        assert!(!script.contains("https://www.youtube.com/embed/"));
+        Ok(())
+    }
+
+    #[tokio::test]
     async fn icons_are_linked() -> TestResult {
         let app = test_app("https://www.example.com", false)?;
         let (_, page) = fetch(&app, "/").await?;
