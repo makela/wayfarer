@@ -1,18 +1,26 @@
 # The blog server with its posts and static files, ready to run:
 #   POST_DIR=$out/share/taichiwayfarer/posts
 #   STATIC_DIR=$out/share/taichiwayfarer/dist
+#
+# Crane builds the cargo dependencies in their own derivation, so changing the
+# blog's code, posts or assets only rebuilds the blog itself.
 {
   lib,
-  rustPlatform,
+  pkgs,
+  # The flake passes its crane input; elsewhere use the version in flake.lock.
+  craneLib ? import ./crane.nix { inherit pkgs; },
   tailwindcss_4,
   vips,
 }:
 let
   fs = lib.fileset;
-in
-rustPlatform.buildRustPackage {
-  pname = "taichiwayfarer";
-  version = (lib.importTOML ../Cargo.toml).package.version;
+
+  commonArgs = {
+    pname = "taichiwayfarer";
+    version = (lib.importTOML ../Cargo.toml).package.version;
+    inherit src;
+    strictDeps = true;
+  };
 
   # Only what the build needs, so e.g. target/ or README edits don't
   # cause rebuilds when this is used straight from a clone.
@@ -28,7 +36,11 @@ rustPlatform.buildRustPackage {
     ];
   };
 
-  cargoLock.lockFile = ../Cargo.lock;
+  # Release dependencies only; rebuilt when Cargo.toml or Cargo.lock change.
+  cargoArtifacts = craneLib.buildDepsOnly commonArgs;
+in
+craneLib.buildPackage (commonArgs // {
+  inherit cargoArtifacts;
 
   nativeBuildInputs = [
     tailwindcss_4
@@ -69,4 +81,4 @@ rustPlatform.buildRustPackage {
     description = "Tai Chi Wayfarer blog";
     mainProgram = "taichiwayfarer";
   };
-}
+})
