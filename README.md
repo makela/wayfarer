@@ -22,7 +22,8 @@ change, and the browser reloads by itself.
 
 The dev shell also enables a pre-commit hook (`.githooks/pre-commit`) that runs
 `cargo fmt --check`, `cargo clippy` and `cargo test`. Outside the dev shell it
-starts one itself. Skip it once with `git commit --no-verify`.
+starts one itself. It also refuses staged images that contain a GPS location.
+Skip it once with `git commit --no-verify`.
 
 ## Configuration
 
@@ -44,6 +45,9 @@ file the pages link to is missing, and logs which one.
    posts show up right away. A line commented out there is a draft.
 3. Put photos in `dist/img` and show them with `![Description](/static/img/photo.jpg)`.
    Full-size photos are fine, they are resized when the package is built.
+   The pre-commit hook refuses photos with a GPS location, since the
+   originals are public in the repository. Remove it with
+   `exiftool -gps:all= -overwrite_original dist/img/photo.jpg`.
 
 The first paragraph becomes the post's description for search engines, link
 previews and the feed, and the first photo its preview image.
@@ -97,3 +101,9 @@ sudo nixos-rebuild switch
   ```
 - YouTube videos load only after the visitor accepts YouTube's cookies,
   see `dist/embed-video.js`.
+
+## License
+
+The code is under the MIT license, see `LICENSE`. The posts in `posts/` and
+the photos in `dist/img/` are all rights reserved. The fonts in `dist/fonts/`
+are under the SIL Open Font License, with their license files next to them.

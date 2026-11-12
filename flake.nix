@@ -35,6 +35,7 @@
             watchexec
             watchman
             tailwindcss_4
+            exiftool
           ];
         };
       }
