@@ -94,6 +94,7 @@ impl PostLink {
 const POSTS: &[(&str, &str, &str)] = &[
     // ("The Sword Set", "the-sword-set", "2026-08-08 08:08"),
     // ("Chinese Glossary", "chinese-glossary", "2026-08-08 08:08"),
+    ("Study Your Movements", "study-your-movements", "2026-11-16 17:42"),
     ("Don't Think — Just Do", "dont-think-just-do", "2026-10-24 15:28"),
     ("Learn by Watching", "learn-by-watching", "2026-10-08 11:41"),
     ("The Slow Set", "the-slow-set", "2026-08-18 19:52"),
