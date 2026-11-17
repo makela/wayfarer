@@ -750,8 +750,17 @@ mod tests {
 
     type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
 
+    /// The app as it was on November 1, 2026, so a newly published post,
+    /// always later than that, cannot change what the tests see.
     fn test_app(site_url: &str, noindex: bool) -> TestResult<Router> {
-        test_app_at(site_url, noindex, Utc::now)
+        test_app_at(site_url, noindex, november_1)
+    }
+
+    /// After "Don't Think — Just Do" and before "Study Your Movements".
+    fn november_1() -> DateTime<Utc> {
+        Utc.with_ymd_and_hms(2026, 11, 1, 12, 0, 0)
+            .single()
+            .unwrap_or_default()
     }
 
     /// The app as if the time were what `now` returns.
@@ -1033,7 +1042,7 @@ mod tests {
         Ok(())
     }
 
-    /// Ten days before "Don't Think — Just Do", the newest post, but after
+    /// Ten days before "Don't Think — Just Do", but after
     /// "Learn by Watching", the one before it.
     fn october_14() -> DateTime<Utc> {
         Utc.with_ymd_and_hms(2026, 10, 14, 12, 0, 0)

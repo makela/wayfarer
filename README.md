@@ -57,6 +57,8 @@ in `get_extra_markup` in `src/data.rs`.
 
 The tests check that every post has its file and photos, that dates are valid
 and in order, and that names are unique.
+Otherwise the tests see the site as it was on November 1, 2026, so a new post
+cannot break them.
 
 ## Deployment
 
