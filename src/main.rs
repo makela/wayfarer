@@ -2,7 +2,7 @@ use axum::{
     Router,
     extract::{Form, Path, Query, Request, State},
     handler::Handler,
-    http::{HeaderName, HeaderValue, StatusCode, header},
+    http::{HeaderName, HeaderValue, Method, StatusCode, header},
     middleware::{self, Next},
     response::{IntoResponse, Redirect, Response},
     routing::get,
@@ -34,7 +34,7 @@ use taichiwayfarer::data::get_extra_markup;
 use taichiwayfarer::db;
 use taichiwayfarer::mail::{self, Encryption, Mailer};
 use taichiwayfarer::newsletter::Newsletter;
-use taichiwayfarer::posts::{Post, PostImage, PostLink, PostRepository, post_path};
+use taichiwayfarer::posts::{Post, PostImage, PostLink, PostRepository};
 use taichiwayfarer::subscribers::{NOTE_LENGTH, Signup, Store, parse_email};
 
 const DEFAULT_SITE_URL: &str = "https://www.taichiwayfarer.com";
@@ -903,15 +903,24 @@ async fn post_page(Path(url): Path<String>, State(state): State<AppState>) -> im
     }
 }
 
-async fn post_redirect(
-    Path(url): Path<String>,
-    State(state): State<AppState>,
-) -> impl IntoResponse {
-    if state.posts.published_page(&url, (state.now)()).is_some() {
-        Redirect::permanent(&post_path(&url)).into_response()
-    } else {
-        not_found(&state.site_url)
+/// Redirects directory style URLs, such as `/about/` and `/post/x/` of the
+/// static site before, permanently to the page without the slash, keeping
+/// the query. Any page gets this, and the page decides whether it exists:
+/// e.g. a scheduled post's is not found either way.
+async fn trim_trailing_slash(request: Request, next: Next) -> Response {
+    let path = request.uri().path();
+    let trimmed = path.trim_end_matches('/');
+    // Not `//host` or `/\host`, which browsers would take as another site.
+    let local = trimmed.len() > 1 && !trimmed[1..].starts_with(['/', '\\']);
+    let read = matches!(*request.method(), Method::GET | Method::HEAD);
+    if trimmed.len() < path.len() && local && read {
+        let location = match request.uri().query() {
+            Some(query) => format!("{trimmed}?{query}"),
+            None => trimmed.to_string(),
+        };
+        return Redirect::permanent(&location).into_response();
     }
+    next.run(request).await
 }
 
 fn app(state: AppState, static_dir: &FsPath, dev: bool) -> Router {
@@ -941,10 +950,9 @@ fn app(state: AppState, static_dir: &FsPath, dev: bool) -> Router {
         .route("/unsubscribe", get(unsubscribe_page).post(unsubscribe))
         .route("/privacy", get(privacy))
         .route("/post/{url}", get(post_page))
-        // Support also directory style urls
-        .route("/about/", get(async || Redirect::permanent("/about")))
-        .route("/post/{url}/", get(post_redirect))
         .fallback(handler_404)
+        // Also for paths without a route, as /about/: the fallback has it too.
+        .layer(middleware::from_fn(trim_trailing_slash))
         .layer(
             TraceLayer::new_for_http()
                 .make_span_with(trace::DefaultMakeSpan::new().level(Level::INFO))
@@ -1624,15 +1632,57 @@ mod tests {
         let (_, search) = fetch(&app, "/search?q=sword").await?;
         assert!(!search.contains(scheduled) && search.contains("posts found"));
 
-        for uri in [scheduled, "/post/dont-think-just-do/"] {
-            let request = Request::builder().uri(uri).body(Body::empty())?;
-            let response = app.clone().oneshot(request).await?;
-            assert_eq!(response.status(), StatusCode::NOT_FOUND, "{uri}");
-        }
+        let request = Request::builder().uri(scheduled).body(Body::empty())?;
+        let response = app.clone().oneshot(request).await?;
+        assert_eq!(response.status(), StatusCode::NOT_FOUND);
+        // With a slash, it goes to the same not found page.
+        assert_eq!(
+            redirect(&app, "/post/dont-think-just-do/").await?,
+            Some(scheduled.to_string())
+        );
         // The post before it has no "next story" yet.
         let (_, previous) = fetch(&app, "/post/learn-by-watching").await?;
         assert!(!previous.contains("Read the next story?"));
         assert!(previous.contains("Read the previous story?"));
+        Ok(())
+    }
+
+    /// Where a GET of `uri` is redirected permanently, if it is.
+    async fn redirect(app: &Router, uri: &str) -> TestResult<Option<String>> {
+        let request = Request::builder().uri(uri).body(Body::empty())?;
+        let response = app.clone().oneshot(request).await?;
+        if response.status() != StatusCode::PERMANENT_REDIRECT {
+            return Ok(None);
+        }
+        let location = response
+            .headers()
+            .get(header::LOCATION)
+            .ok_or("no location")?;
+        Ok(Some(location.to_str()?.to_string()))
+    }
+
+    #[tokio::test]
+    async fn directory_style_urls_redirect_to_the_page() -> TestResult {
+        let app = test_app("https://www.example.com", false).await?;
+        for (uri, page) in [
+            ("/about/", "/about"),
+            ("/post/the-slow-set/", "/post/the-slow-set"),
+            ("/subscribe/", "/subscribe"),
+            ("/privacy//", "/privacy"),
+            ("/search/?q=sword", "/search?q=sword"),
+            ("/no-such-page/", "/no-such-page"),
+        ] {
+            assert_eq!(redirect(&app, uri).await?, Some(page.to_string()), "{uri}");
+        }
+        // The front page is "/" itself.
+        assert_eq!(fetch_status(&app, "/").await?.0, StatusCode::OK);
+        // Never to another site, which `//host` would be.
+        for uri in ["//example.org/", "///example.org/"] {
+            assert_eq!(redirect(&app, uri).await?, None, "{uri}");
+        }
+        // Forms are not redirected, as that would send them twice.
+        let (status, _) = post_form(&app, "/subscribe/", "email=a%40example.com").await?;
+        assert_eq!(status, StatusCode::NOT_FOUND);
         Ok(())
     }
 
