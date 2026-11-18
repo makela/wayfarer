@@ -29,6 +29,7 @@ let
     fileset = fs.unions [
       ../Cargo.toml
       ../Cargo.lock
+      ../migrations
       ../src
       ../posts
       ../input.css

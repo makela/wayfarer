@@ -196,6 +196,12 @@ p {
   @apply text-justify;
 }
 
+/* The pages of confirming and unsubscribing: a few lines each, which
+   justifying would stretch. */
+div.short-page p {
+  @apply text-left;
+}
+
 p.reference, p.date {
   @apply mx-12 italic;
 }
@@ -307,4 +313,50 @@ a.kofi-button {
 }
 a.kofi-button img {
   @apply h-[15px] w-[22px] rounded-none;
+}
+
+/* Signing up for new posts by email, under the introduction and on the
+   pages of subscribing. Clear of the floated photo. */
+/* The forms of subscribing: the sign-up, and the buttons to confirm and
+   unsubscribe. */
+form.subscribe {
+  @apply m-6;
+  font-family: 'Inter', sans-serif;
+}
+form.subscribe label {
+  @apply block text-sm mt-3 mb-1;
+}
+form.subscribe input, form.subscribe textarea {
+  @apply block w-full rounded-lg px-3 py-1 bg-slate-50 text-slate-900;
+}
+form.subscribe button {
+  @apply block mt-4 rounded-lg px-4 py-1 bg-slate-50 text-slate-900 cursor-pointer;
+}
+form.subscribe button:hover {
+  @apply bg-blue-200;
+}
+form.subscribe p {
+  @apply m-0 mt-3 text-sm;
+}
+form.subscribe p.form-error {
+  @apply mt-1 rounded-lg px-3 py-1 bg-yellow-200 text-slate-900;
+}
+
+/* The sign-up: a box of its own, under the introduction and the photo as the
+   list of posts is on the front page, with its name on the border. */
+form.signup {
+  @apply clear-both;
+}
+form.signup fieldset {
+  @apply rounded-lg border border-slate-50/25 bg-slate-800/40 px-5 pt-1 pb-5;
+}
+form.signup legend {
+  @apply px-2 -mx-2 text-sm text-slate-300;
+}
+form.signup p.fine-print {
+  @apply text-slate-400;
+}
+/* For bots only: off the screen, not hidden, as some bots skip hidden fields. */
+form.subscribe .trap {
+  @apply absolute -left-[9999px] w-px h-px overflow-hidden;
 }

@@ -4,7 +4,15 @@
 #
 #   imports = [ /srv/wayfarer/nix/module.nix ];
 #   services.taichiwayfarer.instances = {
-#     www.siteUrl = "https://www.taichiwayfarer.com";
+#     www = {
+#       siteUrl = "https://www.taichiwayfarer.com";
+#       # Gmail with an app password (needs 2-Step Verification on the account)
+#       smtp = {
+#         host = "smtp.gmail.com";
+#         user = "taichiwayfarer@gmail.com";
+#         passwordFile = "/var/lib/secrets/taichiwayfarer/gmail-app-password";
+#       };
+#     };
 #     alt = {
 #       package = pkgs.callPackage /srv/wayfarer-alt/nix/package.nix { };
 #       port = 3001;
@@ -13,7 +21,15 @@
 #     };
 #   };
 #
-# Each instance runs as the service taichiwayfarer-<name>.
+# Each instance runs as the service taichiwayfarer-<name>. Its database,
+# e.g. of subscribers to new posts, is
+# /var/lib/taichiwayfarer-<name>/taichiwayfarer.db, and
+# `sudo taichiwayfarer-<name>-subscribers list | import | remove <email>`
+# manages them (see `subscribers_command` in src/main.rs), e.g.
+#
+#   sudo taichiwayfarer-www-subscribers import < emails.txt
+#
+# Without smtp.host, as alt above, the instance only logs its emails.
 {
   config,
   lib,
@@ -64,6 +80,60 @@ let
           description = "Port to listen on (instance ${name}).";
         };
 
+        mail = {
+          from = lib.mkOption {
+            type = lib.types.str;
+            default = "Tai Chi Wayfarer <taichiwayfarer@gmail.com>";
+            description = ''
+              Who the emails to subscribers are from (MAIL_FROM); replies go there too.
+              With Gmail, the account's own address.
+            '';
+          };
+          notify = lib.mkOption {
+            type = lib.types.nullOr lib.types.str;
+            default = null;
+            example = "timo@example.com";
+            description = "Who hears of new subscribers and their notes (NOTIFY_EMAIL), or null for mail.from.";
+          };
+        };
+
+        smtp = {
+          host = lib.mkOption {
+            type = lib.types.nullOr lib.types.str;
+            default = null;
+            example = "smtp.gmail.com";
+            description = "SMTP server the emails are sent through, or null to only log them.";
+          };
+          port = lib.mkOption {
+            type = lib.types.nullOr lib.types.port;
+            default = null;
+            description = "Port of the SMTP server, or null for 465 with tls and 587 otherwise.";
+          };
+          encryption = lib.mkOption {
+            type = lib.types.enum [
+              "tls"
+              "starttls"
+              "none"
+            ];
+            default = "tls";
+            description = "tls (usually port 465, as Gmail), starttls (usually 587), or none for a local relay.";
+          };
+          user = lib.mkOption {
+            type = lib.types.nullOr lib.types.str;
+            default = null;
+            description = "SMTP login, or null for a server that needs none.";
+          };
+          passwordFile = lib.mkOption {
+            type = lib.types.nullOr lib.types.str;
+            default = null;
+            example = "/var/lib/secrets/taichiwayfarer/gmail-app-password";
+            description = ''
+              File with the SMTP password, e.g. a Gmail app password, outside the Nix
+              store. The service reads it through systemd credentials. Needed with a user.
+            '';
+          };
+        };
+
         logLevel = lib.mkOption {
           type = lib.types.str;
           default = "taichiwayfarer=info,tower_http=info";
@@ -76,6 +146,7 @@ let
     name: instance:
     let
       share = "${instance.package}/share/taichiwayfarer";
+      smtpPassword = instance.smtp.host != null && instance.smtp.passwordFile != null;
     in
     lib.nameValuePair "taichiwayfarer-${name}" {
       description = "Tai Chi Wayfarer blog (${name})";
@@ -90,14 +161,37 @@ let
         POST_DIR = "${share}/posts";
         STATIC_DIR = "${share}/dist";
         RUST_LOG = instance.logLevel;
+        DATABASE_URL = databaseUrl name;
+        MAIL_FROM = instance.mail.from;
+      }
+      // lib.optionalAttrs (instance.mail.notify != null) {
+        NOTIFY_EMAIL = instance.mail.notify;
+      }
+      // lib.optionalAttrs (instance.smtp.host != null) {
+        SMTP_HOST = instance.smtp.host;
+        SMTP_ENCRYPTION = instance.smtp.encryption;
+      }
+      // lib.optionalAttrs (instance.smtp.host != null && instance.smtp.port != null) {
+        SMTP_PORT = toString instance.smtp.port;
+      }
+      // lib.optionalAttrs (instance.smtp.host != null && instance.smtp.user != null) {
+        SMTP_USER = instance.smtp.user;
+      }
+      // lib.optionalAttrs smtpPassword {
+        # %d is the service's credentials directory, see LoadCredential.
+        SMTP_PASSWORD_FILE = "%d/smtp-password";
       };
 
       serviceConfig = {
         ExecStart = lib.getExe instance.package;
         Restart = "on-failure";
 
-        # The server only reads from the Nix store and listens on a port.
+        # The server reads from the Nix store, keeps its subscribers in its
+        # state directory, listens on a port and sends emails.
         DynamicUser = true;
+        # Named, so that the subscribers command runs as the same user.
+        User = "taichiwayfarer-${name}";
+        StateDirectory = "taichiwayfarer-${name}";
         WorkingDirectory = "/";
         CapabilityBoundingSet = "";
         NoNewPrivileges = true;
@@ -115,6 +209,8 @@ let
         RestrictAddressFamilies = [
           "AF_INET"
           "AF_INET6"
+          # Looking up the SMTP server's address, e.g. through nscd.
+          "AF_UNIX"
         ];
         RestrictNamespaces = true;
         RestrictRealtime = true;
@@ -127,8 +223,28 @@ let
           "~@privileged"
         ];
         UMask = "0077";
+      }
+      // lib.optionalAttrs smtpPassword {
+        LoadCredential = "smtp-password:${instance.smtp.passwordFile}";
       };
     };
+
+  databaseUrl = name: "sqlite:///var/lib/taichiwayfarer-${name}/taichiwayfarer.db";
+
+  # taichiwayfarer-<name>-subscribers: the subscribers command, run as the
+  # service's user so that the database stays the service's. Run with sudo.
+  subscribersCommand =
+    name: instance:
+    pkgs.writeShellScriptBin "taichiwayfarer-${name}-subscribers" ''
+      exec ${config.systemd.package}/bin/systemd-run --quiet --pipe --wait --collect \
+        --property=DynamicUser=yes \
+        --property=User=taichiwayfarer-${name} \
+        --property=StateDirectory=taichiwayfarer-${name} \
+        --property=UMask=0077 \
+        --setenv=DATABASE_URL=${databaseUrl name} \
+        --setenv=RUST_LOG=warn \
+        ${lib.getExe instance.package} subscribers "$@"
+    '';
 
   # host:port of each instance, to catch two instances on the same port.
   addresses = lib.mapAttrsToList (_: instance: "${instance.host}:${toString instance.port}") instances;
@@ -146,8 +262,13 @@ in
         assertion = lib.length addresses == lib.length (lib.unique addresses);
         message = "services.taichiwayfarer.instances: each instance needs its own port (${lib.concatStringsSep ", " addresses}).";
       }
-    ];
+    ]
+    ++ lib.mapAttrsToList (name: instance: {
+      assertion = instance.smtp.user == null || instance.smtp.passwordFile != null;
+      message = "services.taichiwayfarer.instances.${name}.smtp: a user needs a passwordFile.";
+    }) instances;
 
     systemd.services = lib.mapAttrs' service instances;
+    environment.systemPackages = lib.mapAttrsToList subscribersCommand instances;
   };
 }

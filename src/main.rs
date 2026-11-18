@@ -1,6 +1,6 @@
 use axum::{
     Router,
-    extract::{Path, Query, Request, State},
+    extract::{Form, Path, Query, Request, State},
     handler::Handler,
     http::{HeaderName, HeaderValue, StatusCode, header},
     middleware::{self, Next},
@@ -8,12 +8,14 @@ use axum::{
     routing::get,
 };
 use chrono::{DateTime, Utc};
+use lettre::message::Mailbox;
 use maud::{DOCTYPE, Markup, PreEscaped, html};
 use rss::extension::atom::{AtomExtension, Link};
 use rss::{ChannelBuilder, Item};
 use std::collections::HashMap;
 use std::path::Path as FsPath;
 use std::sync::Arc;
+use tokio::sync::Notify;
 use tower_http::{
     compression::{
         CompressionLayer, DefaultPredicate,
@@ -29,7 +31,11 @@ use tracing_subscriber::EnvFilter;
 
 use taichiwayfarer::assets;
 use taichiwayfarer::data::get_extra_markup;
+use taichiwayfarer::db;
+use taichiwayfarer::mail::{self, Encryption, Mailer};
+use taichiwayfarer::newsletter::Newsletter;
 use taichiwayfarer::posts::{Post, PostImage, PostLink, PostRepository, post_path};
+use taichiwayfarer::subscribers::{NOTE_LENGTH, Signup, Store, parse_email};
 
 const DEFAULT_SITE_URL: &str = "https://www.taichiwayfarer.com";
 
@@ -43,6 +49,10 @@ struct AppState {
     /// The current time, which decides which posts are published. A function,
     /// so that tests can pick the time.
     now: fn() -> DateTime<Utc>,
+    /// The subscribers to new posts by email.
+    subscribers: Store,
+    /// Wakes the newsletter to send a confirmation email at once.
+    wake: Arc<Notify>,
 }
 
 /// Page details for the document head, search engines and link previews.
@@ -296,9 +306,9 @@ async fn index(State(state): State<AppState>) -> Markup {
                 &html! {
                     p { "In this blog, I share my love of Tai Chi. I hope you enjoy!" }
                     p {
-                        "If you'd like to hear about upcoming camps and workshops or when I publish new posts, "
-                        a href="mailto:taichiwayfarer@gmail.com?subject=Subscribe&body=Please tell me something about yourself. Who is your teacher, or what kind of content are you interested in?" { "send me an email" }
-                        ", and I will share the flyers and my updates with you."
+                        "If you'd like to hear when I publish new posts, "
+                        a href="/subscribe" { "subscribe by email" }
+                        ", and I'll send each new one to you."
                     }
                 },
             ))
@@ -439,6 +449,375 @@ async fn cache_static(State(dev): State<bool>, request: Request, next: Next) -> 
     response
 }
 
+/// Signing up for new posts by email, with an optional note about oneself,
+/// on `/subscribe` only, as is the link to the privacy notice. The values and
+/// the error are those of a sign-up that didn't go through.
+fn subscribe_form(email: &str, note: &str, error: Option<&str>) -> Markup {
+    html! {
+        // In a box of its own under the page's introduction and photo.
+        form .subscribe.signup method="post" action="/subscribe" {
+            fieldset {
+                legend { "New posts by email" }
+                @if let Some(error) = error {
+                    p .form-error role="alert" { (error) }
+                }
+                label for="subscribe-email" { "Your email" }
+                input #subscribe-email type="email" name="email" value=(email) required autocomplete="email";
+                label for="subscribe-note" { "About you (optional)" }
+                textarea #subscribe-note name="note" rows="3" maxlength=(NOTE_LENGTH)
+                    placeholder="Who is your teacher, or what would you like to read about?" { (note) }
+                // Hidden from people; bots that fill in every field fill it in too.
+                div .trap aria-hidden="true" {
+                    label for="subscribe-website" { "Leave this empty" }
+                    input #subscribe-website type="text" name="website" tabindex="-1" autocomplete="off";
+                }
+                button type="submit" { "Subscribe" }
+                p .fine-print {
+                    "I use your email only for my posts, and every post email has a link to unsubscribe. See "
+                    a href="/privacy" { "privacy" }
+                    "."
+                }
+            }
+        }
+    }
+}
+
+/// A Lao Tzu quote and a photo beside the text, as the list of posts opens,
+/// for the pages of confirming and unsubscribing.
+struct Opening {
+    quote: &'static str,
+    photo: &'static str,
+}
+
+/// Waiting for the confirmation email.
+const INBOX: Opening = Opening {
+    quote: "Do you have the patience to wait till your mud settles and the water is clear?",
+    photo: assets::INBOX_PHOTO,
+};
+/// Confirming, and confirmed.
+const SUBSCRIBED: Opening = Opening {
+    quote: "The sage does not hoard. The more he gives to others, the more he has.",
+    photo: assets::SUBSCRIBED_PHOTO,
+};
+/// Unsubscribing, and unsubscribed.
+const UNSUBSCRIBE: Opening = Opening {
+    quote: "Do your work, then step back. The only path to serenity.",
+    photo: assets::UNSUBSCRIBE_PHOTO,
+};
+
+/// A short page about subscribing, which search engines leave out, opened
+/// with a quote and a photo, or, for errors, without.
+fn subscription_page(
+    state: &AppState,
+    status: StatusCode,
+    title: &str,
+    opening: Option<&Opening>,
+    body: &Markup,
+) -> Response {
+    (
+        status,
+        layout(
+            &PageMeta {
+                site_url: &state.site_url,
+                title,
+                description: "Get the new posts of Tai Chi Wayfarer by email.",
+                path: None,
+                image: None,
+                og_type: "website",
+                noindex: true,
+                search_query: "",
+            },
+            &html! {
+                // Left-aligned: justifying stretches the words of these few
+                // lines, e.g. before a long email address.
+                div .short-page {
+                    @if let Some(opening) = opening {
+                        // The photo is decoration, as the photo of the post list.
+                        (listing_intro(title, opening.quote, &static_image(opening.photo, Some("index"), ""), body))
+                    } @else {
+                        h2 { (title) }
+                        (body)
+                    }
+                }
+            },
+        ),
+    )
+        .into_response()
+}
+
+fn server_error(state: &AppState, error: &sqlx::Error) -> Response {
+    tracing::error!(%error, "Subscribers database failed");
+    subscription_page(
+        state,
+        StatusCode::INTERNAL_SERVER_ERROR,
+        "Something Went Wrong",
+        None,
+        &html! { p { "Sorry, that didn't work. Please try again later." } },
+    )
+}
+
+/// The page of signing up, linked from the front page.
+async fn subscribe_page(State(state): State<AppState>) -> Response {
+    signup_page(&state, StatusCode::OK, &subscribe_form("", "", None))
+}
+
+/// The page of signing up, with a Lao Tzu quote and a photo as the list of
+/// posts, around `form`.
+fn signup_page(state: &AppState, status: StatusCode, form: &Markup) -> Response {
+    (
+        status,
+        layout(
+            &PageMeta {
+                site_url: &state.site_url,
+                title: "Subscribe",
+                description: "Get the new posts of Tai Chi Wayfarer by email.",
+                path: None,
+                image: None,
+                og_type: "website",
+                noindex: true,
+                search_query: "",
+            },
+            &html! {
+                (listing_intro(
+                    "Subscribe",
+                    "A good traveler has no fixed plans and is not intent upon arriving.",
+                    // Decoration, as the photo of the post list.
+                    &static_image(assets::SUBSCRIBE_PHOTO, Some("index"), ""),
+                    &html! {
+                        p {
+                            "Get each new post of Tai Chi Wayfarer by email. "
+                            "Tell me something about yourself too, if you like."
+                        }
+                    },
+                ))
+                (form)
+            },
+        ),
+    )
+        .into_response()
+}
+
+async fn subscribe(
+    State(state): State<AppState>,
+    Form(form): Form<HashMap<String, String>>,
+) -> Response {
+    let field = |name: &str| form.get(name).map_or("", String::as_str);
+    let check_inbox = |email: &str| {
+        subscription_page(
+            &state,
+            StatusCode::OK,
+            "Check Your Inbox",
+            Some(&INBOX),
+            &html! {
+                p { "Thank you! To confirm your subscription, click the link in the email I sent to " strong { (email) } "." }
+                p { "If it doesn't arrive in a few minutes, please look in your spam folder." }
+            },
+        )
+    };
+    // A bot: thank it as anyone, but don't email anybody.
+    if !field("website").is_empty() {
+        tracing::info!("Ignored a sign-up with the hidden field filled in");
+        return check_inbox(field("email").trim());
+    }
+    let Some(email) = parse_email(field("email")) else {
+        return signup_page(
+            &state,
+            StatusCode::UNPROCESSABLE_ENTITY,
+            &subscribe_form(
+                field("email"),
+                field("note"),
+                Some("Please check your email address, it doesn't look like one."),
+            ),
+        );
+    };
+    match state
+        .subscribers
+        .subscribe(&email, field("note"), Utc::now())
+        .await
+    {
+        Ok(Signup::TooMany) => subscription_page(
+            &state,
+            StatusCode::SERVICE_UNAVAILABLE,
+            "Please Try Again Later",
+            None,
+            &html! { p { "Many people are signing up just now. Please try again in an hour." } },
+        ),
+        Ok(signup) => {
+            if signup == Signup::ConfirmationQueued {
+                tracing::info!("New sign-up, sending the confirmation");
+                state.wake.notify_one();
+            }
+            check_inbox(&email)
+        }
+        Err(error) => server_error(&state, &error),
+    }
+}
+
+fn token(params: &HashMap<String, String>) -> &str {
+    params.get("token").map_or("", String::as_str)
+}
+
+fn invalid_link(state: &AppState) -> Response {
+    subscription_page(
+        state,
+        StatusCode::NOT_FOUND,
+        "Link Not Valid",
+        None,
+        &html! {
+            p {
+                "This link isn't valid anymore. Sign-ups not confirmed within a week are removed, but you can "
+                a href="/subscribe" { "subscribe again" }
+                "."
+            }
+        },
+    )
+}
+
+fn subscribed(state: &AppState, email: &str) -> Response {
+    subscription_page(
+        state,
+        StatusCode::OK,
+        "You're Subscribed",
+        Some(&SUBSCRIBED),
+        &html! {
+            p { "Thank you! From now on, I'll send each new post to " strong { (email) } "." }
+            p .reference { "Meanwhile, browse " a href="/" { "all posts" } "." }
+        },
+    )
+}
+
+/// The link of the confirmation email: a button, as link checkers of mail
+/// services open links but don't press buttons.
+async fn confirm_page(
+    Query(params): Query<HashMap<String, String>>,
+    State(state): State<AppState>,
+) -> Response {
+    match state.subscribers.by_token(token(&params)).await {
+        Ok(Some(subscriber)) if subscriber.confirmed_at.is_some() => {
+            subscribed(&state, &subscriber.email)
+        }
+        Ok(Some(subscriber)) => subscription_page(
+            &state,
+            StatusCode::OK,
+            "Confirm Your Subscription",
+            Some(&SUBSCRIBED),
+            &html! {
+                p { "Get the new posts of Tai Chi Wayfarer at " strong { (subscriber.email) } "?" }
+                form .subscribe method="post" action={ "/confirm?token=" (subscriber.token) } {
+                    button type="submit" { "Confirm" }
+                }
+            },
+        ),
+        Ok(None) => invalid_link(&state),
+        Err(error) => server_error(&state, &error),
+    }
+}
+
+async fn confirm(
+    Query(params): Query<HashMap<String, String>>,
+    State(state): State<AppState>,
+) -> Response {
+    match state.subscribers.confirm(token(&params), Utc::now()).await {
+        Ok(Some(subscriber)) => {
+            state.wake.notify_one();
+            subscribed(&state, &subscriber.email)
+        }
+        Ok(None) => invalid_link(&state),
+        Err(error) => server_error(&state, &error),
+    }
+}
+
+/// The link at the end of each email: a button, as for confirming.
+async fn unsubscribe_page(
+    Query(params): Query<HashMap<String, String>>,
+    State(state): State<AppState>,
+) -> Response {
+    match state.subscribers.by_token(token(&params)).await {
+        Ok(Some(subscriber)) => subscription_page(
+            &state,
+            StatusCode::OK,
+            "Unsubscribe",
+            Some(&UNSUBSCRIBE),
+            &html! {
+                p { "Stop getting new posts at " strong { (subscriber.email) } "?" }
+                form .subscribe method="post" action={ "/unsubscribe?token=" (subscriber.token) } {
+                    button type="submit" { "Unsubscribe" }
+                }
+            },
+        ),
+        Ok(None) => unsubscribed(&state),
+        Err(error) => server_error(&state, &error),
+    }
+}
+
+/// The button, and mail apps' one-click unsubscribe (RFC 8058), which posts
+/// `List-Unsubscribe=One-Click` to the link.
+async fn unsubscribe(
+    Query(params): Query<HashMap<String, String>>,
+    State(state): State<AppState>,
+) -> Response {
+    match state.subscribers.unsubscribe(token(&params)).await {
+        Ok(removed) => {
+            if removed {
+                tracing::info!("Someone unsubscribed");
+            }
+            unsubscribed(&state)
+        }
+        Err(error) => server_error(&state, &error),
+    }
+}
+
+fn unsubscribed(state: &AppState) -> Response {
+    subscription_page(
+        state,
+        StatusCode::OK,
+        "You're Unsubscribed",
+        Some(&UNSUBSCRIBE),
+        &html! {
+            p { "You won't get more posts by email, and your address is deleted from the list. You're welcome back any time." }
+        },
+    )
+}
+
+async fn privacy(State(state): State<AppState>) -> Markup {
+    layout(
+        &PageMeta {
+            site_url: &state.site_url,
+            title: "Privacy",
+            description: "How Tai Chi Wayfarer handles the email addresses of its subscribers.",
+            path: Some("/privacy"),
+            image: None,
+            og_type: "website",
+            noindex: false,
+            search_query: "",
+        },
+        &html! {
+            article {
+                h2 { "Privacy" }
+                (quote("Those who know do not speak. Those who speak do not know.", "Lao Tzu"))
+                // Decoration, as the photo of the post list.
+                (static_image(assets::PRIVACY_PHOTO, Some("index"), ""))
+                p {
+                    "When you subscribe to new posts, I, Timo, the writer of Tai Chi Wayfarer, keep your email address, what you tell about yourself, and when you subscribed and confirmed. "
+                    "You can reach me at taichiwayfarer@gmail.com."
+                }
+                p {
+                    "I use them to send you new posts, because you asked for them. "
+                    "I don't share them with anyone, and I don't track whether you open the emails."
+                }
+                p {
+                    "The list is kept on the server of this blog. The emails are sent through Gmail, so Google handles them too, and Gmail keeps a copy of each sent email."
+                }
+                p {
+                    "You can unsubscribe with the link in any post email, and your address is deleted from the list at once. "
+                    "A sign-up that isn't confirmed within a week is deleted too. "
+                    "You can also ask me what I have about you, or to correct or delete it, and complain to the data protection authority of your country."
+                }
+            }
+        },
+    )
+}
+
 async fn about(State(state): State<AppState>) -> Markup {
     let profile_photo = assets::path(assets::PROFILE_PHOTO);
     layout(
@@ -481,7 +860,7 @@ fn reference_link(link: Option<&PostLink>, text: &str) -> Markup {
     }
 }
 
-async fn post(Path(url): Path<String>, State(state): State<AppState>) -> impl IntoResponse {
+async fn post_page(Path(url): Path<String>, State(state): State<AppState>) -> impl IntoResponse {
     let now = (state.now)();
     match state.posts.published_page(&url, now) {
         Some(page) => {
@@ -557,7 +936,11 @@ fn app(state: AppState, static_dir: &FsPath, dev: bool) -> Router {
         .route("/robots.txt", get(robots))
         .route("/about", get(about))
         .route("/search", get(search))
-        .route("/post/{url}", get(post))
+        .route("/subscribe", get(subscribe_page).post(subscribe))
+        .route("/confirm", get(confirm_page).post(confirm))
+        .route("/unsubscribe", get(unsubscribe_page).post(unsubscribe))
+        .route("/privacy", get(privacy))
+        .route("/post/{url}", get(post_page))
         // Support also directory style urls
         .route("/about/", get(async || Redirect::permanent("/about")))
         .route("/post/{url}/", get(post_redirect))
@@ -607,6 +990,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
+    let database_url = std::env::var("DATABASE_URL").unwrap_or(db::DEFAULT_URL.to_string());
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    if args.first().is_some_and(|command| command == "subscribers") {
+        if let Err(error) = subscribers_command(&args[1..], &database_url).await {
+            use std::io::Write;
+            let _ = writeln!(std::io::stderr(), "{error}");
+            std::process::exit(1);
+        }
+        return Ok(());
+    }
+
     let post_dir = std::env::var("POST_DIR").unwrap_or("posts".to_string());
     let static_dir = std::env::var("STATIC_DIR").unwrap_or("dist".to_string());
     let static_dir = FsPath::new(&static_dir);
@@ -628,18 +1022,33 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     })?;
     let site_url = std::env::var("SITE_URL").unwrap_or(DEFAULT_SITE_URL.to_string());
     let dev = env_flag("DEV");
+    let pool = db::open(&database_url).await.map_err(|error| {
+        tracing::error!(%error, url = database_url, "Failed to open the database, check DATABASE_URL");
+        error
+    })?;
     let state = AppState {
         posts: Arc::new(posts),
         site_url: site_url.trim_end_matches('/').into(),
         noindex: env_flag("NOINDEX"),
         now: clock(dev),
+        subscribers: Store::new(pool),
+        wake: Arc::new(Notify::new()),
     };
     tracing::info!(site_url = %state.site_url, noindex = state.noindex, dev, "Site settings");
     if dev {
         tracing::info!("Dev mode: showing scheduled posts as published");
     }
+    let newsletter = newsletter(&state).map_err(|error| {
+        tracing::error!(%error, "Failed to set up sending emails");
+        error
+    })?;
+    tokio::spawn(newsletter.run(state.wake.clone()));
 
-    let app = app(state, static_dir, dev);
+    serve(app(state, static_dir, dev), dev).await
+}
+
+/// Serves the site until Ctrl-C or SIGTERM.
+async fn serve(app: Router, dev: bool) -> Result<(), Box<dyn std::error::Error>> {
     // Behind a reverse proxy, set HOST=127.0.0.1 to accept local connections only.
     let host = std::env::var("HOST").unwrap_or("0.0.0.0".to_string());
     let port = std::env::var("PORT").unwrap_or("3000".to_string());
@@ -676,6 +1085,129 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Err(error.into());
     }
     tracing::info!(address = %local_addr, "HTTP server stopped");
+    Ok(())
+}
+
+/// The sender of the emails, as configured by `MAIL_FROM`, `NOTIFY_EMAIL`
+/// and the `SMTP_` variables; without `SMTP_HOST` the emails are only logged.
+fn newsletter(state: &AppState) -> Result<Newsletter, String> {
+    let setting = |name: &str| {
+        std::env::var(name)
+            .ok()
+            .filter(|value| !value.trim().is_empty())
+    };
+    let from: Mailbox = setting("MAIL_FROM")
+        .unwrap_or(mail::DEFAULT_FROM.to_string())
+        .parse()
+        .map_err(|error| format!("MAIL_FROM isn't an address: {error}"))?;
+    let owner: Mailbox = match setting("NOTIFY_EMAIL") {
+        Some(owner) => owner
+            .parse()
+            .map_err(|error| format!("NOTIFY_EMAIL isn't an address: {error}"))?,
+        None => Mailbox::new(None, from.email.clone()),
+    };
+    let mailer = match setting("SMTP_HOST") {
+        None => {
+            tracing::info!("SMTP_HOST isn't set: emails are only logged");
+            Mailer::Log
+        }
+        Some(host) => {
+            let encryption =
+                Encryption::parse(&setting("SMTP_ENCRYPTION").unwrap_or("tls".into()))?;
+            let port = match setting("SMTP_PORT") {
+                Some(port) => port
+                    .parse()
+                    .map_err(|_| format!("SMTP_PORT isn't a port: {port}"))?,
+                None if encryption == Encryption::Tls => 465,
+                None => 587,
+            };
+            let login = match (setting("SMTP_USER"), setting("SMTP_PASSWORD_FILE")) {
+                (None, _) => None,
+                (Some(_), None) => return Err("SMTP_USER needs SMTP_PASSWORD_FILE".into()),
+                (Some(user), Some(file)) => {
+                    let password = std::fs::read_to_string(&file)
+                        .map_err(|error| format!("SMTP_PASSWORD_FILE {file}: {error}"))?;
+                    Some((user, password.trim().to_string()))
+                }
+            };
+            tracing::info!(%host, port, ?encryption, "Sending emails by SMTP");
+            Mailer::smtp(&host, port, encryption, login).map_err(|error| error.to_string())?
+        }
+    };
+    Ok(Newsletter {
+        store: state.subscribers.clone(),
+        mailer,
+        from,
+        owner,
+        site_url: state.site_url.clone(),
+        posts: state.posts.clone(),
+        clock: state.now,
+        pause: std::time::Duration::from_secs(2),
+    })
+}
+
+/// `taichiwayfarer subscribers list|import|remove <email>`: the list of
+/// subscribers, on the server through the module's
+/// `taichiwayfarer-<name>-subscribers`.
+async fn subscribers_command(
+    args: &[String],
+    database_url: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
+    use std::fmt::Write as _;
+    use std::io::{BufRead, Write};
+    let store = Store::new(db::open(database_url).await?);
+    let mut output = String::new();
+    let args: Vec<&str> = args.iter().map(String::as_str).collect();
+    match args.as_slice() {
+        ["list"] => {
+            output.push_str("email\tsubscribed\tconfirmed\tnote\n");
+            for subscriber in store.list().await? {
+                writeln!(
+                    output,
+                    "{}\t{}\t{}\t{}",
+                    subscriber.email,
+                    subscriber.created_at,
+                    subscriber.confirmed_at.as_deref().unwrap_or("no"),
+                    subscriber.note.replace(['\n', '\r', '\t'], " "),
+                )?;
+            }
+        }
+        ["import"] => {
+            let (mut added, mut existing) = (0, 0);
+            for line in std::io::stdin().lock().lines() {
+                let line = line?;
+                let line = line.trim();
+                if line.is_empty() || line.starts_with('#') {
+                    continue;
+                }
+                let email = parse_email(line).ok_or(format!("not an email address: {line}"))?;
+                if store.import(&email, Utc::now()).await? {
+                    added += 1;
+                } else {
+                    existing += 1;
+                }
+            }
+            writeln!(
+                output,
+                "Added {added}, {existing} were on the list already. The site sends them a welcome email within a minute."
+            )?;
+        }
+        ["remove", email] => {
+            if store.remove(email).await? {
+                output.push_str("Removed.\n");
+            } else {
+                return Err(format!("{email} isn't on the list").into());
+            }
+        }
+        _ => {
+            return Err(concat!(
+                "usage: taichiwayfarer subscribers list | import < emails.txt | remove <email>\n",
+                "import adds the addresses, one a line, as confirmed and sends them a welcome email"
+            )
+            .into());
+        }
+    }
+    std::io::stdout().write_all(output.as_bytes())?;
     Ok(())
 }
 
@@ -752,8 +1284,8 @@ mod tests {
 
     /// The app as it was on November 1, 2026, so a newly published post,
     /// always later than that, cannot change what the tests see.
-    fn test_app(site_url: &str, noindex: bool) -> TestResult<Router> {
-        test_app_at(site_url, noindex, november_1)
+    async fn test_app(site_url: &str, noindex: bool) -> TestResult<Router> {
+        test_app_at(site_url, noindex, november_1).await
     }
 
     /// After "Don't Think — Just Do" and before "Study Your Movements".
@@ -764,10 +1296,20 @@ mod tests {
     }
 
     /// The app as if the time were what `now` returns.
-    fn test_app_at(
+    async fn test_app_at(
         site_url: &str,
         noindex: bool,
         now: fn() -> DateTime<Utc>,
+    ) -> TestResult<Router> {
+        test_app_with(site_url, noindex, now, Store::in_memory().await?)
+    }
+
+    /// The app with the given subscribers.
+    fn test_app_with(
+        site_url: &str,
+        noindex: bool,
+        now: fn() -> DateTime<Utc>,
+        subscribers: Store,
     ) -> TestResult<Router> {
         let root = FsPath::new(env!("CARGO_MANIFEST_DIR"));
         assets::init(&root.join("dist"));
@@ -779,6 +1321,8 @@ mod tests {
             site_url: site_url.into(),
             noindex,
             now,
+            subscribers,
+            wake: Arc::new(Notify::new()),
         };
         Ok(app(state, &root.join("dist"), false))
     }
@@ -793,7 +1337,7 @@ mod tests {
 
     #[tokio::test]
     async fn links_use_site_url() -> TestResult {
-        let app = test_app("https://alt.example.com", false)?;
+        let app = test_app("https://alt.example.com", false).await?;
 
         let (headers, page) = fetch(&app, "/post/the-slow-set").await?;
         assert!(
@@ -815,7 +1359,7 @@ mod tests {
 
     #[tokio::test]
     async fn missing_static_file_gets_not_found_page() -> TestResult {
-        let app = test_app("https://www.example.com", false)?;
+        let app = test_app("https://www.example.com", false).await?;
         let request = Request::builder()
             .uri("/static/no-such-file.css")
             .body(Body::empty())?;
@@ -831,7 +1375,7 @@ mod tests {
     async fn every_post_link_resolves() -> TestResult {
         // post_path formats the links and the router's patterns serve them, so
         // following every link on the index checks that the two agree.
-        let app = test_app("https://www.example.com", false)?;
+        let app = test_app("https://www.example.com", false).await?;
         let (_, index) = fetch(&app, "/").await?;
         let links: Vec<&str> = index
             .split(r#"href=""#)
@@ -850,7 +1394,7 @@ mod tests {
 
     #[tokio::test]
     async fn feed_links_to_itself() -> TestResult {
-        let app = test_app("https://alt.example.com", false)?;
+        let app = test_app("https://alt.example.com", false).await?;
         let (_, feed) = fetch(&app, "/feed.xml").await?;
         assert!(
             feed.contains(r#"xmlns:atom="http://www.w3.org/2005/Atom""#),
@@ -864,7 +1408,7 @@ mod tests {
 
     #[tokio::test]
     async fn dates_are_machine_readable() -> TestResult {
-        let app = test_app("https://www.example.com", false)?;
+        let app = test_app("https://www.example.com", false).await?;
         let (_, index) = fetch(&app, "/").await?;
         assert!(index.contains(r#"<time datetime="2026-10-24">October 24, 2026</time>"#));
         let (_, post) = fetch(&app, "/post/the-slow-set").await?;
@@ -874,7 +1418,7 @@ mod tests {
 
     #[tokio::test]
     async fn pages_have_header_and_main_regions() -> TestResult {
-        let app = test_app("https://www.example.com", false)?;
+        let app = test_app("https://www.example.com", false).await?;
         for uri in ["/", "/about", "/post/the-slow-set", "/missing"] {
             let (_, page) = fetch(&app, uri).await?;
             let header = page
@@ -888,7 +1432,7 @@ mod tests {
 
     #[tokio::test]
     async fn search_page_lists_matches() -> TestResult {
-        let app = test_app("https://www.example.com", false)?;
+        let app = test_app("https://www.example.com", false).await?;
         let (_, page) = fetch(&app, "/search?q=man+quan").await?;
         assert!(page.contains(r#"<meta name="robots" content="noindex">"#));
         assert!(page.contains(r#"value="man quan""#));
@@ -925,7 +1469,7 @@ mod tests {
 
     #[tokio::test]
     async fn search_page_looks_like_post_list() -> TestResult {
-        let app = test_app("https://www.example.com", false)?;
+        let app = test_app("https://www.example.com", false).await?;
         let (_, page) = fetch(&app, "/search?q=sword").await?;
         assert!(page.contains("<main><h2>Search</h2><figure class=\"quote\">"));
         assert!(page.contains("Without going outside, you may know the whole world."));
@@ -934,7 +1478,7 @@ mod tests {
 
     #[tokio::test]
     async fn search_page_shows_photo_of_first_result_with_one() -> TestResult {
-        let app = test_app("https://www.example.com", false)?;
+        let app = test_app("https://www.example.com", false).await?;
         let photo = |page: &str| {
             page.split("<img ")
                 .find(|tag| tag.starts_with(r#"class="index""#))
@@ -960,7 +1504,7 @@ mod tests {
 
     #[tokio::test]
     async fn every_page_has_search_in_top_bar() -> TestResult {
-        let app = test_app("https://www.example.com", false)?;
+        let app = test_app("https://www.example.com", false).await?;
         let form = r#"</nav><div class="search-and-support"><form class="search" action="/search" method="get" role="search">"#;
         for uri in [
             "/",
@@ -981,7 +1525,7 @@ mod tests {
 
     #[tokio::test]
     async fn navigations_are_named() -> TestResult {
-        let app = test_app("https://www.example.com", false)?;
+        let app = test_app("https://www.example.com", false).await?;
         let (_, post) = fetch(&app, "/post/the-slow-set").await?;
         assert!(post.contains(r#"<nav aria-label="Main">"#));
         assert!(post.contains(r#"<nav class="more-stories" aria-label="More stories">"#));
@@ -991,7 +1535,7 @@ mod tests {
 
     #[tokio::test]
     async fn photos_have_fitting_alt_text() -> TestResult {
-        let app = test_app("https://www.example.com", false)?;
+        let app = test_app("https://www.example.com", false).await?;
         // Decoration: an empty alt text, so screen readers skip it.
         let decoration = r#"src="/static/img/2023-to-the-states.jpg" alt="""#;
         let (_, index) = fetch(&app, "/").await?;
@@ -1007,7 +1551,7 @@ mod tests {
 
     #[tokio::test]
     async fn chinese_text_is_marked_as_chinese() -> TestResult {
-        let app = test_app("https://www.example.com", false)?;
+        let app = test_app("https://www.example.com", false).await?;
         let (_, page) = fetch(&app, "/post/the-slow-set").await?;
         let characters = page
             .matches(r#"<div class="characters" lang="zh">"#)
@@ -1023,7 +1567,7 @@ mod tests {
 
     #[tokio::test]
     async fn video_has_a_link_without_javascript() -> TestResult {
-        let app = test_app("https://www.example.com", false)?;
+        let app = test_app("https://www.example.com", false).await?;
         let (_, page) = fetch(&app, "/post/the-slow-set").await?;
         assert!(page.contains(concat!(
             r#"<div class="video" data-video-id="mha0hp_cLHE">"#,
@@ -1035,7 +1579,7 @@ mod tests {
 
     #[tokio::test]
     async fn videos_are_embedded_from_youtube_nocookie() -> TestResult {
-        let app = test_app("https://www.example.com", false)?;
+        let app = test_app("https://www.example.com", false).await?;
         let (_, script) = fetch(&app, "/static/embed-video.js").await?;
         assert!(script.contains("https://www.youtube-nocookie.com/embed/"));
         assert!(!script.contains("https://www.youtube.com/embed/"));
@@ -1068,7 +1612,7 @@ mod tests {
 
     #[tokio::test]
     async fn scheduled_post_is_hidden_everywhere() -> TestResult {
-        let app = test_app_at("https://www.example.com", false, october_14)?;
+        let app = test_app_at("https://www.example.com", false, october_14).await?;
         let scheduled = "/post/dont-think-just-do";
 
         let (_, index) = fetch(&app, "/").await?;
@@ -1094,7 +1638,7 @@ mod tests {
 
     #[tokio::test]
     async fn icons_are_linked() -> TestResult {
-        let app = test_app("https://www.example.com", false)?;
+        let app = test_app("https://www.example.com", false).await?;
         let (_, page) = fetch(&app, "/").await?;
         assert!(page.contains(r#"<link rel="icon" href="/favicon.ico" sizes="32x32">"#));
         for (rel, name) in [
@@ -1109,7 +1653,7 @@ mod tests {
 
     #[tokio::test]
     async fn layout_images_have_sizes() -> TestResult {
-        let app = test_app("https://www.example.com", false)?;
+        let app = test_app("https://www.example.com", false).await?;
         let dist = FsPath::new(env!("CARGO_MANIFEST_DIR")).join("dist");
         for (uri, name) in [
             ("/", "img/2023-to-the-states.jpg"),
@@ -1131,7 +1675,7 @@ mod tests {
 
     #[tokio::test]
     async fn posts_end_with_link_to_all_posts() -> TestResult {
-        let app = test_app("https://www.example.com", false)?;
+        let app = test_app("https://www.example.com", false).await?;
         for uri in [
             "/post/the-slow-set",
             "/post/bosco-harvest-2023",
@@ -1156,7 +1700,7 @@ mod tests {
 
     #[tokio::test]
     async fn story_links_are_absolute() -> TestResult {
-        let app = test_app("https://www.example.com", false)?;
+        let app = test_app("https://www.example.com", false).await?;
         let (_, page) = fetch(&app, "/post/the-slow-set").await?;
         assert!(page.contains(r#"Read the next story? <a href="/post/learn-by-watching">"#));
         assert!(page.contains(r#"Read the previous story? <a href="/post/june-2026">"#));
@@ -1165,7 +1709,7 @@ mod tests {
 
     #[tokio::test]
     async fn nav_marks_current_page() -> TestResult {
-        let app = test_app("https://www.example.com", false)?;
+        let app = test_app("https://www.example.com", false).await?;
         let (_, about) = fetch(&app, "/about").await?;
         assert!(about.contains(r#"<a href="/about" aria-current="page">About</a>"#));
         assert!(about.contains(r#"<a href="/">Posts</a>"#));
@@ -1187,7 +1731,7 @@ mod tests {
 
     #[tokio::test]
     async fn noindex_blocks_search_engines() -> TestResult {
-        let app = test_app("https://alt.example.com", true)?;
+        let app = test_app("https://alt.example.com", true).await?;
 
         let (_, robots) = fetch(&app, "/robots.txt").await?;
         assert_eq!(robots, "User-agent: *\nDisallow: /\n");
@@ -1205,6 +1749,161 @@ mod tests {
                 "{uri}"
             );
         }
+        Ok(())
+    }
+
+    async fn post_form(app: &Router, uri: &str, body: &str) -> TestResult<(StatusCode, String)> {
+        let request = Request::builder()
+            .method("POST")
+            .uri(uri)
+            .header(header::CONTENT_TYPE, "application/x-www-form-urlencoded")
+            .body(Body::from(body.to_string()))?;
+        let response = app.clone().oneshot(request).await?;
+        let status = response.status();
+        let body = to_bytes(response.into_body(), usize::MAX).await?;
+        Ok((status, String::from_utf8(body.to_vec())?))
+    }
+
+    #[tokio::test]
+    async fn subscribe_form_has_a_page_of_its_own() -> TestResult {
+        let app = test_app("https://www.example.com", false).await?;
+        let (_, index) = fetch(&app, "/").await?;
+        assert!(index.contains(r#"<a href="/subscribe">subscribe by email</a>"#));
+        assert!(!index.contains("<form class=\"subscribe\"") && !index.contains("mailto:"));
+
+        let (status, page) = fetch_status(&app, "/subscribe").await?;
+        assert_eq!(status, StatusCode::OK);
+        assert!(page.contains(concat!(
+            r#"<main><h2>Subscribe</h2><figure class="quote"><blockquote>"#,
+            "A good traveler has no fixed plans and is not intent upon arriving.</blockquote>"
+        )));
+        assert!(page.contains(
+            r#"<img class="index" src="/static/img/2025-autumn-in-finland.jpg" alt="" width=""#
+        ));
+        assert!(page.contains(r#"<form class="subscribe signup" method="post" action="/subscribe"><fieldset><legend>New posts by email</legend>"#));
+        assert!(page.contains(r#"name="email" value="" required autocomplete="email">"#));
+        assert!(page.contains(r#"<textarea id="subscribe-note" name="note""#));
+
+        // The privacy notice is linked from there only.
+        assert!(page.contains(r#"<a href="/privacy">"#));
+        for uri in ["/", "/about", "/post/the-slow-set", "/search?q=sword"] {
+            let (_, other) = fetch(&app, uri).await?;
+            assert!(!other.contains("/privacy"), "{uri}");
+        }
+        let (_, sitemap) = fetch(&app, "/sitemap.xml").await?;
+        assert!(!sitemap.contains("/privacy"));
+        let (_, privacy) = fetch(&app, "/privacy").await?;
+        assert!(privacy.contains(concat!(
+            r#"<article><h2>Privacy</h2><figure class="quote"><blockquote>"#,
+            "Those who know do not speak. Those who speak do not know.</blockquote>"
+        )));
+        assert!(privacy.contains(
+            r#"<img class="index" src="/static/img/2024-sandy-lake.jpg" alt="" width=""#
+        ));
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn subscribing_takes_a_confirmation() -> TestResult {
+        let store = Store::in_memory().await?;
+        let app = test_app_with("https://www.example.com", false, november_1, store.clone())?;
+
+        let (status, page) = post_form(
+            &app,
+            "/subscribe",
+            "email=+a%40example.com&note=Hi&website=",
+        )
+        .await?;
+        assert_eq!(status, StatusCode::OK);
+        assert!(
+            page.contains("<h2>Check Your Inbox</h2>")
+                && page.contains("<strong>a@example.com</strong>")
+        );
+        assert!(page.contains(r#"<meta name="robots" content="noindex">"#));
+        assert!(
+            page.contains("<blockquote>Do you have the patience to wait till your mud settles")
+        );
+        assert!(page.contains(r#"src="/static/img/2026-may-moon.jpg" alt="""#));
+        let subscriber = store.list().await?.remove(0);
+        assert_eq!(
+            (subscriber.email.as_str(), subscriber.note.as_str()),
+            ("a@example.com", "Hi")
+        );
+        assert_eq!(subscriber.confirmed_at, None);
+
+        // Opening the link only shows a button; pressing it confirms.
+        let link = format!("/confirm?token={}", subscriber.token);
+        let (_, page) = fetch(&app, &link).await?;
+        assert!(page.contains(&format!(r#"<form class="subscribe" method="post" action="{link}"><button type="submit">Confirm</button>"#)));
+        assert!(store.list().await?[0].confirmed_at.is_none());
+        assert!(page.contains("<blockquote>The sage does not hoard."));
+        let (status, page) = post_form(&app, &link, "").await?;
+        assert_eq!(status, StatusCode::OK);
+        assert!(page.contains("<h2>You're Subscribed</h2>"));
+        assert!(page.contains(r#"src="/static/img/2025-felton-view.jpg" alt="""#));
+        assert!(store.list().await?[0].confirmed_at.is_some());
+        // Used again: still subscribed.
+        let (_, page) = fetch(&app, &link).await?;
+        assert!(page.contains("<h2>You're Subscribed</h2>"));
+
+        let (status, page) = fetch_status(&app, "/confirm?token=nope").await?;
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert!(page.contains("<h2>Link Not Valid</h2>"));
+        // Errors are plain.
+        assert!(!page.contains("<blockquote>"));
+        Ok(())
+    }
+
+    async fn fetch_status(app: &Router, uri: &str) -> TestResult<(StatusCode, String)> {
+        let request = Request::builder().uri(uri).body(Body::empty())?;
+        let response = app.clone().oneshot(request).await?;
+        let status = response.status();
+        let body = to_bytes(response.into_body(), usize::MAX).await?;
+        Ok((status, String::from_utf8(body.to_vec())?))
+    }
+
+    #[tokio::test]
+    async fn bad_signups_store_nothing() -> TestResult {
+        let store = Store::in_memory().await?;
+        let app = test_app_with("https://www.example.com", false, november_1, store.clone())?;
+        // A bot fills in the hidden field: thanked, but nothing is kept.
+        let (status, page) =
+            post_form(&app, "/subscribe", "email=bot%40example.com&website=spam").await?;
+        assert_eq!(status, StatusCode::OK);
+        assert!(page.contains("Check Your Inbox"));
+        // A typo: the form again, with what was written.
+        let (status, page) = post_form(&app, "/subscribe", "email=a%40&note=%3Cb%3EHi").await?;
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert!(page.contains(r#"<p class="form-error" role="alert">"#));
+        assert!(page.contains(r#"value="a@""#) && page.contains("&lt;b&gt;Hi</textarea>"));
+        assert_eq!(store.list().await?.len(), 0);
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn unsubscribing_deletes_the_address() -> TestResult {
+        let store = Store::in_memory().await?;
+        let app = test_app_with("https://www.example.com", false, november_1, store.clone())?;
+        store.import("a@example.com", Utc::now()).await?;
+        let link = format!("/unsubscribe?token={}", store.list().await?[0].token);
+        let (_, page) = fetch(&app, &link).await?;
+        assert!(
+            page.contains("<strong>a@example.com</strong>")
+                && page.contains("Unsubscribe</button>")
+        );
+        assert_eq!(store.list().await?.len(), 1);
+        // As a mail app's one-click unsubscribe sends it.
+        let (status, page) = post_form(&app, &link, "List-Unsubscribe=One-Click").await?;
+        assert_eq!(status, StatusCode::OK);
+        assert!(page.contains("<h2>You're Unsubscribed</h2>"));
+        assert!(page.contains(
+            "<blockquote>Do your work, then step back. The only path to serenity.</blockquote>"
+        ));
+        assert!(page.contains(r#"src="/static/img/2025-red-mountain.jpg" alt="""#));
+        assert_eq!(store.list().await?.len(), 0);
+        // Again: the same, without telling whether the address was there.
+        let (_, page) = fetch(&app, &link).await?;
+        assert!(page.contains("<h2>You're Unsubscribed</h2>"));
         Ok(())
     }
 }

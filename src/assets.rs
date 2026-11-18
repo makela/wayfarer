@@ -17,6 +17,16 @@ pub const RSS_ICON: &str = "img/rss.png";
 /// Header photo of the index page, also the link preview image of pages without one.
 pub const HEADER_PHOTO: &str = "img/2023-to-the-states.jpg";
 pub const PROFILE_PHOTO: &str = "img/profile.jpg";
+/// Photo of the subscribe page: a path into autumn fields.
+pub const SUBSCRIBE_PHOTO: &str = "img/2025-autumn-in-finland.jpg";
+/// Photo of the privacy notice: chairs by a secluded lake.
+pub const PRIVACY_PHOTO: &str = "img/2024-sandy-lake.jpg";
+/// Photos of the pages of confirming and unsubscribing: the moon over calm
+/// water while waiting for the email, a sunlit valley once subscribed, and
+/// mountains at dusk for unsubscribing.
+pub const INBOX_PHOTO: &str = "img/2026-may-moon.jpg";
+pub const SUBSCRIBED_PHOTO: &str = "img/2025-felton-view.jpg";
+pub const UNSUBSCRIBE_PHOTO: &str = "img/2025-red-mountain.jpg";
 
 /// Static files whose URLs carry a content hash, so browsers fetch them
 /// again whenever they change.
@@ -32,7 +42,18 @@ pub const PRELOADED_FONTS: &[&str] = &[
 
 /// Other static files the page layout links to. Images in posts are checked
 /// when the posts are loaded.
-const LINKED_FILES: &[&str] = &[ICO_ICON, KOFI_ICON, RSS_ICON, HEADER_PHOTO, PROFILE_PHOTO];
+const LINKED_FILES: &[&str] = &[
+    ICO_ICON,
+    KOFI_ICON,
+    RSS_ICON,
+    HEADER_PHOTO,
+    PROFILE_PHOTO,
+    SUBSCRIBE_PHOTO,
+    PRIVACY_PHOTO,
+    INBOX_PHOTO,
+    SUBSCRIBED_PHOTO,
+    UNSUBSCRIBE_PHOTO,
+];
 
 /// Unversioned URL of a static file, e.g. `/static/img/profile.jpg`.
 #[must_use]

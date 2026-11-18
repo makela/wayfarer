@@ -6,6 +6,7 @@ A small Rust server (axum + maud) that renders the posts from markdown files,
 with an RSS feed (`/feed.xml`), a sitemap (`/sitemap.xml`), `/robots.txt` and a
 search (`/search?q=…`, see `src/search.rs`). Search ignores case and accents, so
 "man quan" finds "màn quán", and also covers the extra content under posts.
+Readers can subscribe to new posts by email, see [Subscribers](#subscribers).
 
 ## Development
 
@@ -29,7 +30,9 @@ Skip it once with `git commit --no-verify`.
 
 All settings are optional environment variables, read also from a `.env` file.
 See `.env.example` for the list and defaults: `HOST`, `PORT`, `SITE_URL`,
-`NOINDEX`, `POST_DIR`, `STATIC_DIR`, `DEV` and `RUST_LOG`.
+`NOINDEX`, `POST_DIR`, `STATIC_DIR`, `DEV`, `RUST_LOG`, and for the
+database and the subscribers `DATABASE_URL`, `MAIL_FROM`, `NOTIFY_EMAIL` and
+`SMTP_*`.
 
 The server refuses to start if a post file, an image a post shows or a static
 file the pages link to is missing, and logs which one.
@@ -50,7 +53,11 @@ file the pages link to is missing, and logs which one.
    `exiftool -gps:all= -overwrite_original dist/img/photo.jpg`.
 
 The first paragraph becomes the post's description for search engines, link
-previews and the feed, and the first photo its preview image.
+previews, the feed and the subscribers' email, and the first photo its preview
+image.
+
+When the post is published, the subscribers get it by email, within a minute.
+A post whose date is over a week in the past when it's added isn't sent.
 
 Extra content under some posts, such as the movement names of the slow set, is
 in `get_extra_markup` in `src/data.rs`.
@@ -59,6 +66,34 @@ The tests check that every post has its file and photos, that dates are valid
 and in order, and that names are unique.
 Otherwise the tests see the site as it was on November 1, 2026, so a new post
 cannot break them.
+
+## Subscribers
+
+The form on `/subscribe`, linked from the front page, signs readers up for new
+posts by email, with an optional note about themselves. They confirm with a
+link they get by email, and you get an email with their note, which you can
+reply to. Every post email has a link to unsubscribe, also as a one-click
+button in mail apps; it deletes the address. Sign-ups not confirmed within a
+week are deleted. `/privacy`, linked from the form only, tells readers this.
+
+The subscribers are in the site's SQLite database (`DATABASE_URL`, by default
+`sqlite://taichiwayfarer.db`, which git ignores; see `src/db.rs`). The server sends the emails itself
+(`src/newsletter.rs`), by SMTP, e.g. through Gmail. Without `SMTP_HOST`, as in
+development, it only logs them; `RUST_LOG=taichiwayfarer=debug` shows the
+whole email with its links.
+
+The first time the server runs, it marks the posts published so far as sent
+without sending them.
+
+```sh
+cargo run -- subscribers list                # email, subscribed, confirmed, note
+cargo run -- subscribers import < emails.txt # one address a line, as confirmed
+cargo run -- subscribers remove a@example.com
+```
+
+Imported addresses count as confirmed, for people who asked for updates before
+the form, and get a welcome email telling how it works now. On the server, use
+`sudo taichiwayfarer-www-subscribers …` instead (see below).
 
 ## Deployment
 
@@ -71,6 +106,15 @@ service, one per instance, listening on 127.0.0.1:3000 by default. Put a
 reverse proxy with TLS, such as nginx, in front. Usage, for example with a
 `www` instance and a test copy that search engines don't index, is described
 at the top of the module.
+
+For the emails, the `www` instance needs `smtp` settings; the example at the
+top of the module sends through Gmail. That needs a Gmail app password
+(Google Account → Security → 2-Step Verification → App passwords) in a file
+only root can read, e.g. `/var/lib/secrets/taichiwayfarer/gmail-app-password`.
+Gmail allows about 500 emails a day and keeps a copy of each in Sent.
+
+The module's `taichiwayfarer-<name>-subscribers` runs the subscribers command
+for an instance, e.g. `sudo taichiwayfarer-www-subscribers import < emails.txt`.
 
 To publish, update the clone the server builds from and switch:
 

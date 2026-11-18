@@ -29,10 +29,17 @@ impl Post {
     /// Whether the post's publication time, in Helsinki time, has come by `now`.
     #[must_use]
     pub fn is_published(&self, now: DateTime<Utc>) -> bool {
+        self.published_utc()
+            .is_some_and(|published_at| published_at <= now)
+    }
+
+    /// The post's publication time, given in Helsinki time.
+    #[must_use]
+    pub fn published_utc(&self) -> Option<DateTime<Utc>> {
         chrono_tz::Europe::Helsinki
             .from_local_datetime(&self.published_at)
             .earliest()
-            .is_some_and(|published_at| published_at <= now)
+            .map(|published_at| published_at.with_timezone(&Utc))
     }
 
     /// Path of the post's page, see [`post_path`].
