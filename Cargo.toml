@@ -10,7 +10,7 @@ axum = { version = "0.8.1", features = ["tokio"] }
 chrono = { version = "0.4.39", features = ["serde"] }
 chrono-tz = "0.10.4"
 dotenvy = "0.15.7"
-getrandom = "0.3"
+getrandom = "0.4"
 imagesize = "0.15.0"
 lettre = { version = "0.11.23", default-features = false, features = ["builder", "smtp-transport", "tokio1-rustls-tls", "hostname", "pool"] }
 markdown = "1.0.0"
