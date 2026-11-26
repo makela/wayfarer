@@ -19,10 +19,13 @@
         pkgs = import nixpkgs {
           inherit system overlays;
         };
+        # rust-toolchain.toml's Rust: rustc, cargo, clippy, rustfmt and
+        # rust-analyzer, the same version as the other projects
+        rustOf = p: p.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
       in
       with pkgs;
       {
-        packages.default = callPackage ./nix/package.nix { craneLib = crane.mkLib pkgs; };
+        packages.default = callPackage ./nix/package.nix { craneLib = (crane.mkLib pkgs).overrideToolchain rustOf; };
 
         devShells.default = mkShell {
           shellHook = ''
@@ -30,7 +33,7 @@
             git config core.hooksPath .githooks 2>/dev/null || true
           '';
           buildInputs = [
-            rust-bin.stable.latest.default
+            (rustOf pkgs)
             just
             watchexec
             watchman
